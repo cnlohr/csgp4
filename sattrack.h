@@ -392,7 +392,7 @@ printf( "EPOCH: %f %f %f %f %f %f %f %f %f %ld %f %ld\n",
 	// satrec.alta = satrec.a*(1.0 + satrec.ecco) - 1.0;
 	// satrec.altp = satrec.a*(1.0 - satrec.ecco) - 1.0;
 
-	sgp4init( whichconst, opsmode, satrec->satnum, satrec->jdsatepoch-2433281.5, satrec->bstar,
+	sgp4init( whichconst, opsmode, satrec->satnum, satrec->jdsatepoch-2433281.5 /* ???!!?? */, satrec->bstar,
 		 satrec->ndot, satrec->nddot, satrec->ecco, satrec->argpo, satrec->inclo, satrec->mo, satrec->no_kozai,
 		 satrec->nodeo, satrec );
 

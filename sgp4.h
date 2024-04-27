@@ -2224,7 +2224,6 @@ static void days2mdhms
 	}
 	*mon = i;
 	*day = dayofyr - inttemp;
-
 	/* ----------------- find hours minutes and seconds ------------- */
 	temp = (days - dayofyr) * 24.0;
 	*hr = (int16_t)(floor(temp));

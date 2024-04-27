@@ -67,10 +67,11 @@ int main( int argc, char ** argv )
 
 		sgp4 (&satrec, tsince, ro,  vo);
 
-		double jd = satrec.jdsatepoch;
-		double jdfrac = satrec.jdsatepochF + tsince/1440.0;
-//		int year, mon, day, hr, min, sec;
-//		invjday( jd, jdfrac, &year, &mon, &day, &hr, &min, &sec );
+		double jd = satrec.jdsatepoch + satrec.jdsatepochF;
+		double jdfrac = tsince/1440.0;
+		int year, mon, day, hr, min;
+		double sec;
+		invjday( jd, jdfrac, &year, &mon, &day, &hr, &min, &sec );
 //		printf( "%f %f %04d %02d %02d %02d:%02d:%05.02f /", jd, jdfrac, year, mon, day, hr, min, sec );
 
 		printf( "%16.8f %16.8f %16.8f %16.8f [%f] %12.9f %12.9f %12.9f\n",
