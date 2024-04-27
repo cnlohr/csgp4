@@ -52,7 +52,7 @@ int main( int argc, char ** argv )
 	}
 
 	// set start/stop times for propagation, in minutes.
-	double startmfe = 1440.0;//(OGGetAbsoluteTime() - o->epoch)/60.0; // Convert to minutes.
+	double startmfe = (OGGetAbsoluteTime() - o->epoch)/60.0; // Convert to minutes.
 	double stopmfe  = startmfe + 45.0;
 	double deltamin = 1.0;
 

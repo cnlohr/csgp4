@@ -3,6 +3,8 @@
 
 #include <math.h>
 
+#define RESTRICT restrict
+
 #define SGPPI 3.1415926535897932384626433
 
 #if 1
@@ -166,14 +168,14 @@ static SGPF gstime
 static void getgravconst
 	 (
 	  enum gravconsttype whichconst,
-	  SGPF * tumin,
-	  SGPF * mu,
-	  SGPF * radiusearthkm,
-	  SGPF * xke,
-	  SGPF * j2,
-	  SGPF * j3,
-	  SGPF * j4,
-	  SGPF * j3oj2
+	  SGPF * RESTRICT tumin,
+	  SGPF * RESTRICT mu,
+	  SGPF * RESTRICT radiusearthkm,
+	  SGPF * RESTRICT xke,
+	  SGPF * RESTRICT j2,
+	  SGPF * RESTRICT j3,
+	  SGPF * RESTRICT j4,
+	  SGPF * RESTRICT j3oj2
 	 )
 {
 
@@ -312,8 +314,8 @@ static void dspace
 	   SGPF dmdt, SGPF dnodt, SGPF domdt, SGPF argpo, SGPF argpdot,
 	   SGPF t, SGPF tc, SGPF gsto, SGPF xfact, SGPF xlamo,
 	   SGPF no,
-	   SGPF * atime, SGPF * em, SGPF * argpm, SGPF * inclm, SGPF * xli,
-	   SGPF * mm, SGPF * xni, SGPF * nodem, SGPF * dndt, SGPF * nm
+	   SGPF * RESTRICT atime, SGPF * RESTRICT em, SGPF * RESTRICT argpm, SGPF * RESTRICT inclm, SGPF * RESTRICT xli,
+	   SGPF * RESTRICT mm, SGPF * RESTRICT xni, SGPF * RESTRICT nodem, SGPF * RESTRICT dndt, SGPF * RESTRICT nm
 	 )
 {
 	const SGPF twopi = 2.0 * SGPPI;
@@ -550,14 +552,14 @@ static void dsinit
 	   SGPF mo, SGPF mdot, SGPF no, SGPF nodeo, SGPF nodedot,
 	   SGPF xpidot, SGPF z1, SGPF z3, SGPF z11, SGPF z13,
 	   SGPF z21, SGPF z23, SGPF z31, SGPF z33, SGPF ecco,
-	   SGPF eccsq, SGPF * em, SGPF * argpm, SGPF * inclm, SGPF * mm,
-	   SGPF * nm, SGPF * nodem,
+	   SGPF eccsq, SGPF * RESTRICT em, SGPF * RESTRICT argpm, SGPF * RESTRICT inclm, SGPF * RESTRICT mm,
+	   SGPF * RESTRICT nm, SGPF * RESTRICT nodem,
 	   int * irez,
-	   SGPF * atime, SGPF * d2201, SGPF * d2211, SGPF * d3210, SGPF * d3222,
-	   SGPF * d4410, SGPF * d4422, SGPF * d5220, SGPF * d5232, SGPF * d5421,
-	   SGPF * d5433, SGPF * dedt, SGPF * didt, SGPF * dmdt, SGPF * dndt,
-	   SGPF * dnodt, SGPF * domdt, SGPF * del1, SGPF * del2, SGPF * del3,
-	   SGPF * xfact, SGPF * xlamo, SGPF * xli, SGPF * xni
+	   SGPF * RESTRICT atime, SGPF * RESTRICT d2201, SGPF * RESTRICT d2211, SGPF * RESTRICT d3210, SGPF * RESTRICT d3222,
+	   SGPF * RESTRICT d4410, SGPF * RESTRICT d4422, SGPF * RESTRICT d5220, SGPF * RESTRICT d5232, SGPF * RESTRICT d5421,
+	   SGPF * RESTRICT d5433, SGPF * RESTRICT dedt, SGPF * RESTRICT didt, SGPF * RESTRICT dmdt, SGPF * RESTRICT dndt,
+	   SGPF * RESTRICT dnodt, SGPF * RESTRICT domdt, SGPF * RESTRICT del1, SGPF * RESTRICT del2, SGPF * RESTRICT del3,
+	   SGPF * RESTRICT xfact, SGPF * RESTRICT xlamo, SGPF * RESTRICT xli, SGPF * RESTRICT xni
 	 )
 {
 	/* --------------------- local variables ------------------------ */
@@ -827,10 +829,10 @@ static void initl
 
 	// Output params:
 	   char * method,
-	   SGPF * ainv, SGPF * ao, SGPF * con41, SGPF * con42, SGPF * cosio,
-	   SGPF * cosio2, SGPF * eccsq, SGPF * omeosq, SGPF * posq,
-	   SGPF * rp, SGPF * rteosq, SGPF * sinio, SGPF * gsto,
-	   char opsmode, SGPF * no_unkozai
+	   SGPF * RESTRICT ainv, SGPF * RESTRICT ao, SGPF * RESTRICT con41, SGPF * RESTRICT con42, SGPF * RESTRICT cosio,
+	   SGPF * RESTRICT cosio2, SGPF * RESTRICT eccsq, SGPF * RESTRICT omeosq, SGPF * RESTRICT posq,
+	   SGPF * RESTRICT rp, SGPF * RESTRICT rteosq, SGPF * RESTRICT sinio, SGPF * RESTRICT gsto,
+	   char opsmode, SGPF * RESTRICT no_unkozai
 	 )
 {
 	/* --------------------- local variables ------------------------ */
@@ -970,23 +972,23 @@ static void dscom
 	 (
 	   SGPF epoch, SGPF ep, SGPF argpp, SGPF tc, SGPF inclp,
 	   SGPF nodep, SGPF np,
-	   SGPF * snodm, SGPF * cnodm, SGPF * sinim, SGPF * cosim, SGPF * sinomm,
-	   SGPF * cosomm, SGPF * day, SGPF * e3, SGPF * ee2, SGPF * em,
-	   SGPF * emsq, SGPF * gam, SGPF * peo, SGPF * pgho, SGPF * pho,
-	   SGPF * pinco, SGPF * plo, SGPF * rtemsq, SGPF * se2, SGPF * se3,
-	   SGPF * sgh2, SGPF * sgh3, SGPF * sgh4, SGPF * sh2, SGPF * sh3,
-	   SGPF * si2, SGPF * si3, SGPF * sl2, SGPF * sl3, SGPF * sl4,
-	   SGPF * s1, SGPF * s2, SGPF * s3, SGPF * s4, SGPF * s5,
-	   SGPF * s6, SGPF * s7, SGPF * ss1, SGPF * ss2, SGPF * ss3,
-	   SGPF * ss4, SGPF * ss5, SGPF * ss6, SGPF * ss7, SGPF * sz1,
-	   SGPF * sz2, SGPF * sz3, SGPF * sz11, SGPF * sz12, SGPF * sz13,
-	   SGPF * sz21, SGPF * sz22, SGPF * sz23, SGPF * sz31, SGPF * sz32,
-	   SGPF * sz33, SGPF * xgh2, SGPF * xgh3, SGPF * xgh4, SGPF * xh2,
-	   SGPF * xh3, SGPF * xi2, SGPF * xi3, SGPF * xl2, SGPF * xl3,
-	   SGPF * xl4, SGPF * nm, SGPF * z1, SGPF * z2, SGPF * z3,
-	   SGPF * z11, SGPF * z12, SGPF * z13, SGPF * z21, SGPF * z22,
-	   SGPF * z23, SGPF * z31, SGPF * z32, SGPF * z33, SGPF * zmol,
-	   SGPF * zmos
+	   SGPF * RESTRICT snodm, SGPF * RESTRICT cnodm, SGPF * RESTRICT sinim, SGPF * RESTRICT cosim, SGPF * RESTRICT sinomm,
+	   SGPF * RESTRICT cosomm, SGPF * RESTRICT day, SGPF * RESTRICT e3, SGPF * RESTRICT ee2, SGPF * RESTRICT em,
+	   SGPF * RESTRICT emsq, SGPF * RESTRICT gam, SGPF * RESTRICT peo, SGPF * RESTRICT pgho, SGPF * RESTRICT pho,
+	   SGPF * RESTRICT pinco, SGPF * RESTRICT plo, SGPF * RESTRICT rtemsq, SGPF * RESTRICT se2, SGPF * RESTRICT se3,
+	   SGPF * RESTRICT sgh2, SGPF * RESTRICT sgh3, SGPF * RESTRICT sgh4, SGPF * RESTRICT sh2, SGPF * RESTRICT sh3,
+	   SGPF * RESTRICT si2, SGPF * RESTRICT si3, SGPF * RESTRICT sl2, SGPF * RESTRICT sl3, SGPF * RESTRICT sl4,
+	   SGPF * RESTRICT s1, SGPF * RESTRICT s2, SGPF * RESTRICT s3, SGPF * RESTRICT s4, SGPF * RESTRICT s5,
+	   SGPF * RESTRICT s6, SGPF * RESTRICT s7, SGPF * RESTRICT ss1, SGPF * RESTRICT ss2, SGPF * RESTRICT ss3,
+	   SGPF * RESTRICT ss4, SGPF * RESTRICT ss5, SGPF * RESTRICT ss6, SGPF * RESTRICT ss7, SGPF * RESTRICT sz1,
+	   SGPF * RESTRICT sz2, SGPF * RESTRICT sz3, SGPF * RESTRICT sz11, SGPF * RESTRICT sz12, SGPF * RESTRICT sz13,
+	   SGPF * RESTRICT sz21, SGPF * RESTRICT sz22, SGPF * RESTRICT sz23, SGPF * RESTRICT sz31, SGPF * RESTRICT sz32,
+	   SGPF * RESTRICT sz33, SGPF * RESTRICT xgh2, SGPF * RESTRICT xgh3, SGPF * RESTRICT xgh4, SGPF * RESTRICT xh2,
+	   SGPF * RESTRICT xh3, SGPF * RESTRICT xi2, SGPF * RESTRICT xi3, SGPF * RESTRICT xl2, SGPF * RESTRICT xl3,
+	   SGPF * RESTRICT xl4, SGPF * RESTRICT nm, SGPF * RESTRICT z1, SGPF * RESTRICT z2, SGPF * RESTRICT z3,
+	   SGPF * RESTRICT z11, SGPF * RESTRICT z12, SGPF * RESTRICT z13, SGPF * RESTRICT z21, SGPF * RESTRICT z22,
+	   SGPF * RESTRICT z23, SGPF * RESTRICT z31, SGPF * RESTRICT z32, SGPF * RESTRICT z33, SGPF * RESTRICT zmol,
+	   SGPF * RESTRICT zmos
 	 )
 {
 	/* -------------------------- constants ------------------------- */
@@ -1286,7 +1288,7 @@ static void dpper
 	   SGPF xi2, SGPF xi3, SGPF xl2, SGPF xl3, SGPF xl4,
 	   SGPF zmol, SGPF zmos, SGPF inclo,
 	   char init,
-	   SGPF * ep, SGPF * inclp, SGPF * nodep, SGPF * argpp, SGPF * mp,
+	   SGPF * RESTRICT ep, SGPF * RESTRICT inclp, SGPF * RESTRICT nodep, SGPF * RESTRICT argpp, SGPF * RESTRICT mp,
 	   char opsmode
 	 )
 {
@@ -2225,7 +2227,7 @@ static void sgp4init
 static void days2mdhms
 	(
 	int year, SGPF days,
-	int * mon, int * day, int * hr, int * minute, SGPF * second
+	int * mon, int * day, int * hr, int * minute, SGPF * RESTRICT second
 	)
 {
 	int i, inttemp, dayofyr;
@@ -2295,7 +2297,7 @@ static void days2mdhms
 static void jday
 		(
 		  int year, int mon, int day, int hr, int minute, SGPF sec,
-		  SGPF * jd, SGPF * jdFrac
+		  SGPF * RESTRICT jd, SGPF * RESTRICT jdFrac
 		)
 {
 	*jd = 367.0 * year -
@@ -2362,7 +2364,7 @@ static void invjday
 	(
 	SGPF jd, SGPF jdFrac,
 	int * year, int * mon, int * day,
-	int * hr, int * minute, SGPF * second
+	int * hr, int * minute, SGPF * RESTRICT second
 	)
 {
 	int leapyrs;
