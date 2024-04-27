@@ -1,9 +1,6 @@
 #include <stdio.h>
-#include "sattrack.h"
 #include "os_generic.h"
-
-#define _GNU_SOURCE
-#include <fenv.h>
+#include "sattrack.h"
 
 int main( int argc, char ** argv )
 {
@@ -47,18 +44,17 @@ int main( int argc, char ** argv )
 
 	// Let's just pick out ISS (Zarya)	
 	struct elsetrec satrec;
-printf( "A\n" );
+
 	if( ConvertTLEToSGP4( &satrec, o ) )
 	{
 		printf( "failed to convert tle\n" );
 		return -5;
 	}
-printf( "B\n" );
 
-	// set start/stop times for propagation
+	// set start/stop times for propagation, in minutes.
 	double startmfe = (OGGetAbsoluteTime() - o->epoch)/60.0; // Convert to minutes.
-	double stopmfe  = startmfe + 2880.0;
-	double deltamin = 120.0;
+	double stopmfe  = startmfe + 45.0*4;
+	double deltamin = 4.0;
 
 
 	double tsince = startmfe;
@@ -69,16 +65,18 @@ printf( "B\n" );
 		if(tsince > stopmfe)
 			tsince = stopmfe;
 
-		sgp4 (&satrec,  tsince, ro,  vo);
+		sgp4 (&satrec, tsince, ro,  vo);
 
-		double jd = satrec.jdsatepoch + tsince/1440.0;
-		//invjday( jd, year,mon,day,hr,min, sec );
+		double jd = satrec.jdsatepoch;
+		double jdfrac = satrec.jdsatepochF + tsince/1440.0;
+//		int year, mon, day, hr, min, sec;
+//		invjday( jd, jdfrac, &year, &mon, &day, &hr, &min, &sec );
+//		printf( "%f %f %04d %02d %02d %02d:%02d:%05.02f /", jd, jdfrac, year, mon, day, hr, min, sec );
 
-		printf( " %16.8f %16.8f %16.8f %16.8f [%f] %12.9f %12.9f %12.9f\n",
+		printf( "%16.8f %16.8f %16.8f %16.8f [%f] %12.9f %12.9f %12.9f\n",
 			tsince,ro[0],ro[1],ro[2], sqrt(ro[0]*ro[0]+ro[1]*ro[1]+ro[2]*ro[2]),vo[0],vo[1],vo[2]);
 
 		tsince = tsince + deltamin;
-
 	}
 
 #if 0

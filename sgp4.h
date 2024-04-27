@@ -13,7 +13,7 @@ struct elsetrec
 {
 	// change to scripting to handle upcoming numbering changes, either alpha 5 or 9 digit
 	char satnum[32];
-	int epochyr, epochtynumrev;
+	int epochyr/*, epochtynumrev*/;
 	int error;
 	char operationmode;
 	char init, method;
@@ -2234,6 +2234,63 @@ static void days2mdhms
 }  //  days2mdhms
 
 
+/* -----------------------------------------------------------------------------
+*
+*                           procedure jday
+*
+*  this procedure finds the julian date given the year, month, day, and time.
+*    the julian date is defined by each elapsed day since noon, jan 1, 4713 bc.
+*    two values are passed back for improved accuracy
+*
+*  algorithm     : calculate the answer in one step for efficiency
+*
+*  author        : david vallado                  719-573-2600    1 mar 2001
+*
+*  inputs          description                    range / units
+*    year        - year                           1900 .. 2100
+*    mon         - month                          1 .. 12
+*    day         - day                            1 .. 28,29,30,31
+*    hr          - universal time hour            0 .. 23
+*    min         - universal time min             0 .. 59
+*    sec         - universal time sec             0.0 .. 59.999
+*
+*  outputs       :
+*    jd          - julian date (days only)           days from 4713 bc
+*    jdFrac      - julian date (fraction of a day)   days from 0 hr of the day
+*
+*  locals        :
+*    none.
+*
+*  coupling      :
+*    none.
+*
+*  references    :
+*    vallado       2007, 189, alg 14, ex 3-14
+* --------------------------------------------------------------------------- */
+
+static void jday
+		(
+		  int year, int mon, int day, int hr, int minute, double sec,
+		  double * jd, double * jdFrac
+		)
+{
+	*jd = 367.0 * year -
+		floor((7 * (year + floor((mon + 9) / 12.0))) * 0.25) +
+		floor(275 * mon / 9.0) +
+		day + 1721013.5;  // use - 678987.0 to go to mjd directly
+	*jdFrac = (sec + minute * 60.0 + hr * 3600.0) / 86400.0;
+
+	// check that the day and fractional day are correct
+	if (fabs(*jdFrac) > 1.0)
+	{
+		double dtt = floor(*jdFrac);
+		*jd = *jd + dtt;
+		*jdFrac = *jdFrac - dtt;
+	}
+
+	// - 0.5*sgn(100.0*year + mon - 190002.5) + 0.5;
+}  //  jday
+
 
 /* -----------------------------------------------------------------------------
 *
@@ -2284,43 +2341,43 @@ static void invjday
 	int * hr, int * minute, double * second
 	)
 {
-    int leapyrs;
-    double dt, days, tu, temp;
+	int leapyrs;
+	double dt, days, tu, temp;
 
-    // check jdfrac for multiple days
-    if (fabs(jdFrac) >= 1.0)
-    {
-        jd = jd + floor(jdFrac);
-        jdFrac = jdFrac - floor(jdFrac);
-    }
+	// check jdfrac for multiple days
+	if (fabs(jdFrac) >= 1.0)
+	{
+		jd = jd + floor(jdFrac);
+		jdFrac = jdFrac - floor(jdFrac);
+	}
 
-    // check for fraction of a day included in the jd
-    dt = jd - floor(jd) - 0.5;
-    if (fabs(dt) > 0.00000001)
-    {
-        jd = jd - dt;
-        jdFrac = jdFrac + dt;
-    }
+	// check for fraction of a day included in the jd
+	dt = jd - floor(jd) - 0.5;
+	if (fabs(dt) > 0.00000001)
+	{
+		jd = jd - dt;
+		jdFrac = jdFrac + dt;
+	}
 
-    /* --------------- find year and days of the year --------------- */
-    temp = jd - 2415019.5;
-    tu = temp / 365.25;
-    *year = 1900 + (int16_t)(floor(tu));
-    leapyrs = (int16_t)(floor((*year - 1901) * 0.25));
+	/* --------------- find year and days of the year --------------- */
+	temp = jd - 2415019.5;
+	tu = temp / 365.25;
+	*year = 1900 + (int16_t)(floor(tu));
+	leapyrs = (int16_t)(floor((*year - 1901) * 0.25));
 
-    days = floor(temp - ((*year - 1900) * 365.0 + leapyrs));
+	days = floor(temp - ((*year - 1900) * 365.0 + leapyrs));
 
-    /* ------------ check for case of beginning of a year ----------- */
-    if (days + jdFrac < 1.0)
-    {
-        *year = *year - 1;
-        leapyrs = (int16_t)(floor((*year - 1901) * 0.25));
-        days = floor(temp - ((*year - 1900) * 365.0 + leapyrs));
-    }
+	/* ------------ check for case of beginning of a year ----------- */
+	if (days + jdFrac < 1.0)
+	{
+		*year = *year - 1;
+		leapyrs = (int16_t)(floor((*year - 1901) * 0.25));
+		days = floor(temp - ((*year - 1900) * 365.0 + leapyrs));
+	}
 
-    /* ----------------- find remaining data  ----------------------- */
-    // now add the daily time in to preserve accuracy
-    days2mdhms(*year, days + jdFrac, mon, day, hr, minute, second);
+	/* ----------------- find remaining data  ----------------------- */
+	// now add the daily time in to preserve accuracy
+	days2mdhms(*year, days + jdFrac, mon, day, hr, minute, second);
 }  // invjday
 
 

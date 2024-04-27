@@ -18,7 +18,13 @@ struct TLEObject
 	char objectName[28]; // Actually maxes at 25; [0] is the classification designator, but this pads
 	uint32_t catalogNumber; 
 	char internationalDesignator[12]; // Actually maxes at 8, but we pad.
+
+	// Either-or
 	double epoch; // In Unix Time.
+
+	double epochDay;
+	int epochYear;
+
 	float meanMotion1;
 	float meanMotion2; // I.e. 16003-4 = 0.000016003
 	float dragTerm; // I.e. 34469-3 = 0.00034469
@@ -193,12 +199,12 @@ static int ParseFile( FILE * f, struct TLEObject ** objects, int * numObjects )
 			line[43] = 0;
 			thisObject->meanMotion1 = atof( line + 33 );
 			line[32] = 0;
-			double epochDay = atof( line + 20 );
+			thisObject->epochDay = atof( line + 20 );
 			line[20] = 0;
-			int epochYear = atoi( line + 18 );
+			thisObject->epochYear = atoi( line + 18 );
 			line[17] = 0;
 
-			thisObject->epoch = ConvertEpochYearAndDayToUnix( epochYear, epochDay );
+			thisObject->epoch = ConvertEpochYearAndDayToUnix( thisObject->epochYear, thisObject->epochDay );
 
 			break;
 		case '2':
@@ -276,6 +282,11 @@ static int ConvertTLEToSGP4( struct elsetrec * satrec, struct TLEObject * obj )
 { 
 	// Test from TestSGP4.cpp
 
+	// Example
+	//ISS (ZARYA)             
+	//1 25544U 98067A   24108.06679608  .00019473  00000+0  34469-3 0  9999
+	//2 25544  51.6384 258.4693 0004986  70.1481  42.8477 15.50291806449066
+
 	const double deg2rad  =   SGPPI / 180.0;         //   0.0174532925199433
 	const double xpdotp   =  1440.0 / (2.0 *SGPPI);  // 229.1831180523293
 
@@ -284,7 +295,34 @@ static int ConvertTLEToSGP4( struct elsetrec * satrec, struct TLEObject * obj )
 	enum gravconsttype whichconst = wgs72;
 	char opsmode = 'a';
 	snprintf( satrec->satnum, sizeof( satrec->satnum ), "%d", obj->catalogNumber );
-	satrec->jdsatepoch = obj->epoch; //2453911.8321544402
+
+	// ----------------------------------------------------------------
+	// find sgp4epoch time of element set
+	// remember that sgp4 uses units of days from 0 jan 1950 (sgp4epoch)
+	// and minutes from the epoch (time)
+	// ----------------------------------------------------------------
+
+	// ---------------- temp fix for years from 1957-2056 -------------------
+	// --------- correct fix will occur when year is 4-digit in tle ---------
+	satrec->epochyr = obj->epochYear;
+	satrec->epochdays = obj->epochDay;
+
+	int mon, day, hr, minute, year;
+	double sec;
+	if (satrec->epochyr < 57)
+		year = satrec->epochyr + 2000;
+	else
+		year = satrec->epochyr + 1900;
+	days2mdhms(year, satrec->epochdays, &mon, &day, &hr, &minute, &sec);
+
+	//printf( "Satellite epoch: %04d %d %d %d %d %f\n", year, mon, day, hr, minute, sec );
+	//double now = OGGetAbsoluteTime();
+	//printf( "Now epoch: %f %f = %f\n", obj->epoch, now, now - obj->epoch );
+
+	jday(year, mon, day, hr, minute, sec, &satrec->jdsatepoch, &satrec->jdsatepochF);
+	//	satrec->jdsatepoch =  //2453911.8321544402 (from above)
+
+
 	satrec->no_kozai = obj->meanMotion; //2.00491383;
 	satrec->ecco = obj->eccentricity; //0.6877146;
 	satrec->inclo = obj->inclination; //64.1586;
@@ -299,26 +337,24 @@ static int ConvertTLEToSGP4( struct elsetrec * satrec, struct TLEObject * obj )
 	satrec->classification = obj->objectName[0];
 	strncpy(satrec->intldesg, &obj->objectName[1], sizeof(satrec->intldesg) );
 
+	//#error TODO: Find their reference satellite
 
-#error TODO: Find their reference satellite
-#error TODO: Figure out relationship of jdsatepoch and obj->epoch
 	satrec->ephtype = 0;
-//ISS (ZARYA)             
-//1 25544U 98067A   24108.06679608  .00019473  00000+0  34469-3 0  9999
-//2 25544  51.6384 258.4693 0004986  70.1481  42.8477 15.50291806449066
-printf( "%f %f %f %f %f %f %f %f %f %ld %f %ld\n",
-satrec->jdsatepoch,
- satrec->no_kozai,
-satrec->ecco,
-satrec->inclo,
-satrec->nodeo,
-satrec->argpo,
-satrec->mo,
-satrec->nddot,
-satrec->bstar,
-satrec->elnum,
-satrec->ndot,
-satrec->revnum );
+/*
+printf( "EPOCH: %f %f %f %f %f %f %f %f %f %ld %f %ld\n",
+	satrec->jdsatepoch,
+	satrec->no_kozai,
+	satrec->ecco,
+	satrec->inclo,
+	satrec->nodeo,
+	satrec->argpo,
+	satrec->mo,
+	satrec->nddot,
+	satrec->bstar,
+	satrec->elnum,
+	satrec->ndot,
+	satrec->revnum );
+*/
 #if 0
 	// sgp4fix demonstrate method of running SGP4 directly from orbital element values
 	//1 08195U 75081A   06176.33215444  .00000099  00000-0  11873-3 0   813
@@ -351,6 +387,10 @@ satrec->revnum );
 	satrec->nodeo = satrec->nodeo  * deg2rad;
 	satrec->argpo = satrec->argpo  * deg2rad;
 	satrec->mo    = satrec->mo     * deg2rad;
+
+	// sgp4fix not needed here
+	// satrec.alta = satrec.a*(1.0 + satrec.ecco) - 1.0;
+	// satrec.altp = satrec.a*(1.0 - satrec.ecco) - 1.0;
 
 	sgp4init( whichconst, opsmode, satrec->satnum, satrec->jdsatepoch-2433281.5, satrec->bstar,
 		 satrec->ndot, satrec->nddot, satrec->ecco, satrec->argpo, satrec->inclo, satrec->mo, satrec->no_kozai,
