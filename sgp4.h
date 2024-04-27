@@ -3,11 +3,12 @@
 
 #include <math.h>
 
+#define SGPPI 3.1415926535897932384626433
+
+
 // Single-file C header transliterated from David Vallado's SGP4Lib.cs, version: "SGP4 Version 2020-03-12";
 
 enum gravconsttype { wgs72old, wgs72, wgs84 }; // wgs72 is the standard and should be used with JSPOC TLEs
-
-#define SGPPI 3.1415926535897932384626433
 
 struct elsetrec
 {

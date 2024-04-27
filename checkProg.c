@@ -53,9 +53,11 @@ int main( int argc, char ** argv )
 
 	// set start/stop times for propagation, in minutes.
 	double startmfe = (OGGetAbsoluteTime() - o->epoch)/60.0; // Convert to minutes.
-	double stopmfe  = startmfe + 45.0*4;
-	double deltamin = 4.0;
+	double stopmfe  = startmfe + 45.0;
+	double deltamin = 1.0;
 
+	double dTotalTime = 0;
+	int iterations = 0;
 
 	double tsince = startmfe;
 	while ((tsince < stopmfe) && (satrec.error == 0))
@@ -65,20 +67,26 @@ int main( int argc, char ** argv )
 		if(tsince > stopmfe)
 			tsince = stopmfe;
 
+		double ds = OGGetAbsoluteTime();
 		sgp4 (&satrec, tsince, ro,  vo);
+		dTotalTime += OGGetAbsoluteTime() - ds;
+		iterations++;
 
+#if 0
 		double jd = satrec.jdsatepoch + satrec.jdsatepochF;
 		double jdfrac = tsince/1440.0;
 		int year, mon, day, hr, min;
 		double sec;
 		invjday( jd, jdfrac, &year, &mon, &day, &hr, &min, &sec );
-//		printf( "%f %f %04d %02d %02d %02d:%02d:%05.02f /", jd, jdfrac, year, mon, day, hr, min, sec );
-
+		printf( "%f %f %04d %02d %02d %02d:%02d:%05.02f /", jd, jdfrac, year, mon, day, hr, min, sec );
+#endif
 		printf( "%16.8f %16.8f %16.8f %16.8f [%f] %12.9f %12.9f %12.9f\n",
 			tsince,ro[0],ro[1],ro[2], sqrt(ro[0]*ro[0]+ro[1]*ro[1]+ro[2]*ro[2]),vo[0],vo[1],vo[2]);
 
 		tsince = tsince + deltamin;
 	}
+
+	printf( "%f us per call\n", dTotalTime * 1000000.0 / iterations );
 
 #if 0
 	// Test from TestSGP4.cpp

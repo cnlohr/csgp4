@@ -1,7 +1,7 @@
 all : test
 
 checkProg : checkProg.c sattrack.h
-	gcc -g -o $@ $< -lm
+	gcc -Os -o $@ $< -lm
 
 spacestations.txt : 
 	wget "https://celestrak.org/NORAD/elements/gp.php?GROUP=stations&FORMAT=tle" -O spacestations.txt
