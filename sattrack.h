@@ -287,8 +287,8 @@ static int ConvertTLEToSGP4( struct elsetrec * satrec, struct TLEObject * obj )
 	//1 25544U 98067A   24108.06679608  .00019473  00000+0  34469-3 0  9999
 	//2 25544  51.6384 258.4693 0004986  70.1481  42.8477 15.50291806449066
 
-	const double deg2rad  =   SGPPI / 180.0;         //   0.0174532925199433
-	const double xpdotp   =  1440.0 / (2.0 *SGPPI);  // 229.1831180523293
+	const SGPF deg2rad  =   SGPPI / 180.0;         //   0.0174532925199433
+	const SGPF xpdotp   =  1440.0 / (2.0 *SGPPI);  // 229.1831180523293
 
 	if( !obj->valid ) return -1;
 
@@ -308,7 +308,7 @@ static int ConvertTLEToSGP4( struct elsetrec * satrec, struct TLEObject * obj )
 	satrec->epochdays = obj->epochDay;
 
 	int mon, day, hr, minute, year;
-	double sec;
+	SGPF sec;
 	if (satrec->epochyr < 57)
 		year = satrec->epochyr + 2000;
 	else

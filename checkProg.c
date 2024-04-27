@@ -52,26 +52,20 @@ int main( int argc, char ** argv )
 	}
 
 	// set start/stop times for propagation, in minutes.
-	double startmfe = (OGGetAbsoluteTime() - o->epoch)/60.0; // Convert to minutes.
+	double startmfe = 1440.0;//(OGGetAbsoluteTime() - o->epoch)/60.0; // Convert to minutes.
 	double stopmfe  = startmfe + 45.0;
 	double deltamin = 1.0;
-
-	double dTotalTime = 0;
-	int iterations = 0;
 
 	double tsince = startmfe;
 	while ((tsince < stopmfe) && (satrec.error == 0))
 	{
-		double ro[3], vo[3];
+		SGPF ro[3], vo[3];
 
 		if(tsince > stopmfe)
 			tsince = stopmfe;
 
-		double ds = OGGetAbsoluteTime();
+		// .25us per call
 		sgp4 (&satrec, tsince, ro,  vo);
-		dTotalTime += OGGetAbsoluteTime() - ds;
-		iterations++;
-
 #if 0
 		double jd = satrec.jdsatepoch + satrec.jdsatepochF;
 		double jdfrac = tsince/1440.0;
@@ -85,8 +79,6 @@ int main( int argc, char ** argv )
 
 		tsince = tsince + deltamin;
 	}
-
-	printf( "%f us per call\n", dTotalTime * 1000000.0 / iterations );
 
 #if 0
 	// Test from TestSGP4.cpp

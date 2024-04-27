@@ -5,6 +5,30 @@
 
 #define SGPPI 3.1415926535897932384626433
 
+#if 1
+
+#define SGPF double
+#define FLOOR floor
+#define FABS  fabs
+#define COS   cos
+#define SIN   sin
+#define ATAN2 atan2
+#define SQRT  sqrt
+#define POW   pow
+
+#else
+
+#define SGPF float
+#define FLOOR floor
+#define FABS  fabs
+#define COS   cos
+#define SIN   sin
+#define ATAN2 atan2
+#define SQRT  sqrt
+#define POW   pow
+
+#endif
+
 
 // Single-file C header transliterated from David Vallado's SGP4Lib.cs, version: "SGP4 Version 2020-03-12";
 
@@ -21,14 +45,14 @@ struct elsetrec
 
 	/* Near Earth */
 	int isimp;
-	double aycof, con41, cc1, cc4, cc5, d2, d3, d4,
+	SGPF aycof, con41, cc1, cc4, cc5, d2, d3, d4,
 		   delmo, eta, argpdot, omgcof, sinmao, t, t2cof, t3cof,
 		   t4cof, t5cof, x1mth2, x7thm1, mdot, nodedot, xlcof, xmcof,
 		   nodecf;
 
 	/* Deep Space */
 	int irez;
-	double d2201, d2211, d3210, d3222, d4410, d4422, d5220, d5232,
+	SGPF d2201, d2211, d3210, d3222, d4410, d4422, d5220, d5232,
 		   d5421, d5433, dedt, del1, del2, del3, didt, dmdt,
 		   dnodt, domdt, e3, ee2, peo, pgho, pho, pinco,
 		   plo, se2, se3, sgh2, sgh3, sgh4, sh2, sh3,
@@ -36,7 +60,7 @@ struct elsetrec
 		   xgh3, xgh4, xh2, xh3, xi2, xi3, xl2, xl3,
 		   xl4, xlamo, zmol, zmos, atime, xli, xni;
 
-	double a, altp, alta, epochdays, jdsatepoch, jdsatepochF, nddot, ndot,
+	SGPF a, altp, alta, epochdays, jdsatepoch, jdsatepochF, nddot, ndot,
 		   bstar, rcse, inclo, nodeo, ecco, argpo, mo,
 		   no_kozai;
 	// sgp4fix add new variables from tle
@@ -45,18 +69,18 @@ struct elsetrec
 	int ephtype;
 	long elnum, revnum;
 	// sgp4fix add unkozai'd variable
-	double no_unkozai;
+	SGPF no_unkozai;
 	// sgp4fix add singly averaged variables
-	double am, em, im, Om, om, mm, nm;
+	SGPF am, em, im, Om, om, mm, nm;
 	// sgp4fix add constant parameters to eliminate mutliple calls during execution
-	double tumin, mu, radiusearthkm, xke, j2, j3, j4, j3oj2;
+	SGPF tumin, mu, radiusearthkm, xke, j2, j3, j4, j3oj2;
 
 	  //	   Additional elements to capture relevant TLE and object information:		|
 	long dia_mm; // RSO dia in mm
-	double period_sec; // Period in seconds
+	SGPF period_sec; // Period in seconds
 	char active[32]; // "Active S/C" flag (0=n, 1=y) 
 	char not_orbital[32]; // "Orbiting S/C" flag (0=n, 1=y)  
-	double rcs_m2; // "RCS (m^2)" storage 
+	SGPF rcs_m2; // "RCS (m^2)" storage 
 };
 
 
@@ -76,7 +100,7 @@ struct elsetrec
 *	gstime	  - greenwich sidereal time		0 to 2pi rad
 *
 *  locals		:
-*	temp		- temporary variable for doubles   rad
+*	temp		- temporary variable for SGPFs   rad
 *	tut1		- julian centuries from the
 *				  jan 1, 2000 12 h epoch (ut1)
 *
@@ -87,14 +111,14 @@ struct elsetrec
 *	vallado	   2004, 191, eq 3-45
 * --------------------------------------------------------------------------- */
 
-static double gstime
+static SGPF gstime
 		(
-		  double jdut1
+		  SGPF jdut1
 		)
 {
-	const double twopi = 2.0 * SGPPI;
-	const double deg2rad = SGPPI / 180.0;
-	double temp, tut1;
+	const SGPF twopi = 2.0 * SGPPI;
+	const SGPF deg2rad = SGPPI / 180.0;
+	SGPF temp, tut1;
 
 	tut1 = (jdut1 - 2451545.0) / 36525.0;
 	temp = -6.2e-6 * tut1 * tut1 * tut1 + 0.093104 * tut1 * tut1 +
@@ -142,14 +166,14 @@ static double gstime
 static void getgravconst
 	 (
 	  enum gravconsttype whichconst,
-	  double * tumin,
-	  double * mu,
-	  double * radiusearthkm,
-	  double * xke,
-	  double * j2,
-	  double * j3,
-	  double * j4,
-	  double * j3oj2
+	  SGPF * tumin,
+	  SGPF * mu,
+	  SGPF * radiusearthkm,
+	  SGPF * xke,
+	  SGPF * j2,
+	  SGPF * j3,
+	  SGPF * j4,
+	  SGPF * j3oj2
 	 )
 {
 
@@ -170,7 +194,7 @@ static void getgravconst
 		case wgs72:
 			*mu = 398600.8;			// in km3 / s2
 			*radiusearthkm = 6378.135;	 // km
-			*xke = 60.0 / sqrt(*radiusearthkm * *radiusearthkm * *radiusearthkm / *mu);
+			*xke = 60.0 / SQRT(*radiusearthkm * *radiusearthkm * *radiusearthkm / *mu);
 			*tumin = 1.0 / *xke;
 			*j2 = 0.001082616;
 			*j3 = -0.00000253881;
@@ -181,7 +205,7 @@ static void getgravconst
 			// ------------ wgs-84 constants ------------
 			*mu = 398600.5;			// in km3 / s2
 			*radiusearthkm = 6378.137;	 // km
-			*xke = 60.0 / sqrt(*radiusearthkm * *radiusearthkm * *radiusearthkm / *mu);
+			*xke = 60.0 / SQRT(*radiusearthkm * *radiusearthkm * *radiusearthkm / *mu);
 			*tumin = 1.0 / *xke;
 			*j2 = 0.00108262998905;
 			*j3 = -0.00000253215306;
@@ -282,19 +306,19 @@ static void getgravconst
 static void dspace
 	 (
 	   int irez,
-	   double d2201, double d2211, double d3210, double d3222, double d4410,
-	   double d4422, double d5220, double d5232, double d5421, double d5433,
-	   double dedt, double del1, double del2, double del3, double didt,
-	   double dmdt, double dnodt, double domdt, double argpo, double argpdot,
-	   double t, double tc, double gsto, double xfact, double xlamo,
-	   double no,
-	   double * atime, double * em, double * argpm, double * inclm, double * xli,
-	   double * mm, double * xni, double * nodem, double * dndt, double * nm
+	   SGPF d2201, SGPF d2211, SGPF d3210, SGPF d3222, SGPF d4410,
+	   SGPF d4422, SGPF d5220, SGPF d5232, SGPF d5421, SGPF d5433,
+	   SGPF dedt, SGPF del1, SGPF del2, SGPF del3, SGPF didt,
+	   SGPF dmdt, SGPF dnodt, SGPF domdt, SGPF argpo, SGPF argpdot,
+	   SGPF t, SGPF tc, SGPF gsto, SGPF xfact, SGPF xlamo,
+	   SGPF no,
+	   SGPF * atime, SGPF * em, SGPF * argpm, SGPF * inclm, SGPF * xli,
+	   SGPF * mm, SGPF * xni, SGPF * nodem, SGPF * dndt, SGPF * nm
 	 )
 {
-	const double twopi = 2.0 * SGPPI;
+	const SGPF twopi = 2.0 * SGPPI;
 	int iretn;  //, iret;
-	double delt, ft, theta, x2li, x2omi, xl, xldot, xnddt, xndt, xomi, g22, g32,
+	SGPF delt, ft, theta, x2li, x2omi, xl, xldot, xnddt, xndt, xomi, g22, g32,
 		 g44, g52, g54, fasx2, fasx4, fasx6, rptim, step2, stepn, stepp;
 
 	fasx2 = 0.13130908;
@@ -344,7 +368,7 @@ static void dspace
 	if (irez != 0)
 	{
 		// sgp4fix streamline check
-		if ((*atime == 0.0) || (t * *atime <= 0.0) || (fabs(t) < fabs(*atime)))
+		if ((*atime == 0.0) || (t * *atime <= 0.0) || (FABS(t) < FABS(*atime)))
 		{
 			*atime = 0.0;
 			*xni = no;
@@ -364,12 +388,12 @@ static void dspace
 			/* ----------- near - synchronous resonance terms ------- */
 			if (irez != 2)
 			{
-				xndt = del1 * sin(*xli - fasx2) + del2 * sin(2.0 * (*xli - fasx4)) +
-						del3 * sin(3.0 * (*xli - fasx6));
+				xndt = del1 * SIN(*xli - fasx2) + del2 * SIN(2.0 * (*xli - fasx4)) +
+						del3 * SIN(3.0 * (*xli - fasx6));
 				xldot = *xni + xfact;
-				xnddt = del1 * cos(*xli - fasx2) +
-						2.0 * del2 * cos(2.0 * (*xli - fasx4)) +
-						3.0 * del3 * cos(3.0 * (*xli - fasx6));
+				xnddt = del1 * COS(*xli - fasx2) +
+						2.0 * del2 * COS(2.0 * (*xli - fasx4)) +
+						3.0 * del3 * COS(3.0 * (*xli - fasx6));
 				xnddt = xnddt * xldot;
 			}
 			else
@@ -378,24 +402,24 @@ static void dspace
 				xomi = argpo + argpdot * *atime;
 				x2omi = xomi + xomi;
 				x2li = *xli + *xli;
-				xndt = d2201 * sin(x2omi + *xli - g22) + d2211 * sin(*xli - g22) +
-					  d3210 * sin(xomi + *xli - g32) + d3222 * sin(-xomi + *xli - g32) +
-					  d4410 * sin(x2omi + x2li - g44) + d4422 * sin(x2li - g44) +
-					  d5220 * sin(xomi + *xli - g52) + d5232 * sin(-xomi + *xli - g52) +
-					  d5421 * sin(xomi + x2li - g54) + d5433 * sin(-xomi + x2li - g54);
+				xndt = d2201 * SIN(x2omi + *xli - g22) + d2211 * SIN(*xli - g22) +
+					  d3210 * SIN(xomi + *xli - g32) + d3222 * SIN(-xomi + *xli - g32) +
+					  d4410 * SIN(x2omi + x2li - g44) + d4422 * SIN(x2li - g44) +
+					  d5220 * SIN(xomi + *xli - g52) + d5232 * SIN(-xomi + *xli - g52) +
+					  d5421 * SIN(xomi + x2li - g54) + d5433 * SIN(-xomi + x2li - g54);
 				xldot = *xni + xfact;
-				xnddt = d2201 * cos(x2omi + *xli - g22) + d2211 * cos(*xli - g22) +
-					  d3210 * cos(xomi + *xli - g32) + d3222 * cos(-xomi + *xli - g32) +
-					  d5220 * cos(xomi + *xli - g52) + d5232 * cos(-xomi + *xli - g52) +
-					  2.0 * (d4410 * cos(x2omi + x2li - g44) +
-					  d4422 * cos(x2li - g44) + d5421 * cos(xomi + x2li - g54) +
-					  d5433 * cos(-xomi + x2li - g54));
+				xnddt = d2201 * COS(x2omi + *xli - g22) + d2211 * COS(*xli - g22) +
+					  d3210 * COS(xomi + *xli - g32) + d3222 * COS(-xomi + *xli - g32) +
+					  d5220 * COS(xomi + *xli - g52) + d5232 * COS(-xomi + *xli - g52) +
+					  2.0 * (d4410 * COS(x2omi + x2li - g44) +
+					  d4422 * COS(x2li - g44) + d5421 * COS(xomi + x2li - g54) +
+					  d5433 * COS(-xomi + x2li - g54));
 				xnddt = xnddt * xldot;
 			}
 
 			/* ----------------------- integrator ------------------- */
 			// sgp4fix move end checks to end of routine
-			if (fabs(t - *atime) >= stepp)
+			if (FABS(t - *atime) >= stepp)
 			{
 				//iret = 0;
 				iretn = 381;
@@ -517,29 +541,29 @@ static void dsinit
 	 (
 	// sgp4fix just send in xke as a constant and eliminate getgravconst call
 	// gravconsttype whichconst, 
-	   double xke,
-	   double cosim, double emsq, double argpo, double s1, double s2,
-	   double s3, double s4, double s5, double sinim, double ss1,
-	   double ss2, double ss3, double ss4, double ss5, double sz1,
-	   double sz3, double sz11, double sz13, double sz21, double sz23,
-	   double sz31, double sz33, double t, double tc, double gsto,
-	   double mo, double mdot, double no, double nodeo, double nodedot,
-	   double xpidot, double z1, double z3, double z11, double z13,
-	   double z21, double z23, double z31, double z33, double ecco,
-	   double eccsq, double * em, double * argpm, double * inclm, double * mm,
-	   double * nm, double * nodem,
+	   SGPF xke,
+	   SGPF cosim, SGPF emsq, SGPF argpo, SGPF s1, SGPF s2,
+	   SGPF s3, SGPF s4, SGPF s5, SGPF sinim, SGPF ss1,
+	   SGPF ss2, SGPF ss3, SGPF ss4, SGPF ss5, SGPF sz1,
+	   SGPF sz3, SGPF sz11, SGPF sz13, SGPF sz21, SGPF sz23,
+	   SGPF sz31, SGPF sz33, SGPF t, SGPF tc, SGPF gsto,
+	   SGPF mo, SGPF mdot, SGPF no, SGPF nodeo, SGPF nodedot,
+	   SGPF xpidot, SGPF z1, SGPF z3, SGPF z11, SGPF z13,
+	   SGPF z21, SGPF z23, SGPF z31, SGPF z33, SGPF ecco,
+	   SGPF eccsq, SGPF * em, SGPF * argpm, SGPF * inclm, SGPF * mm,
+	   SGPF * nm, SGPF * nodem,
 	   int * irez,
-	   double * atime, double * d2201, double * d2211, double * d3210, double * d3222,
-	   double * d4410, double * d4422, double * d5220, double * d5232, double * d5421,
-	   double * d5433, double * dedt, double * didt, double * dmdt, double * dndt,
-	   double * dnodt, double * domdt, double * del1, double * del2, double * del3,
-	   double * xfact, double * xlamo, double * xli, double * xni
+	   SGPF * atime, SGPF * d2201, SGPF * d2211, SGPF * d3210, SGPF * d3222,
+	   SGPF * d4410, SGPF * d4422, SGPF * d5220, SGPF * d5232, SGPF * d5421,
+	   SGPF * d5433, SGPF * dedt, SGPF * didt, SGPF * dmdt, SGPF * dndt,
+	   SGPF * dnodt, SGPF * domdt, SGPF * del1, SGPF * del2, SGPF * del3,
+	   SGPF * xfact, SGPF * xlamo, SGPF * xli, SGPF * xni
 	 )
 {
 	/* --------------------- local variables ------------------------ */
-	const double twopi = 2.0 * SGPPI;
+	const SGPF twopi = 2.0 * SGPPI;
 
-	double ainv2, aonv = 0.0, cosisq, eoc, f220, f221, f311,
+	SGPF ainv2, aonv = 0.0, cosisq, eoc, f220, f221, f311,
 		 f321, f322, f330, f441, f442, f522, f523,
 		 f542, f543, g200, g201, g211, g300, g310,
 		 g322, g410, g422, g520, g521, g532, g533,
@@ -622,7 +646,7 @@ static void dsinit
 	/* -------------- initialize the resonance terms ------------- */
 	if (*irez != 0)
 	{
-		aonv = pow(*nm / xke, x2o3);
+		aonv = POW(*nm / xke, x2o3);
 
 		/* ---------- geopotential resonance for 12 hour orbits ------ */
 		if (*irez == 2)
@@ -798,24 +822,24 @@ static void initl
 	// int satn,	  
 	// sgp4fix just pass in xke and j2
 	// gravconsttype whichconst, 
-	   double xke, double j2,
-	   double ecco, double epoch, double inclo, double no_kozai,
+	   SGPF xke, SGPF j2,
+	   SGPF ecco, SGPF epoch, SGPF inclo, SGPF no_kozai,
 
 	// Output params:
 	   char * method,
-	   double * ainv, double * ao, double * con41, double * con42, double * cosio,
-	   double * cosio2, double * eccsq, double * omeosq, double * posq,
-	   double * rp, double * rteosq, double * sinio, double * gsto,
-	   char opsmode, double * no_unkozai
+	   SGPF * ainv, SGPF * ao, SGPF * con41, SGPF * con42, SGPF * cosio,
+	   SGPF * cosio2, SGPF * eccsq, SGPF * omeosq, SGPF * posq,
+	   SGPF * rp, SGPF * rteosq, SGPF * sinio, SGPF * gsto,
+	   char opsmode, SGPF * no_unkozai
 	 )
 {
 	/* --------------------- local variables ------------------------ */
-	double ak, d1, del, adel, po, x2o3;
+	SGPF ak, d1, del, adel, po, x2o3;
 
 	// sgp4fix use old way of finding gst
-	double ds70;
-	double ts70, tfrac, c1, thgr70, fk5r, c1p2p;
-	const double twopi = 2.0 * SGPPI;
+	SGPF ds70;
+	SGPF ts70, tfrac, c1, thgr70, fk5r, c1p2p;
+	const SGPF twopi = 2.0 * SGPPI;
 
 	/* ----------------------- earth constants ---------------------- */
 	// sgp4fix identify constants and allow alternate values
@@ -826,12 +850,12 @@ static void initl
 	/* ------------- calculate auxillary epoch quantities ---------- */
 	*eccsq = ecco * ecco;
 	*omeosq = 1.0 - *eccsq;
-	*rteosq = sqrt(*omeosq);
-	*cosio = cos(inclo);
+	*rteosq = SQRT(*omeosq);
+	*cosio = COS(inclo);
 	*cosio2 = *cosio * *cosio;
 
 	/* ------------------ un-kozai the mean motion ----------------- */
-	ak = pow(xke / no_kozai, x2o3);
+	ak = POW(xke / no_kozai, x2o3);
 	d1 = 0.75 * j2 * (3.0 * *cosio2 - 1.0) / (*rteosq * *omeosq);
 	del = d1 / (ak * ak);
 	adel = ak * (1.0 - del * del - del *
@@ -839,8 +863,8 @@ static void initl
 	del = d1 / (adel * adel);
 	*no_unkozai = no_kozai / (1.0 + del);
 
-	*ao = pow(xke / (*no_unkozai), x2o3);
-	*sinio = sin(inclo);
+	*ao = POW(xke / (*no_unkozai), x2o3);
+	*sinio = SIN(inclo);
 	po = *ao * *omeosq;
 	*con42 = 1.0 - 5.0 * *cosio2;
 	*con41 = -*con42 - *cosio2 - *cosio2;
@@ -855,7 +879,7 @@ static void initl
 		// sgp4fix use old way of finding gst
 		// count integer number of days from 0 jan 1970
 		ts70 = epoch - 7305.0;
-		ds70 = floor(ts70 + 1.0e-8);
+		ds70 = FLOOR(ts70 + 1.0e-8);
 		tfrac = ts70 - ds70;
 		// find greenwich location at epoch
 		c1 = 1.72027916940703639e-2;
@@ -944,41 +968,41 @@ static void initl
 
 static void dscom
 	 (
-	   double epoch, double ep, double argpp, double tc, double inclp,
-	   double nodep, double np,
-	   double * snodm, double * cnodm, double * sinim, double * cosim, double * sinomm,
-	   double * cosomm, double * day, double * e3, double * ee2, double * em,
-	   double * emsq, double * gam, double * peo, double * pgho, double * pho,
-	   double * pinco, double * plo, double * rtemsq, double * se2, double * se3,
-	   double * sgh2, double * sgh3, double * sgh4, double * sh2, double * sh3,
-	   double * si2, double * si3, double * sl2, double * sl3, double * sl4,
-	   double * s1, double * s2, double * s3, double * s4, double * s5,
-	   double * s6, double * s7, double * ss1, double * ss2, double * ss3,
-	   double * ss4, double * ss5, double * ss6, double * ss7, double * sz1,
-	   double * sz2, double * sz3, double * sz11, double * sz12, double * sz13,
-	   double * sz21, double * sz22, double * sz23, double * sz31, double * sz32,
-	   double * sz33, double * xgh2, double * xgh3, double * xgh4, double * xh2,
-	   double * xh3, double * xi2, double * xi3, double * xl2, double * xl3,
-	   double * xl4, double * nm, double * z1, double * z2, double * z3,
-	   double * z11, double * z12, double * z13, double * z21, double * z22,
-	   double * z23, double * z31, double * z32, double * z33, double * zmol,
-	   double * zmos
+	   SGPF epoch, SGPF ep, SGPF argpp, SGPF tc, SGPF inclp,
+	   SGPF nodep, SGPF np,
+	   SGPF * snodm, SGPF * cnodm, SGPF * sinim, SGPF * cosim, SGPF * sinomm,
+	   SGPF * cosomm, SGPF * day, SGPF * e3, SGPF * ee2, SGPF * em,
+	   SGPF * emsq, SGPF * gam, SGPF * peo, SGPF * pgho, SGPF * pho,
+	   SGPF * pinco, SGPF * plo, SGPF * rtemsq, SGPF * se2, SGPF * se3,
+	   SGPF * sgh2, SGPF * sgh3, SGPF * sgh4, SGPF * sh2, SGPF * sh3,
+	   SGPF * si2, SGPF * si3, SGPF * sl2, SGPF * sl3, SGPF * sl4,
+	   SGPF * s1, SGPF * s2, SGPF * s3, SGPF * s4, SGPF * s5,
+	   SGPF * s6, SGPF * s7, SGPF * ss1, SGPF * ss2, SGPF * ss3,
+	   SGPF * ss4, SGPF * ss5, SGPF * ss6, SGPF * ss7, SGPF * sz1,
+	   SGPF * sz2, SGPF * sz3, SGPF * sz11, SGPF * sz12, SGPF * sz13,
+	   SGPF * sz21, SGPF * sz22, SGPF * sz23, SGPF * sz31, SGPF * sz32,
+	   SGPF * sz33, SGPF * xgh2, SGPF * xgh3, SGPF * xgh4, SGPF * xh2,
+	   SGPF * xh3, SGPF * xi2, SGPF * xi3, SGPF * xl2, SGPF * xl3,
+	   SGPF * xl4, SGPF * nm, SGPF * z1, SGPF * z2, SGPF * z3,
+	   SGPF * z11, SGPF * z12, SGPF * z13, SGPF * z21, SGPF * z22,
+	   SGPF * z23, SGPF * z31, SGPF * z32, SGPF * z33, SGPF * zmol,
+	   SGPF * zmos
 	 )
 {
 	/* -------------------------- constants ------------------------- */
-	const double zes = 0.01675;
-	const double zel = 0.05490;
-	const double c1ss = 2.9864797e-6;
-	const double c1l = 4.7968065e-7;
-	const double zsinis = 0.39785416;
-	const double zcosis = 0.91744867;
-	const double zcosgs = 0.1945905;
-	const double zsings = -0.98088458;
-	const double twopi = 2.0 * SGPPI;
+	const SGPF zes = 0.01675;
+	const SGPF zel = 0.05490;
+	const SGPF c1ss = 2.9864797e-6;
+	const SGPF c1l = 4.7968065e-7;
+	const SGPF zsinis = 0.39785416;
+	const SGPF zcosis = 0.91744867;
+	const SGPF zcosgs = 0.1945905;
+	const SGPF zsings = -0.98088458;
+	const SGPF twopi = 2.0 * SGPPI;
 
 	/* --------------------- local variables ------------------------ */
 	int lsflg;
-	double a1, a2, a3, a4, a5, a6, a7,
+	SGPF a1, a2, a3, a4, a5, a6, a7,
 	   a8, a9, a10, betasq, cc, ctem, stem,
 	   x1, x2, x3, x4, x5, x6, x7,
 	   x8, xnodce, xnoi, zcosg, zcosgl, zcosh, zcoshl,
@@ -1028,15 +1052,15 @@ static void dscom
 
 	*nm = np;
 	*em = ep;
-	*snodm = sin(nodep);
-	*cnodm = cos(nodep);
-	*sinomm = sin(argpp);
-	*cosomm = cos(argpp);
-	*sinim = sin(inclp);
-	*cosim = cos(inclp);
+	*snodm = SIN(nodep);
+	*cnodm = COS(nodep);
+	*sinomm = SIN(argpp);
+	*cosomm = COS(argpp);
+	*sinim = SIN(inclp);
+	*cosim = COS(inclp);
 	*emsq = *em * *em;
 	betasq = 1.0 - *emsq;
-	*rtemsq = sqrt(betasq);
+	*rtemsq = SQRT(betasq);
 
 	/* ----------------- initialize lunar solar terms --------------- */
 	*peo = 0.0;
@@ -1046,19 +1070,19 @@ static void dscom
 	*pho = 0.0;
 	*day = epoch + 18261.5 + tc / 1440.0;
 	xnodce = fmod(4.5236020 - 9.2422029e-4 * *day, twopi);
-	stem = sin(xnodce);
-	ctem = cos(xnodce);
+	stem = SIN(xnodce);
+	ctem = COS(xnodce);
 	zcosil = 0.91375164 - 0.03568096 * ctem;
-	zsinil = sqrt(1.0 - zcosil * zcosil);
+	zsinil = SQRT(1.0 - zcosil * zcosil);
 	zsinhl = 0.089683511 * stem / zsinil;
-	zcoshl = sqrt(1.0 - zsinhl * zsinhl);
+	zcoshl = SQRT(1.0 - zsinhl * zsinhl);
 	*gam = 5.8351514 + 0.0019443680 * *day;
 	zx = 0.39785416 * stem / zsinil;
 	zy = zcoshl * ctem + 0.91744867 * zsinhl * stem;
-	zx = atan2(zx, zy);
+	zx = ATAN2(zx, zy);
 	zx = *gam + zx - xnodce;
-	zcosgl = cos(zx);
-	zsingl = sin(zx);
+	zcosgl = COS(zx);
+	zsingl = SIN(zx);
 
 	/* ------------------------- do solar terms --------------------- */
 	zcosg = zcosgs;
@@ -1254,21 +1278,21 @@ static void dscom
 
 static void dpper
 	 (
-	   double e3, double ee2, double peo, double pgho, double pho,
-	   double pinco, double plo, double se2, double se3, double sgh2,
-	   double sgh3, double sgh4, double sh2, double sh3, double si2,
-	   double si3, double sl2, double sl3, double sl4, double t,
-	   double xgh2, double xgh3, double xgh4, double xh2, double xh3,
-	   double xi2, double xi3, double xl2, double xl3, double xl4,
-	   double zmol, double zmos, double inclo,
+	   SGPF e3, SGPF ee2, SGPF peo, SGPF pgho, SGPF pho,
+	   SGPF pinco, SGPF plo, SGPF se2, SGPF se3, SGPF sgh2,
+	   SGPF sgh3, SGPF sgh4, SGPF sh2, SGPF sh3, SGPF si2,
+	   SGPF si3, SGPF sl2, SGPF sl3, SGPF sl4, SGPF t,
+	   SGPF xgh2, SGPF xgh3, SGPF xgh4, SGPF xh2, SGPF xh3,
+	   SGPF xi2, SGPF xi3, SGPF xl2, SGPF xl3, SGPF xl4,
+	   SGPF zmol, SGPF zmos, SGPF inclo,
 	   char init,
-	   double * ep, double * inclp, double * nodep, double * argpp, double * mp,
+	   SGPF * ep, SGPF * inclp, SGPF * nodep, SGPF * argpp, SGPF * mp,
 	   char opsmode
 	 )
 {
 	/* --------------------- local variables ------------------------ */
-	const double twopi = 2.0 * SGPPI;
-	double alfdp, betdp, cosip, cosop, dalf, dbet, dls,
+	const SGPF twopi = 2.0 * SGPPI;
+	SGPF alfdp, betdp, cosip, cosop, dalf, dbet, dls,
 		 f2, f3, pe, pgh, ph, pinc, pl,
 		 sel, ses, sghl, sghs, shll, shs, sil,
 		 sinip, sinop, sinzf, sis, sll, sls, xls,
@@ -1285,10 +1309,10 @@ static void dpper
 	// be sure that the initial call has time set to zero
 	if (init == 'y')
 		zm = zmos;
-	zf = zm + 2.0 * zes * sin(zm);
-	sinzf = sin(zf);
+	zf = zm + 2.0 * zes * SIN(zm);
+	sinzf = SIN(zf);
 	f2 = 0.5 * sinzf * sinzf - 0.25;
-	f3 = -0.5 * sinzf * cos(zf);
+	f3 = -0.5 * sinzf * COS(zf);
 	ses = se2 * f2 + se3 * f3;
 	sis = si2 * f2 + si3 * f3;
 	sls = sl2 * f2 + sl3 * f3 + sl4 * sinzf;
@@ -1297,10 +1321,10 @@ static void dpper
 	zm = zmol + znl * t;
 	if (init == 'y')
 		zm = zmol;
-	zf = zm + 2.0 * zel * sin(zm);
-	sinzf = sin(zf);
+	zf = zm + 2.0 * zel * SIN(zm);
+	sinzf = SIN(zf);
 	f2 = 0.5 * sinzf * sinzf - 0.25;
-	f3 = -0.5 * sinzf * cos(zf);
+	f3 = -0.5 * sinzf * COS(zf);
 	sel = ee2 * f2 + e3 * f3;
 	sil = xi2 * f2 + xi3 * f3;
 	sll = xl2 * f2 + xl3 * f3 + xl4 * sinzf;
@@ -1321,8 +1345,8 @@ static void dpper
 		ph = ph - pho;
 		*inclp = *inclp + pinc;
 		*ep = *ep + pe;
-		sinip = sin(*inclp);
-		cosip = cos(*inclp);
+		sinip = SIN(*inclp);
+		cosip = COS(*inclp);
 
 		/* ----------------- apply periodics directly ------------ */
 		//  sgp4fix for lyddane choice
@@ -1344,8 +1368,8 @@ static void dpper
 		else
 		{
 			/* ---- apply periodics with lyddane modification ---- */
-			sinop = sin(*nodep);
-			cosop = cos(*nodep);
+			sinop = SIN(*nodep);
+			cosop = COS(*nodep);
 			alfdp = sinip * sinop;
 			betdp = sinip * cosop;
 			dalf = ph * cosop + pinc * cosip * sinop;
@@ -1361,12 +1385,12 @@ static void dpper
 			dls = pl + pgh - pinc * *nodep * sinip;
 			xls = xls + dls;
 			xnoh = *nodep;
-			*nodep = atan2(alfdp, betdp);
+			*nodep = ATAN2(alfdp, betdp);
 			//  sgp4fix for afspc written intrinsic functions
 			// nodep used without a trigonometric function ahead
 			if ((*nodep < 0.0) && (opsmode == 'a'))
 				*nodep = *nodep + twopi;
-			if (fabs(xnoh - *nodep) > SGPPI)
+			if (FABS(xnoh - *nodep) > SGPPI)
 				if (*nodep < xnoh)
 					*nodep = *nodep + twopi;
 				else
@@ -1471,11 +1495,11 @@ static void dpper
 
 static void sgp4
 	 (
-	   struct elsetrec * satrec, double tsince,
-	   double r[3], double v[3]
+	   struct elsetrec * satrec, SGPF tsince,
+	   SGPF r[3], SGPF v[3]
 	 )
 {
-	double am, axnl, aynl, betal, cosim, cnod,
+	SGPF am, axnl, aynl, betal, cosim, cnod,
 		cos2u, coseo1, cosi, cosip, cosisq, cossu, cosu,
 		delm, delomg, em, emsq, ecose, el2, eo1,
 		ep, esine, argpm, argpp, argpdf, pl, mrt = 0.0,
@@ -1502,7 +1526,7 @@ static void sgp4
 	// sgp4fix divisor for divide by zero check on inclination
 	// the old check used 1.0 + cos(Math.PI-1.0e-9), but then compared it to
 	// 1.5 e-12, so the threshold was changed to 1.5e-12 for consistency
-	const double temp4 = 1.5e-12;
+	const SGPF temp4 = 1.5e-12;
 	twopi = 2.0 * SGPPI;
 	x2o3 = 2.0 / 3.0;
 	// sgp4fix identify constants and allow alternate values
@@ -1528,8 +1552,8 @@ static void sgp4
 	if (satrec->isimp != 1)
 	{
 		delomg = satrec->omgcof * satrec->t;
-		// sgp4fix use mutliply for speed instead of Math.Pow
-		delmtemp = 1.0 + satrec->eta * cos(xmdf);
+		// sgp4fix use mutliply for speed instead of Math.POW
+		delmtemp = 1.0 + satrec->eta * COS(xmdf);
 		delm = satrec->xmcof *
 				 (delmtemp * delmtemp * delmtemp -
 				 satrec->delmo);
@@ -1540,7 +1564,7 @@ static void sgp4
 		t4 = t3 * satrec->t;
 		tempa = tempa - satrec->d2 * t2 - satrec->d3 * t3 -
 						 satrec->d4 * t4;
-		tempe = tempe + satrec->bstar * satrec->cc5 * (sin(mm) -
+		tempe = tempe + satrec->bstar * satrec->cc5 * (SIN(mm) -
 						 satrec->sinmao);
 		templ = templ + satrec->t3cof * t3 + t4 * (satrec->t4cof +
 						 satrec->t * satrec->t5cof);
@@ -1576,8 +1600,8 @@ static void sgp4
 		// sgp4fix add return
 		//return false;
 	}
-	am = pow((satrec->xke / nm), x2o3) * tempa * tempa;
-	nm = satrec->xke / pow(am, 1.5);
+	am = POW((satrec->xke / nm), x2o3) * tempa * tempa;
+	nm = satrec->xke / POW(am, 1.5);
 	em = em - tempe;
 
 	// fix tolerance for error recognition
@@ -1612,8 +1636,8 @@ static void sgp4
 	satrec->nm = nm;
 
 	/* ----------------- compute extra mean quantities ------------- */
-	sinim = sin(inclm);
-	cosim = cos(inclm);
+	sinim = SIN(inclm);
+	cosim = COS(inclm);
 
 	/* -------------------- add lunar-solar periodics -------------- */
 	ep = em;
@@ -1658,18 +1682,18 @@ static void sgp4
 	/* -------------------- long period periodics ------------------ */
 	if (satrec->method == 'd')
 	{
-		sinip = sin(xincp);
-		cosip = cos(xincp);
+		sinip = SIN(xincp);
+		cosip = COS(xincp);
 		satrec->aycof = -0.5 * satrec->j3oj2 * sinip;
 		// sgp4fix for divide by zero for xincp = 180 deg
-		if (fabs(cosip + 1.0) > 1.5e-12)
+		if (FABS(cosip + 1.0) > 1.5e-12)
 			satrec->xlcof = -0.25 * satrec->j3oj2 * sinip * (3.0 + 5.0 * cosip) / (1.0 + cosip);
 		else
 			satrec->xlcof = -0.25 * satrec->j3oj2 * sinip * (3.0 + 5.0 * cosip) / temp4;
 	}
-	axnl = ep * cos(argpp);
+	axnl = ep * COS(argpp);
 	temp = 1.0 / (am * (1.0 - ep * ep));
-	aynl = ep * sin(argpp) + temp * satrec->aycof;
+	aynl = ep * SIN(argpp) + temp * satrec->aycof;
 	xl = mp + argpp + nodep + temp * satrec->xlcof * axnl;
 
 	/* --------------------- solve kepler's equation --------------- */
@@ -1682,13 +1706,13 @@ static void sgp4
 	sineo1 = 0.0;
 	//   sgp4fix for kepler iteration
 	//   the following iteration needs better limits on corrections
-	while ((fabs(tem5) >= 1.0e-12) && (ktr <= 10))
+	while ((FABS(tem5) >= 1.0e-12) && (ktr <= 10))
 	{
-		sineo1 = sin(eo1);
-		coseo1 = cos(eo1);
+		sineo1 = SIN(eo1);
+		coseo1 = COS(eo1);
 		tem5 = 1.0 - coseo1 * axnl - sineo1 * aynl;
 		tem5 = (u - aynl * coseo1 + axnl * sineo1 - eo1) / tem5;
-		if (fabs(tem5) >= 0.95)
+		if (FABS(tem5) >= 0.95)
 			tem5 = tem5 > 0.0 ? 0.95 : -0.95;
 		eo1 = eo1 + tem5;
 		ktr = ktr + 1;
@@ -1709,13 +1733,13 @@ static void sgp4
 	else
 	{
 		rl = am * (1.0 - ecose);
-		rdotl = sqrt(am) * esine / rl;
-		rvdotl = sqrt(pl) / rl;
-		betal = sqrt(1.0 - el2);
+		rdotl = SQRT(am) * esine / rl;
+		rvdotl = SQRT(pl) / rl;
+		betal = SQRT(1.0 - el2);
 		temp = esine / (1.0 + betal);
 		sinu = am / rl * (sineo1 - aynl - axnl * temp);
 		cosu = am / rl * (coseo1 - axnl + aynl * temp);
-		su = atan2(sinu, cosu);
+		su = ATAN2(sinu, cosu);
 		sin2u = (cosu + cosu) * sinu;
 		cos2u = 1.0 - 2.0 * sinu * sinu;
 		temp = 1.0 / pl;
@@ -1740,12 +1764,12 @@ static void sgp4
 				1.5 * satrec->con41) / satrec->xke;
 
 		/* --------------------- orientation vectors ------------------- */
-		sinsu = sin(su);
-		cossu = cos(su);
-		snod = sin(xnode);
-		cnod = cos(xnode);
-		sini = sin(xinc);
-		cosi = cos(xinc);
+		sinsu = SIN(su);
+		cossu = COS(su);
+		snod = SIN(xnode);
+		cnod = COS(xnode);
+		sini = SIN(xinc);
+		cosi = COS(xinc);
 		xmx = -snod * cosi;
 		xmy = cnod * cosi;
 		ux = xmx * sinsu + cnod * cossu;
@@ -1864,14 +1888,14 @@ static void sgp4
 
 static void sgp4init
 	 (
-	   enum gravconsttype whichconst, char opsmode, char * satn, double epoch,
-	   double xbstar, double xndot, double xnddot, double xecco, double xargpo,
-	   double xinclo, double xmo, double xno_kozai,
-	   double xnodeo, struct elsetrec * satrec
+	   enum gravconsttype whichconst, char opsmode, char * satn, SGPF epoch,
+	   SGPF xbstar, SGPF xndot, SGPF xnddot, SGPF xecco, SGPF xargpo,
+	   SGPF xinclo, SGPF xmo, SGPF xno_kozai,
+	   SGPF xnodeo, struct elsetrec * satrec
 	 )
 {
 	/* --------------------- local variables ------------------------ */
-	double ao, ainv, con42, cosio, sinio, cosio2, eccsq,
+	SGPF ao, ainv, con42, cosio, sinio, cosio2, eccsq,
 		 omeosq, posq, rp, rteosq,
 		 cnodm, snodm, cosim, sinim, cosomm, sinomm, cc1sq,
 		 cc2, cc3, coef, coef1, cosio4, day, dndt,
@@ -1886,14 +1910,14 @@ static void sgp4init
 		 z21, z22, z23, z31, z32, z33,
 		 qzms2t, ss, x2o3,
 		 delmotemp, qzms2ttemp, qzms24temp;
-	double r[3];
-	double v[3];
+	SGPF r[3];
+	SGPF v[3];
 
 	/* ------------------------ initialization --------------------- */
 	// sgp4fix divisor for divide by zero check on inclination
 	// the old check used 1.0 + cos(Math.PI-1.0e-9), but then compared it to
 	// 1.5 e-12, so the threshold was changed to 1.5e-12 for consistency
-	const double temp4 = 1.5e-12;
+	const SGPF temp4 = 1.5e-12;
 
 	/* ----------- set all near earth variables to zero ------------ */
 	satrec->isimp = 0; satrec->method = 'n'; satrec->aycof = 0.0;
@@ -1960,7 +1984,7 @@ static void sgp4init
 	// sgp4fix identify constants and allow alternate values no longer needed
 	// getgravconst( whichconst, tumin, mu, radiusearthkm, xke, j2, j3, j4, j3oj2 );
 	ss = 78.0 / satrec->radiusearthkm + 1.0;
-	// sgp4fix use multiply for speed instead of Math.Pow
+	// sgp4fix use multiply for speed instead of Math.POW
 	qzms2ttemp = (120.0 - 78.0) / satrec->radiusearthkm;
 	qzms2t = qzms2ttemp * qzms2ttemp * qzms2ttemp * qzms2ttemp;
 	x2o3 = 2.0 / 3.0;
@@ -1973,7 +1997,7 @@ static void sgp4init
 		(satrec->xke, satrec->j2, satrec->ecco, epoch, satrec->inclo, satrec->no_kozai, &satrec->method,
 		  &ainv, &ao, &satrec->con41, &con42, &cosio, &cosio2, &eccsq, &omeosq,
 		  &posq, &rp, &rteosq, &sinio, &satrec->gsto, satrec->operationmode, &satrec->no_unkozai);
-	satrec->a = pow(satrec->no_unkozai * satrec->tumin, (-2.0 / 3.0));
+	satrec->a = POW(satrec->no_unkozai * satrec->tumin, (-2.0 / 3.0));
 	satrec->alta = satrec->a * (1.0 + satrec->ecco) - 1.0;
 	satrec->altp = satrec->a * (1.0 - satrec->ecco) - 1.0;
 	satrec->error = 0;
@@ -2002,7 +2026,7 @@ static void sgp4init
 			sfour = perige - 78.0;
 			if (perige < 98.0)
 				sfour = 20.0;
-			// sgp4fix use multiply for speed instead of Math.Pow
+			// sgp4fix use multiply for speed instead of Math.POW
 			qzms24temp = (120.0 - sfour) / satrec->radiusearthkm;
 			qzms24 = qzms24temp * qzms24temp * qzms24temp * qzms24temp;
 			sfour = sfour / satrec->radiusearthkm + 1.0;
@@ -2013,9 +2037,9 @@ static void sgp4init
 		satrec->eta = ao * satrec->ecco * tsi;
 		etasq = satrec->eta * satrec->eta;
 		eeta = satrec->ecco * satrec->eta;
-		psisq = fabs(1.0 - etasq);
-		coef = qzms24 * pow(tsi, 4.0);
-		coef1 = coef / pow(psisq, 3.5);
+		psisq = FABS(1.0 - etasq);
+		coef = qzms24 * POW(tsi, 4.0);
+		coef1 = coef / POW(psisq, 3.5);
 		cc2 = coef1 * satrec->no_unkozai * (ao * (1.0 + 1.5 * etasq + eeta *
 					   (4.0 + etasq)) + 0.375 * satrec->j2 * tsi / psisq * satrec->con41 *
 					   (8.0 + 3.0 * etasq * (8.0 + etasq)));
@@ -2029,7 +2053,7 @@ static void sgp4init
 						  (0.5 + 2.0 * etasq) - satrec->j2 * tsi / (ao * psisq) *
 						  (-3.0 * satrec->con41 * (1.0 - 2.0 * eeta + etasq *
 						  (1.5 - 0.5 * eeta)) + 0.75 * satrec->x1mth2 *
-						  (2.0 * etasq - eeta * (1.0 + etasq)) * cos(2.0 * satrec->argpo)));
+						  (2.0 * etasq - eeta * (1.0 + etasq)) * COS(2.0 * satrec->argpo)));
 		satrec->cc5 = 2.0 * coef1 * ao * omeosq * (1.0 + 2.75 *
 					   (etasq + eeta) + eeta * etasq);
 		cosio4 = cosio2 * cosio2;
@@ -2045,22 +2069,22 @@ static void sgp4init
 		satrec->nodedot = xhdot1 + (0.5 * temp2 * (4.0 - 19.0 * cosio2) +
 							 2.0 * temp3 * (3.0 - 7.0 * cosio2)) * cosio;
 		xpidot = satrec->argpdot + satrec->nodedot;
-		satrec->omgcof = satrec->bstar * cc3 * cos(satrec->argpo);
+		satrec->omgcof = satrec->bstar * cc3 * COS(satrec->argpo);
 		satrec->xmcof = 0.0;
 		if (satrec->ecco > 1.0e-4)
 			satrec->xmcof = -x2o3 * coef * satrec->bstar / eeta;
 		satrec->nodecf = 3.5 * omeosq * xhdot1 * satrec->cc1;
 		satrec->t2cof = 1.5 * satrec->cc1;
 		// sgp4fix for divide by zero with xinco = 180 deg
-		if (fabs(cosio + 1.0) > 1.5e-12)
+		if (FABS(cosio + 1.0) > 1.5e-12)
 			satrec->xlcof = -0.25 * satrec->j3oj2 * sinio * (3.0 + 5.0 * cosio) / (1.0 + cosio);
 		else
 			satrec->xlcof = -0.25 * satrec->j3oj2 * sinio * (3.0 + 5.0 * cosio) / temp4;
 		satrec->aycof = -0.5 * satrec->j3oj2 * sinio;
-		// sgp4fix use multiply for speed instead of Math.Pow
-		delmotemp = 1.0 + satrec->eta * cos(satrec->mo);
+		// sgp4fix use multiply for speed instead of Math.POW
+		delmotemp = 1.0 + satrec->eta * COS(satrec->mo);
 		satrec->delmo = delmotemp * delmotemp * delmotemp;
-		satrec->sinmao = sin(satrec->mo);
+		satrec->sinmao = SIN(satrec->mo);
 		satrec->x7thm1 = 7.0 * cosio2 - 1.0;
 
 		/* --------------- deep space initialization ------------- */
@@ -2200,16 +2224,16 @@ static void sgp4init
 
 static void days2mdhms
 	(
-	int year, double days,
-	int * mon, int * day, int * hr, int * minute, double * second
+	int year, SGPF days,
+	int * mon, int * day, int * hr, int * minute, SGPF * second
 	)
 {
 	int i, inttemp, dayofyr;
-	double temp;
+	SGPF temp;
 	static const int lmonthNoLeap[] = { 0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 };
 	static const int lmonthLeap[] = { 0, 31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 };
 	const int * lmonth;
-	dayofyr = (int)floor(days);
+	dayofyr = (int)FLOOR(days);
 	/* ----------------- find month and day of month ---------------- */
 	if ((year % 4) == 0)
 		lmonth = lmonthLeap;
@@ -2227,9 +2251,9 @@ static void days2mdhms
 	*day = dayofyr - inttemp;
 	/* ----------------- find hours minutes and seconds ------------- */
 	temp = (days - dayofyr) * 24.0;
-	*hr = (int16_t)(floor(temp));
+	*hr = (int16_t)(FLOOR(temp));
 	temp = (temp - *hr) * 60.0;
-	*minute = (int16_t)(floor(temp));
+	*minute = (int16_t)(FLOOR(temp));
 	*second= (temp - *minute) * 60.0;
 }  //  days2mdhms
 
@@ -2270,20 +2294,20 @@ static void days2mdhms
 
 static void jday
 		(
-		  int year, int mon, int day, int hr, int minute, double sec,
-		  double * jd, double * jdFrac
+		  int year, int mon, int day, int hr, int minute, SGPF sec,
+		  SGPF * jd, SGPF * jdFrac
 		)
 {
 	*jd = 367.0 * year -
-		floor((7 * (year + floor((mon + 9) / 12.0))) * 0.25) +
-		floor(275 * mon / 9.0) +
+		FLOOR((7 * (year + FLOOR((mon + 9) / 12.0))) * 0.25) +
+		FLOOR(275 * mon / 9.0) +
 		day + 1721013.5;  // use - 678987.0 to go to mjd directly
 	*jdFrac = (sec + minute * 60.0 + hr * 3600.0) / 86400.0;
 
 	// check that the day and fractional day are correct
-	if (fabs(*jdFrac) > 1.0)
+	if (FABS(*jdFrac) > 1.0)
 	{
-		double dtt = floor(*jdFrac);
+		SGPF dtt = FLOOR(*jdFrac);
 		*jd = *jd + dtt;
 		*jdFrac = *jdFrac - dtt;
 	}
@@ -2324,7 +2348,7 @@ static void jday
 *                  portion of a day               days
 *    tu          - julian centuries from 0 h
 *                  jan 0, 1900
-*    temp        - temporary double values
+*    temp        - temporary SGPF values
 *    leapyrs     - number of leap years from 1900
 *
 *  coupling      :
@@ -2336,24 +2360,24 @@ static void jday
 
 static void invjday
 	(
-	double jd, double jdFrac,
+	SGPF jd, SGPF jdFrac,
 	int * year, int * mon, int * day,
-	int * hr, int * minute, double * second
+	int * hr, int * minute, SGPF * second
 	)
 {
 	int leapyrs;
-	double dt, days, tu, temp;
+	SGPF dt, days, tu, temp;
 
 	// check jdfrac for multiple days
-	if (fabs(jdFrac) >= 1.0)
+	if (FABS(jdFrac) >= 1.0)
 	{
-		jd = jd + floor(jdFrac);
-		jdFrac = jdFrac - floor(jdFrac);
+		jd = jd + FLOOR(jdFrac);
+		jdFrac = jdFrac - FLOOR(jdFrac);
 	}
 
 	// check for fraction of a day included in the jd
-	dt = jd - floor(jd) - 0.5;
-	if (fabs(dt) > 0.00000001)
+	dt = jd - FLOOR(jd) - 0.5;
+	if (FABS(dt) > 0.00000001)
 	{
 		jd = jd - dt;
 		jdFrac = jdFrac + dt;
@@ -2362,17 +2386,17 @@ static void invjday
 	/* --------------- find year and days of the year --------------- */
 	temp = jd - 2415019.5;
 	tu = temp / 365.25;
-	*year = 1900 + (int16_t)(floor(tu));
-	leapyrs = (int16_t)(floor((*year - 1901) * 0.25));
+	*year = 1900 + (int16_t)(FLOOR(tu));
+	leapyrs = (int16_t)(FLOOR((*year - 1901) * 0.25));
 
-	days = floor(temp - ((*year - 1900) * 365.0 + leapyrs));
+	days = FLOOR(temp - ((*year - 1900) * 365.0 + leapyrs));
 
 	/* ------------ check for case of beginning of a year ----------- */
 	if (days + jdFrac < 1.0)
 	{
 		*year = *year - 1;
-		leapyrs = (int16_t)(floor((*year - 1901) * 0.25));
-		days = floor(temp - ((*year - 1900) * 365.0 + leapyrs));
+		leapyrs = (int16_t)(FLOOR((*year - 1901) * 0.25));
+		days = FLOOR(temp - ((*year - 1900) * 365.0 + leapyrs));
 	}
 
 	/* ----------------- find remaining data  ----------------------- */
