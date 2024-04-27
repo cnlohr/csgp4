@@ -2,6 +2,7 @@
 Primitive code for approximating satellite locations
 
 ## Resources
+ * SGP4 Transliterated from https://celestrak.org/software/vallado-sw.php, specifically https://celestrak.org/software/vallado/cs.zip
 
  * https://en.wikipedia.org/wiki/Two-line_element_set
 

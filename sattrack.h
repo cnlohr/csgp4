@@ -10,6 +10,8 @@
 #include <string.h>
 #include <stdint.h>
 
+#include "sgp4.h"
+
 struct TLEObject
 {
 	int valid; // 0 for invalid, 1 for name, 2 for line 1, 4 for line 2.
@@ -34,7 +36,7 @@ struct TLEObject
 	int revolutionNumberAtEpoch;
 };
 
-float ParseFixedEponential( const char * le, int lineno, int * )
+static float ParseFixedEponential( const char * le, int lineno, int * )
 {
 	int i;
 
@@ -71,7 +73,7 @@ float ParseFixedEponential( const char * le, int lineno, int * )
 }
 
 
-double ConvertEpochYearAndDayToUnix( int epochYear, double epochDay )
+static double ConvertEpochYearAndDayToUnix( int epochYear, double epochDay )
 {
 	epochYear = ( epochYear > 56 ) ? ( epochYear + 1900 ) : ( epochYear + 2000 );
 	int year;
