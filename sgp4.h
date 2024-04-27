@@ -2320,7 +2320,7 @@ static void invjday
 
     /* ----------------- find remaining data  ----------------------- */
     // now add the daily time in to preserve accuracy
-    days2mdhms(year, days + jdFrac, mon, day, hr, minute, second);
+    days2mdhms(*year, days + jdFrac, mon, day, hr, minute, second);
 }  // invjday
 
 

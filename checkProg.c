@@ -2,6 +2,8 @@
 #include "sattrack.h"
 #include "os_generic.h"
 
+#define _GNU_SOURCE
+#include <fenv.h>
 
 int main( int argc, char ** argv )
 {
@@ -36,11 +38,51 @@ int main( int argc, char ** argv )
 	for( i = 0; i < numObjects; i++ )
 	{
 		struct TLEObject * o = &obj[i];
-		double diff = OGGetAbsoluteTime() - o->epoch;
-		printf( "%24s %f %f %f\n", o->objectName, diff, OGGetAbsoluteTime(), o->epoch );
+		//double diff = OGGetAbsoluteTime() - o->epoch;
+		printf( "%24s %f\n", o->objectName, o->epoch );//, diff, OGGetAbsoluteTime(), o->epoch );
 	}
 
 
+	struct TLEObject * o = &obj[0];
+
+	// Let's just pick out ISS (Zarya)	
+	struct elsetrec satrec;
+printf( "A\n" );
+	if( ConvertTLEToSGP4( &satrec, o ) )
+	{
+		printf( "failed to convert tle\n" );
+		return -5;
+	}
+printf( "B\n" );
+
+	// set start/stop times for propagation
+	double startmfe = (OGGetAbsoluteTime() - o->epoch)/60.0; // Convert to minutes.
+	double stopmfe  = startmfe + 2880.0;
+	double deltamin = 120.0;
+
+
+	double tsince = startmfe;
+	while ((tsince < stopmfe) && (satrec.error == 0))
+	{
+		double ro[3], vo[3];
+
+		if(tsince > stopmfe)
+			tsince = stopmfe;
+
+		sgp4 (&satrec,  tsince, ro,  vo);
+
+		double jd = satrec.jdsatepoch + tsince/1440.0;
+		//invjday( jd, year,mon,day,hr,min, sec );
+
+		printf( " %16.8f %16.8f %16.8f %16.8f [%f] %12.9f %12.9f %12.9f\n",
+			tsince,ro[0],ro[1],ro[2], sqrt(ro[0]*ro[0]+ro[1]*ro[1]+ro[2]*ro[2]),vo[0],vo[1],vo[2]);
+
+		tsince = tsince + deltamin;
+
+	}
+
+#if 0
+	// Test from TestSGP4.cpp
 
 	// sgp4fix demonstrate method of running SGP4 directly from orbital element values
 	//1 08195U 75081A   06176.33215444  .00000099  00000-0  11873-3 0   813
@@ -81,7 +123,7 @@ int main( int argc, char ** argv )
 	// set start/stop times for propagation
 	double startmfe =     0.0;
 	double stopmfe  =  2880.0;
-	double deltamin =   12.0;
+	double deltamin =   120.0;
 
 	sgp4init( whichconst, opsmode, satrec.satnum, satrec.jdsatepoch-2433281.5, satrec.bstar,
 		 satrec.ndot, satrec.nddot, satrec.ecco, satrec.argpo, satrec.inclo, satrec.mo, satrec.no_kozai,
@@ -104,6 +146,7 @@ int main( int argc, char ** argv )
 		printf( " %16.8f %16.8f %16.8f %16.8f %12.9f %12.9f %12.9f\n",
 			tsince,ro[0],ro[1],ro[2],vo[0],vo[1],vo[2]);
 	}
+#endif
 
 }
 

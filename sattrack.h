@@ -256,6 +256,8 @@ static int ParseFile( FILE * f, struct TLEObject ** objects, int * numObjects )
 			line[16] = 0;
 			thisObject->inclination = atof( line + 8 );
 			line[7] = 0;
+			thisObject->valid = 1;
+
 			break;
 		default:
 			fprintf( stderr, "Unknown record type %c on line %d\n", line[0], lineno );
@@ -270,6 +272,92 @@ static int ParseFile( FILE * f, struct TLEObject ** objects, int * numObjects )
 
 
 
+static int ConvertTLEToSGP4( struct elsetrec * satrec, struct TLEObject * obj )
+{ 
+	// Test from TestSGP4.cpp
+
+	const double deg2rad  =   SGPPI / 180.0;         //   0.0174532925199433
+	const double xpdotp   =  1440.0 / (2.0 *SGPPI);  // 229.1831180523293
+
+	if( !obj->valid ) return -1;
+
+	enum gravconsttype whichconst = wgs72;
+	char opsmode = 'a';
+	snprintf( satrec->satnum, sizeof( satrec->satnum ), "%d", obj->catalogNumber );
+	satrec->jdsatepoch = obj->epoch; //2453911.8321544402
+	satrec->no_kozai = obj->meanMotion; //2.00491383;
+	satrec->ecco = obj->eccentricity; //0.6877146;
+	satrec->inclo = obj->inclination; //64.1586;
+	satrec->nodeo = obj->rightAscensionOfTheAscendingNode; //279.0717;
+	satrec->argpo = obj->argumentOfPerigee; //264.7651;
+	satrec->mo = obj->meanAnomaly;          //20.2257;
+	satrec->nddot = obj->meanMotion2;       //0.00000e0;
+	satrec->bstar = obj->dragTerm;          //0.11873e-3;
+	satrec->ndot = obj->meanMotion1;        //0.00000099;
+	satrec->elnum = obj->elementSetNumber;  //813;
+	satrec->revnum = obj->revolutionNumberAtEpoch; //22565;
+	satrec->classification = obj->objectName[0];
+	strncpy(satrec->intldesg, &obj->objectName[1], sizeof(satrec->intldesg) );
+
+
+#error TODO: Find their reference satellite
+#error TODO: Figure out relationship of jdsatepoch and obj->epoch
+	satrec->ephtype = 0;
+//ISS (ZARYA)             
+//1 25544U 98067A   24108.06679608  .00019473  00000+0  34469-3 0  9999
+//2 25544  51.6384 258.4693 0004986  70.1481  42.8477 15.50291806449066
+printf( "%f %f %f %f %f %f %f %f %f %ld %f %ld\n",
+satrec->jdsatepoch,
+ satrec->no_kozai,
+satrec->ecco,
+satrec->inclo,
+satrec->nodeo,
+satrec->argpo,
+satrec->mo,
+satrec->nddot,
+satrec->bstar,
+satrec->elnum,
+satrec->ndot,
+satrec->revnum );
+#if 0
+	// sgp4fix demonstrate method of running SGP4 directly from orbital element values
+	//1 08195U 75081A   06176.33215444  .00000099  00000-0  11873-3 0   813
+	//2 08195  64.1586 279.0717 6877146 264.7651  20.2257  2.00491383225656
+	enum gravconsttype whichconst = wgs72;
+	char opsmode = 'a';
+	strcpy( satrec.satnum, "8195" );
+	satrec.jdsatepoch = 2453911.8321544402;
+	satrec.no_kozai = 2.00491383;
+	satrec.ecco = 0.6877146;
+	satrec.inclo = 64.1586;
+	satrec.nodeo = 279.0717;
+	satrec.argpo = 264.7651;
+	satrec.mo = 20.2257;
+	satrec.nddot = 0.00000e0;
+	satrec.bstar = 0.11873e-3;
+	satrec.ndot = 0.00000099;
+	satrec.elnum = 813;
+	satrec.revnum = 22565;
+	satrec.classification = 'U';
+	strcpy(satrec.intldesg, "        ");
+	satrec.ephtype = 0;
+#endif
+
+	// convert units and initialize
+	satrec->no_kozai = satrec->no_kozai / xpdotp; //* rad/min
+	satrec->ndot = satrec->ndot  / (xpdotp*1440.0);  //* ? * minperday
+	satrec->nddot= satrec->nddot / (xpdotp*1440.0*1440);
+	satrec->inclo = satrec->inclo  * deg2rad;
+	satrec->nodeo = satrec->nodeo  * deg2rad;
+	satrec->argpo = satrec->argpo  * deg2rad;
+	satrec->mo    = satrec->mo     * deg2rad;
+
+	sgp4init( whichconst, opsmode, satrec->satnum, satrec->jdsatepoch-2433281.5, satrec->bstar,
+		 satrec->ndot, satrec->nddot, satrec->ecco, satrec->argpo, satrec->inclo, satrec->mo, satrec->no_kozai,
+		 satrec->nodeo, satrec );
+
+	return 0;
+}
 
 #endif
 
