@@ -10,7 +10,7 @@
 #include <string.h>
 #include <stdint.h>
 
-#include "sgp4.h"
+#include "csgp4.h"
 
 struct TLEObject
 {
@@ -310,6 +310,7 @@ static int ConvertTLEToSGP4( struct elsetrec * satrec, struct TLEObject * obj )
 
 	if( !obj->valid ) return -1;
 
+	// Options are: enum gravconsttype { wgs72old, wgs72, wgs84 }; // wgs72 is the standard and should be used with JSPOC TLEs
 	enum gravconsttype whichconst = wgs72;
 	char opsmode = 'a';
 	snprintf( satrec->satnum, sizeof( satrec->satnum ), "%d", obj->catalogNumber );

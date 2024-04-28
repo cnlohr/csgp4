@@ -14,9 +14,15 @@
 
 #define SGPPI 3.1415926535897932384626433
 
-#if 1
-// Use double precision.
-#define SGPF double
+// Default to double calculations.
+#ifndef CSGP4_USE_FLOAT
+#define CSGP4_USE_FLOAT 0
+#endif
+
+#if CSGP4_USE_FLOAT
+
+// Use single precision.
+#define SGPF float
 #define FLOOR floor
 #define FABS  fabs
 #define COS   cos
@@ -26,8 +32,8 @@
 #define POW   pow
 
 #else
-// Use single precision.
-#define SGPF float
+// Use double precision.
+#define SGPF double
 #define FLOOR floor
 #define FABS  fabs
 #define COS   cos

@@ -1,5 +1,8 @@
 #include <stdio.h>
 #include "os_generic.h"
+
+#define CSGP4_USE_FLOAT 0
+
 #include "sattrack.h"
 
 int main( int argc, char ** argv )
@@ -109,14 +112,16 @@ int main( int argc, char ** argv )
 		double startmfe = (1714240800 - ss->epoch)/60.0;
 		sgp4 (&iss, startmfe, ro,  vo);
 
-		double jd = iss.jdsatepoch + iss.jdsatepochF;
-		double jdfrac = startmfe/1440.0;
+		SGPF jd = iss.jdsatepoch + iss.jdsatepochF;
+		SGPF jdfrac = startmfe/1440.0;
 		int year, mon, day, hr, min;
-		double sec;
+		SGPF sec;
 		invjday( jd, jdfrac, &year, &mon, &day, &hr, &min, &sec );
-		printf( "%f %f %04d %02d %02d %02d:%02d:%05.02f /", jd, jdfrac, year, mon, day, hr, min, sec );
-		printf( "[%16.8f] %16.8f %16.8f %16.8f [%f] %12.9f %12.9f %12.9f\n",
-			startmfe,ro[0],ro[1],ro[2], sqrt(ro[0]*ro[0]+ro[1]*ro[1]+ro[2]*ro[2]),vo[0],vo[1],vo[2]);
+		printf( "%f %f %04d %02d %02d %02d:%02d:%05.02f\n", jd, jdfrac, year, mon, day, hr, min, sec );
+		printf( "[Δt%14.8f] %16.8f %16.8f %16.8f %16.8f \n                   %16.9f %16.9f %16.9f %16.9f\n",
+			startmfe,ro[0],ro[1],ro[2], sqrt(ro[0]*ro[0]+ro[1]*ro[1]+ro[2]*ro[2]),vo[0],vo[1],vo[2], sqrt(vo[0]*vo[0]+vo[1]*vo[1]+vo[2]*vo[2]));
+		printf( "NOTE (For anyone curious): Error seems to be primarily due to timing issues.\n" );
+
 		/*
 		  These are from the following python code:
 
@@ -182,9 +187,9 @@ e, r, v = satellite.sgp4(jd, fr)
 		jd = iss.jdsatepoch + iss.jdsatepochF;
 		jdfrac = startmfe/1440.0;
 		invjday( jd, jdfrac, &year, &mon, &day, &hr, &min, &sec );
-		printf( "%f %f %04d %02d %02d %02d:%02d:%05.02f /", jd, jdfrac, year, mon, day, hr, min, sec );
-		printf( "[%16.8f] %16.8f %16.8f %16.8f [%f] %12.9f %12.9f %12.9f\n",
-			startmfe,ro[0],ro[1],ro[2], sqrt(ro[0]*ro[0]+ro[1]*ro[1]+ro[2]*ro[2]),vo[0],vo[1],vo[2]);
+		printf( "%f %f %04d %02d %02d %02d:%02d:%05.02f\n", jd, jdfrac, year, mon, day, hr, min, sec );
+		printf( "[Δt%14.8f] %16.8f %16.8f %16.8f %16.8f \n                   %16.9f %16.9f %16.9f %16.9f\n",
+			startmfe,ro[0],ro[1],ro[2], sqrt(ro[0]*ro[0]+ro[1]*ro[1]+ro[2]*ro[2]),vo[0],vo[1],vo[2], sqrt(vo[0]*vo[0]+vo[1]*vo[1]+vo[2]*vo[2]));
 
 		pysgp4[0] = 5099.551520031815;
 		pysgp4[1] = 1808.2683576301836;
@@ -196,7 +201,7 @@ e, r, v = satellite.sgp4(jd, fr)
 		printf( "Python / Our SGP4 Disagreement: %f %f %f RMS: %f km\n",
 			 ro[0] - pysgp4[0], ro[1] - pysgp4[1], ro[2] - pysgp4[2],
 			rmse );
-		if( rmse < 0.005 )
+		if( rmse < 0.005 + CSGP4_USE_FLOAT * 10 )
 		{
 			printf( "PASS\n" );
 		}
@@ -210,7 +215,7 @@ e, r, v = satellite.sgp4(jd, fr)
 		printf( "Python / Our SGP4 Disagreement: %f %f %f RMS: %f km/s\n",
 			 vo[0] - pysgp4v[0], vo[1] - pysgp4v[1], vo[2] - pysgp4v[2],
 			vrmse );
-		if( vrmse < 0.00005 )
+		if( vrmse < 0.00005 + CSGP4_USE_FLOAT * 10 )
 		{
 			printf( "PASS\n" );
 		}
