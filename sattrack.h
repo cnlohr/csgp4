@@ -103,7 +103,7 @@ static double ConvertEpochYearAndDayToUnix( int epochYear, double epochDay )
 }
 
 
-static int ParseFile( FILE * f, struct TLEObject ** objects, int * numObjects )
+static int ParseFileOrString( FILE * f, const char * sLineSet, struct TLEObject ** objects, int * numObjects )
 {
 	int i;
 	ssize_t s;
@@ -117,8 +117,26 @@ static int ParseFile( FILE * f, struct TLEObject ** objects, int * numObjects )
 	int ret = 0;
 	struct TLEObject * thisObject;
 
-	while( ( s = getline( &lineptr, &n, f ) ) >= 0 )
+	while( 1 )
 	{
+		if( f )
+		{
+			s = getline( &lineptr, &n, f );
+			if( s < 0 )
+				break;
+		}
+		else if( sLineSet )
+		{
+			char c;
+			s = 0;
+			while( ( c = *(sLineSet++) ) )			{
+				line[s++] = c;
+				if( c == '\n' ) break;
+			}
+			if( c == 0 ) break;
+			line[s] = 0;
+			n = s;
+		}
 		if( line[s-1] == '\r' || line[s-1] == '\n' ) s--;
 		if( line[s-1] == '\r' || line[s-1] == '\n' ) s--;
 		lineno++;
