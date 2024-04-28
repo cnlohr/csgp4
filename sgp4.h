@@ -3,7 +3,7 @@
 // I could not find a license, but assume whatever license the original code is under.
 // I (Charles Lohr) just ported the code back to C from C#.
 // I cannot guaratee this code for precision or fitness beyond my simple tests in associated files.
-
+// USE AT YOUR OWN RISK
 
 #ifndef _SGP4_H
 #define _SGP4_H
