@@ -3,8 +3,9 @@
 C, header-only port of David Vallado's SGP4Lib, for use in embedded, and unusual situations.
 
 Approximate values per-core on a AMD 5800X:
-Init: 0.469150 us/iteration
-Run:  0.226054 us/iteration
+
+| Init | 0.469150 us/iteration |
+| Run |  0.226054 us/iteration |
 
 This is kind of rough, so USE AT YOUR OWN RISK.
 
