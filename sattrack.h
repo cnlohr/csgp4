@@ -217,7 +217,8 @@ static int ParseFileOrString( FILE * f, const char * sLineSet, struct TLEObject 
 			line[43] = 0;
 			thisObject->meanMotion1 = atof( line + 33 );
 			line[32] = 0;
-			thisObject->epochDay = atof( line + 20 );
+			// For some reason, -0.0000000005 matches the python SGP4 - but, I don't think that's right.  That said - without this delta, we sometimes seem to get squirely math on the data conversion functions.
+			thisObject->epochDay = atof( line + 20 )-0.0000000005;
 			line[20] = 0;
 			thisObject->epochYear = atoi( line + 18 );
 			line[17] = 0;
@@ -333,14 +334,7 @@ static int ConvertTLEToSGP4( struct elsetrec * satrec, struct TLEObject * obj )
 	else
 		year = satrec->epochyr + 1900;
 	days2mdhms(year, satrec->epochdays, &mon, &day, &hr, &minute, &sec);
-
-	//printf( "Satellite epoch: %04d %d %d %d %d %f\n", year, mon, day, hr, minute, sec );
-	//double now = OGGetAbsoluteTime();
-	//printf( "Now epoch: %f %f = %f\n", obj->epoch, now, now - obj->epoch );
-
 	jday(year, mon, day, hr, minute, sec, &satrec->jdsatepoch, &satrec->jdsatepochF);
-	//	satrec->jdsatepoch =  //2453911.8321544402 (from above)
-
 
 	satrec->no_kozai = obj->meanMotion; //2.00491383;
 	satrec->ecco = obj->eccentricity; //0.6877146;
@@ -356,47 +350,7 @@ static int ConvertTLEToSGP4( struct elsetrec * satrec, struct TLEObject * obj )
 	satrec->classification = obj->objectName[0];
 	strncpy(satrec->intldesg, &obj->objectName[1], sizeof(satrec->intldesg) );
 
-	//#error TODO: Find their reference satellite
-
 	satrec->ephtype = 0;
-/*
-printf( "EPOCH: %f %f %f %f %f %f %f %f %f %ld %f %ld\n",
-	satrec->jdsatepoch,
-	satrec->no_kozai,
-	satrec->ecco,
-	satrec->inclo,
-	satrec->nodeo,
-	satrec->argpo,
-	satrec->mo,
-	satrec->nddot,
-	satrec->bstar,
-	satrec->elnum,
-	satrec->ndot,
-	satrec->revnum );
-*/
-#if 0
-	// sgp4fix demonstrate method of running SGP4 directly from orbital element values
-	//1 08195U 75081A   06176.33215444  .00000099  00000-0  11873-3 0   813
-	//2 08195  64.1586 279.0717 6877146 264.7651  20.2257  2.00491383225656
-	enum gravconsttype whichconst = wgs72;
-	char opsmode = 'a';
-	strcpy( satrec.satnum, "8195" );
-	satrec.jdsatepoch = 2453911.8321544402;
-	satrec.no_kozai = 2.00491383;
-	satrec.ecco = 0.6877146;
-	satrec.inclo = 64.1586;
-	satrec.nodeo = 279.0717;
-	satrec.argpo = 264.7651;
-	satrec.mo = 20.2257;
-	satrec.nddot = 0.00000e0;
-	satrec.bstar = 0.11873e-3;
-	satrec.ndot = 0.00000099;
-	satrec.elnum = 813;
-	satrec.revnum = 22565;
-	satrec.classification = 'U';
-	strcpy(satrec.intldesg, "        ");
-	satrec.ephtype = 0;
-#endif
 
 	// convert units and initialize
 	satrec->no_kozai = satrec->no_kozai / xpdotp; //* rad/min
