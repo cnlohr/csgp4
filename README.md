@@ -1,4 +1,4 @@
-# sattrack
+# csgp4
 
 C, header-only port of David Vallado's SGP4Lib, for use in embedded, and unusual situations.
 
