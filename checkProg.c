@@ -180,8 +180,8 @@ int main( int argc, char ** argv )
 			sgp4 (&iss, startmfe, ro,  vo);
 		}
 		double dEndRun = OGGetAbsoluteTime();
-		printf( "Init: %f us/iteration\n", dEndSetup - dStartSetup );
-		printf( "Run:  %f us/iteration\n", dEndRun - dStartRun );
+		printf( "Init: %.4f us/iteration\n", dEndSetup - dStartSetup );
+		printf( "Run:  %.4f us/iteration\n", dEndRun - dStartRun );
 	}
 
 
