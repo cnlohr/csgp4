@@ -1,7 +1,7 @@
 all : test
 
 checkProg : checkProg.c sattrack.h
-	gcc -g -Os -o $@ $< -lm
+	gcc -g -Os -flto -o $@ $< -lm
 	objdump -S $@ > $@.lst
 
 
