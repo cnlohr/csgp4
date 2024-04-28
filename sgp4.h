@@ -98,6 +98,7 @@ struct elsetrec
 *  this function finds the greenwich sidereal time.
 *
 *  author		: david vallado				  719-573-2600	1 mar 2001
+*  translated to c: charles lohr 2024-04-28
 *
 *  inputs		  description					range / units
 *	jdut1	   - julian date in ut1			 days from 4713 bc
@@ -147,6 +148,7 @@ static SGPF gstime
 *	facilitiate comparisons with newer models. the common useage is wgs72.
 *
 *  author		: david vallado				  719-573-2600   21 jul 2006
+*  translated to c: charles lohr 2024-04-28
 *
 *  inputs		:
 *	whichconst  - which set of constants to use  wgs72old, wgs72, wgs84
@@ -247,6 +249,7 @@ static void getgravconst
 *	(mean motion)
 *
 *  author		: david vallado				  719-573-2600   28 jun 2005
+*  translated to c: charles lohr 2024-04-28
 *
 *  inputs		:
 *	d2201, d2211, d3210, d3222, d4410, d4422, d5220, d5232, d5421, d5433 -
@@ -470,6 +473,7 @@ static void dspace
 *	to geopotential resonance with half day and one day orbits.
 *
 *  author		: david vallado				  719-573-2600   28 jun 2005
+*  translated to c: charles lohr 2024-04-28
 *
 *  inputs		:
 *	xke		 - reciprocal of tumin
@@ -777,6 +781,7 @@ static void dsinit
 *	consolidated here instead of having multiple loops inside other routines.
 *
 *  author		: david vallado				  719-573-2600   28 jun 2005
+*  translated to c: charles lohr 2024-04-28
 *
 *  inputs		:
 *	satn		- satellite number - not needed, placed in satrec
@@ -913,6 +918,7 @@ static void initl
 *	used to be called dpper, but the functions inside weren't well organized.
 *
 *  author		: david vallado				  719-573-2600   28 jun 2005
+*  translated to c: charles lohr 2024-04-28
 *
 *  inputs		:
 *	epoch	   -
@@ -1225,6 +1231,7 @@ static void dscom
 *	recurring function.
 *
 *  author		: david vallado				  719-573-2600   28 jun 2005
+*  translated to c: charles lohr 2024-04-28
 *
 *  inputs		:
 *	e3		  -
@@ -1423,6 +1430,7 @@ static void dpper
 *	development of the code.
 *
 *  author		: david vallado				  719-573-2600   28 jun 2005
+*  translated to c: charles lohr 2024-04-28
 *
 *  inputs		:
 *	satrec	 - initialised structure from sgp4init() call.
@@ -1579,6 +1587,7 @@ static void sgp4
 	nm = satrec->no_unkozai;
 	em = satrec->ecco;
 	inclm = satrec->inclo;
+
 	if (satrec->method == 'd')
 	{
 		tc = satrec->t;
@@ -1817,6 +1826,7 @@ static void sgp4
 *  this procedure initializes variables for sgp4.
 *
 *  author		: david vallado				  719-573-2600   28 jun 2005
+*  translated to c: charles lohr 2024-04-28
 *
 *  inputs		:
 *	opsmode	 - mode of operation afspc or improved 'a', 'i'
@@ -2205,6 +2215,7 @@ static void sgp4init
 *                  convert remainder into h m s using type conversions
 *
 *  author        : david vallado           davallado@gmail.com    1 mar 2001
+*  translated to c: charles lohr 2024-04-28
 *
 *  inputs          description                    range / units
 *    year        - year                           1900 .. 2100
@@ -2275,6 +2286,7 @@ static void days2mdhms
 *  algorithm     : calculate the answer in one step for efficiency
 *
 *  author        : david vallado                  719-573-2600    1 mar 2001
+*  translated to c: charles lohr 2024-04-28
 *
 *  inputs          description                    range / units
 *    year        - year                           1900 .. 2100
@@ -2336,6 +2348,7 @@ static void jday
 *                  call routine to find each individual value
 *
 *  author        : david vallado           davallado@gmail.com    1 mar 2001
+*  translated to c: charles lohr 2024-04-28
 *
 *  inputs          description                    range / units
 *    jd          - julian date (days only)           days from 4713 bc
