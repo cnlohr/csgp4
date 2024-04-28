@@ -106,9 +106,6 @@ int main( int argc, char ** argv )
 			printf( "failed to convert tle\n" );
 			return -5;
 		}
-		//From https://nasa-public-data.s3.amazonaws.com/iss-coords/current/ISS_OEM/ISS.OEM_J2K_EPH.txt
-		//2024-04-27T18:00:00.000 -4587.597832963610 -4337.824413854870 2498.905090951730 5.05095945730461 -2.27273088144798 5.29906134757423
-		// 1714240800 = Sat Apr 27 2024 18:00:00 GMT+0000
 		double startmfe = (1714240800 - ss->epoch)/60.0;
 		sgp4 (&iss, startmfe, ro,  vo);
 
@@ -120,6 +117,25 @@ int main( int argc, char ** argv )
 		printf( "%f %f %04d %02d %02d %02d:%02d:%05.02f /", jd, jdfrac, year, mon, day, hr, min, sec );
 		printf( "[%16.8f] %16.8f %16.8f %16.8f [%f] %12.9f %12.9f %12.9f\n",
 			startmfe,ro[0],ro[1],ro[2], sqrt(ro[0]*ro[0]+ro[1]*ro[1]+ro[2]*ro[2]),vo[0],vo[1],vo[2]);
+		/*
+		  These are from:
+			>>> from sgp4.api import jday
+			>>> from sgp4.api import Satrec
+			>>> s = "1 25544U 98067A   24118.69784154  .00029521  00000+0  51116-3 0  9995"
+			>>> t = "2 25544  51.6397 205.7509 0003603 115.2045 341.2688 15.50662375450710"
+			>>> satellite = Satrec.twoline2rv(s, t)
+			>>> jd, fr = jday(2024, 4, 27, 18, 0, 0)
+			>>> e, r, v = satellite.sgp4(jd, fr)
+			>>> r
+			(-4582.664719456509, -4356.875102968861, 2475.1474001054107)
+			>>> v
+			(5.036095414394779, -2.2591278380385664, 5.3188560672302145)
+
+		  For some reason, they disagree withh these coords by a few km.
+			From https://nasa-public-data.s3.amazonaws.com/iss-coords/current/ISS_OEM/ISS.OEM_J2K_EPH.txt
+			2024-04-27T18:00:00.000 -4587.597832963610 -4337.824413854870 2498.905090951730 5.05095945730461 -2.27273088144798 5.29906134757423
+			1714240800 = Sat Apr 27 2024 18:00:00 GMT+0000
+		*/
 		double pysgp4[3] = { -4582.664719456509, -4356.875102968861, 2475.1474001054107 };
 		double pysgp4v[3] = { 5.036095414394779, -2.2591278380385664, 5.3188560672302145 };
 		double rmse = sqrt( (ro[0] - pysgp4[0])*(ro[0] - pysgp4[0]) + (ro[1] - pysgp4[1]) * (ro[1] - pysgp4[1]) + ( ro[2] - pysgp4[2] ) * (ro[2] - pysgp4[2]) );

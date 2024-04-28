@@ -1,3 +1,10 @@
+// Single-file C header transliterated from David Vallado's SGP4Lib.cs, version: "SGP4 Version 2020-03-12";
+// https://celestrak.org/software/vallado-sw.php
+// I could not find a license, but assume whatever license the original code is under.
+// I (Charles Lohr) just ported the code back to C from C#.
+// I cannot guaratee this code for precision or fitness beyond my simple tests in associated files.
+
+
 #ifndef _SGP4_H
 #define _SGP4_H
 
@@ -8,7 +15,7 @@
 #define SGPPI 3.1415926535897932384626433
 
 #if 1
-
+// Use double precision.
 #define SGPF double
 #define FLOOR floor
 #define FABS  fabs
@@ -19,7 +26,7 @@
 #define POW   pow
 
 #else
-
+// Use single precision.
 #define SGPF float
 #define FLOOR floor
 #define FABS  fabs
@@ -30,9 +37,6 @@
 #define POW   pow
 
 #endif
-
-
-// Single-file C header transliterated from David Vallado's SGP4Lib.cs, version: "SGP4 Version 2020-03-12";
 
 enum gravconsttype { wgs72old, wgs72, wgs84 }; // wgs72 is the standard and should be used with JSPOC TLEs
 
