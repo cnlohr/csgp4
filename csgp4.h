@@ -19,6 +19,10 @@
 #define CSGP4_USE_FLOAT 0
 #endif
 
+#ifndef CSGP4_INIT
+#define CSGP4_INIT 1
+#endif
+
 #if CSGP4_USE_FLOAT
 
 // Use single precision.
@@ -48,19 +52,19 @@ enum gravconsttype { wgs72old, wgs72, wgs84 }; // wgs72 is the standard and shou
 
 struct elsetrec
 {
-	// change to scripting to handle upcoming numbering changes, either alpha 5 or 9 digit
-	char satnum[32];
-	int epochyr/*, epochtynumrev*/;
 	int error;
 	char operationmode;
 	char init, method;
 
 	/* Near Earth */
 	int isimp;
+
 	SGPF aycof, con41, cc1, cc4, cc5, d2, d3, d4,
 		   delmo, eta, argpdot, omgcof, sinmao, t, t2cof, t3cof,
-		   t4cof, t5cof, x1mth2, x7thm1, mdot, nodedot, xlcof, xmcof,
-		   nodecf;
+		   t4cof, t5cof, x1mth2, x7thm1, mdot, nodedot, xlcof, xmcof, nodecf;
+
+
+	SGPF  bstar,  inclo, nodeo, ecco, argpo, mo;
 
 	/* Deep Space */
 	int irez;
@@ -71,15 +75,6 @@ struct elsetrec
 		   si2, si3, sl2, sl3, sl4, gsto, xfact, xgh2,
 		   xgh3, xgh4, xh2, xh3, xi2, xi3, xl2, xl3,
 		   xl4, xlamo, zmol, zmos, atime, xli, xni;
-
-	SGPF a, altp, alta, epochdays, jdsatepoch, jdsatepochF, nddot, ndot,
-		   bstar, rcse, inclo, nodeo, ecco, argpo, mo,
-		   no_kozai;
-	// sgp4fix add new variables from tle
-	char classification;
-	char intldesg[32];  //10
-	int ephtype;
-	long elnum, revnum;
 	// sgp4fix add unkozai'd variable
 	SGPF no_unkozai;
 	// sgp4fix add singly averaged variables
@@ -87,12 +82,12 @@ struct elsetrec
 	// sgp4fix add constant parameters to eliminate mutliple calls during execution
 	SGPF tumin, mu, radiusearthkm, xke, j2, j3, j4, j3oj2;
 
-	  //	   Additional elements to capture relevant TLE and object information:		|
-	long dia_mm; // RSO dia in mm
-	SGPF period_sec; // Period in seconds
-	char active[32]; // "Active S/C" flag (0=n, 1=y) 
-	char not_orbital[32]; // "Orbiting S/C" flag (0=n, 1=y)  
-	SGPF rcs_m2; // "RCS (m^2)" storage 
+
+#if CSGP4_INIT
+	int epochyr/*, epochtynumrev*/;
+	SGPF a, alta;
+	SGPF  no_kozai,rcse,ndot,nddot,jdsatepochF, jdsatepoch,epochdays,altp;
+#endif
 };
 
 
@@ -470,6 +465,8 @@ static void dspace
 
 	//#include "debug4.cpp"
 }  // end dsspace
+
+#if CSGP4_INIT
 
 /*-----------------------------------------------------------------------------
 *
@@ -914,6 +911,7 @@ static void initl
 	//#include "debug5.cpp"
 }  // end initl
 
+#endif
 
 /*-----------------------------------------------------------------------------
 *
@@ -1824,7 +1822,7 @@ static void sgp4
 
 
 
-
+#if CSGP4_INIT
 /*-----------------------------------------------------------------------------
 *
 *							 procedure sgp4init
@@ -1910,7 +1908,7 @@ static void sgp4
 
 static void sgp4init
 	 (
-	   enum gravconsttype whichconst, char opsmode, char * satn, SGPF epoch,
+	   enum gravconsttype whichconst, char opsmode/*, char * satn*/, SGPF epoch,
 	   SGPF xbstar, SGPF xndot, SGPF xnddot, SGPF xecco, SGPF xargpo,
 	   SGPF xinclo, SGPF xmo, SGPF xno_kozai,
 	   SGPF xnodeo, struct elsetrec * satrec
@@ -1981,7 +1979,7 @@ static void sgp4init
 	//-------------------------------------------------------------------------
 	satrec->error = 0;
 	satrec->operationmode = opsmode;
-	strcpy( satrec->satnum, satn );
+	//strcpy( satrec->satnum, satn );
 
 	// sgp4fix - note the following variables are also passed directly via satrec->
 	// it is possible to streamline the sgp4init call by deleting the 'x'
@@ -2202,6 +2200,7 @@ static void sgp4init
 	//return true;
 }  // end sgp4init
 
+#endif // CSGP4_INIT
 
 // Utility functions from "MathTimeLib.cs"
 
@@ -2274,9 +2273,9 @@ static void days2mdhms
 	*day = dayofyr - inttemp;
 	/* ----------------- find hours minutes and seconds ------------- */
 	temp = (days - dayofyr) * 24.0;
-	*hr = (int16_t)(FLOOR(temp));
+	*hr = (int)(FLOOR(temp));
 	temp = (temp - *hr) * 60.0;
-	*minute = (int16_t)(FLOOR(temp));
+	*minute = (int)(FLOOR(temp));
 	*second= (temp - *minute) * 60.0;
 }  //  days2mdhms
 
@@ -2411,8 +2410,8 @@ static void invjday
 	/* --------------- find year and days of the year --------------- */
 	temp = jd - 2415019.5;
 	tu = temp / 365.25;
-	*year = 1900 + (int16_t)(FLOOR(tu));
-	leapyrs = (int16_t)(FLOOR((*year - 1901) * 0.25));
+	*year = 1900 + (int)(FLOOR(tu));
+	leapyrs = (int)(FLOOR((*year - 1901) * 0.25));
 
 	days = FLOOR(temp - ((*year - 1900) * 365.0 + leapyrs));
 
@@ -2420,7 +2419,7 @@ static void invjday
 	if (days + jdFrac < 1.0)
 	{
 		*year = *year - 1;
-		leapyrs = (int16_t)(FLOOR((*year - 1901) * 0.25));
+		leapyrs = (int)(FLOOR((*year - 1901) * 0.25));
 		days = FLOOR(temp - ((*year - 1900) * 365.0 + leapyrs));
 	}
 

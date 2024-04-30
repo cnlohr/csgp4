@@ -313,8 +313,7 @@ static int ConvertTLEToSGP4( struct elsetrec * satrec, struct TLEObject * obj )
 
 	// Options are: enum gravconsttype { wgs72old, wgs72, wgs84 }; // wgs72 is the standard and should be used with JSPOC TLEs
 	enum gravconsttype whichconst = wgs72;
-	char opsmode = 'a';
-	snprintf( satrec->satnum, sizeof( satrec->satnum ), "%d", obj->catalogNumber );
+//	snprintf( satrec->satnum, sizeof( satrec->satnum ), "%d", obj->catalogNumber );
 
 	// ----------------------------------------------------------------
 	// find sgp4epoch time of element set
@@ -345,12 +344,11 @@ static int ConvertTLEToSGP4( struct elsetrec * satrec, struct TLEObject * obj )
 	satrec->nddot = obj->meanMotion2;       //0.00000e0;
 	satrec->bstar = obj->dragTerm;          //0.11873e-3;
 	satrec->ndot = obj->meanMotion1;        //0.00000099;
-	satrec->elnum = obj->elementSetNumber;  //813;
-	satrec->revnum = obj->revolutionNumberAtEpoch; //22565;
-	satrec->classification = obj->objectName[0];
-	strncpy(satrec->intldesg, &obj->objectName[1], sizeof(satrec->intldesg) );
-
-	satrec->ephtype = 0;
+//	satrec->elnum = obj->elementSetNumber;  //813;
+//	satrec->revnum = obj->revolutionNumberAtEpoch; //22565;
+//	satrec->classification = obj->objectName[0];
+//	strncpy(satrec->intldesg, &obj->objectName[1], sizeof(satrec->intldesg) );
+//	satrec->ephtype = 0;
 
 	// convert units and initialize
 	satrec->no_kozai = satrec->no_kozai / xpdotp; //* rad/min
@@ -365,7 +363,7 @@ static int ConvertTLEToSGP4( struct elsetrec * satrec, struct TLEObject * obj )
 	// satrec.alta = satrec.a*(1.0 + satrec.ecco) - 1.0;
 	// satrec.altp = satrec.a*(1.0 - satrec.ecco) - 1.0;
 
-	sgp4init( whichconst, opsmode, satrec->satnum, satrec->jdsatepoch-2433281.5 /* ???!!?? */, satrec->bstar,
+	sgp4init( whichconst, 'a', /*satrec->satnum,*/ satrec->jdsatepoch-2433281.5 /* ???!!?? */, satrec->bstar,
 		 satrec->ndot, satrec->nddot, satrec->ecco, satrec->argpo, satrec->inclo, satrec->mo, satrec->no_kozai,
 		 satrec->nodeo, satrec );
 
