@@ -522,20 +522,20 @@ e, r, v = satellite.sgp4(jd, fr)
 
 	// Perf test
 	{
-		struct TLEObject * ss_THEMIS = 0;
-		struct elsetrec iss_THEMIS;
-		int numSS_THEMIS = 0;
+		struct TLEObject * ss = 0;
+		struct elsetrec iss;
+		int numss = 0;
 		r = ParseFileOrString( 0, ""
-			"THEMIS E                \n"
-			"1 30798U 07004E   24121.56859868 -.00000520  00000+0  00000+0 0  9999\n"
-			"2 30798   7.9414 283.2653 8322119 302.3633 341.0652  0.87832507 59071\n",
-			&ss_THEMIS, &numSS_THEMIS );
-		if( r || numSS_THEMIS != 1 )
+			"ISS (ZARYA)             \n"
+			"1 25544U 98067A   24118.69784154  .00029521  00000+0  51116-3 0  9995\n"
+			"2 25544  51.6397 205.7509 0003603 115.2045 341.2688 15.50662375450710\n",
+			&ss, &numss );
+		if( r || numss != 1 )
 		{
 			fprintf( stderr, "Error: SS can't load.\n" );
 			return -5;
 		}
-		if( ConvertTLEToSGP4( &iss_THEMIS, &ss_THEMIS[0], 0, 0, 0 ) )
+		if( ConvertTLEToSGP4( &iss, &ss[0], 0, 0, 0 ) )
 		{
 			printf( "failed to convert tle\n" );
 			return -5;
@@ -544,35 +544,63 @@ e, r, v = satellite.sgp4(jd, fr)
 		double dStartSetup = OGGetAbsoluteTime();
 		for( iter = 0; iter < 1000000; iter++ )
 		{
-			ConvertTLEToSGP4( &iss_THEMIS, &ss_THEMIS[0], 0, 0, 0 );
+			ConvertTLEToSGP4( &iss, &ss[0], 0, 0, 0 );
 		}
 		double dEndSetup = OGGetAbsoluteTime();
 		double dStartRun = OGGetAbsoluteTime();
 		for( iter = 0; iter < 1000000; iter++ )
 		{
-			double startmfe = (1714240800 + iter - ss_THEMIS->epoch)/60.0;
-			sgp4 (&iss_THEMIS, startmfe, ro,  vo);
+			double startmfe = (1714240800 + iter - ss->epoch)/60.0;
+			sgp4 (&iss, startmfe, ro,  vo);
 		}
 		double dEndRun = OGGetAbsoluteTime();
 		double dStartFull = OGGetAbsoluteTime();
 		for( iter = 0; iter < 1000000; iter++ )
 		{
-			double startmfe = (1714240800 + iter - ss_THEMIS->epoch)/60.0;
-			ConvertTLEToSGP4( &iss_THEMIS, &ss_THEMIS[0], 0, 0, 0 );
-			sgp4 (&iss_THEMIS, startmfe, ro,  vo);
+			double startmfe = (1714240800 + iter - ss->epoch)/60.0;
+			ConvertTLEToSGP4( &iss, &ss[0], 0, 0, 0 );
+			sgp4 (&iss, startmfe, ro,  vo);
 		}
 		double dEndFull = OGGetAbsoluteTime();
 		double dStartFullInit = OGGetAbsoluteTime();
 		for( iter = 0; iter < 1000000; iter++ )
 		{
-			double startmfe = (1714240800 + iter - ss_THEMIS->epoch)/60.0;
-			ConvertTLEToSGP4( &iss_THEMIS, &ss_THEMIS[0], startmfe, ro, vo );
+			double startmfe = (1714240800 + iter - ss->epoch)/60.0;
+			ConvertTLEToSGP4( &iss, &ss[0], startmfe, ro, vo );
 		}
 		double dEndFullInit = OGGetAbsoluteTime();
 		printf( "Init: %.4f us/iteration\n", dEndSetup - dStartSetup );
 		printf( "Run:  %.4f us/iteration\n", dEndRun - dStartRun );
 		printf( "Full: %.4f us/iteration\n", dEndFull - dStartFull );
 		printf( "FullAtInit: %.4f us/iteration\n", dEndFullInit - dStartFullInit );
+
+		numss = 0;
+		r = ParseFileOrString( 0, ""
+			"THEMIS E                \n"
+			"1 30798U 07004E   24121.56859868 -.00000520  00000+0  00000+0 0  9999\n"
+			"2 30798   7.9414 283.2653 8322119 302.3633 341.0652  0.87832507 59071\n",
+			&ss, &numss );
+		if( r || numss != 1 )
+		{
+			fprintf( stderr, "Error: THEMIS can't load.\n" );
+			return -5;
+		}
+		if( ConvertTLEToSGP4( &iss, &ss[0], 0, 0, 0 ) )
+		{
+			printf( "failed to convert tle\n" );
+			return -5;
+		}
+		dStartFullInit = OGGetAbsoluteTime();
+		for( iter = 0; iter < 1000000; iter++ )
+		{
+			double startmfe = (1714240800 + iter - ss->epoch)/60.0;
+			ConvertTLEToSGP4( &iss, &ss[0], startmfe, ro, vo );
+		}
+		dEndFullInit = OGGetAbsoluteTime();
+		printf( "Deep Space Full At Init: %.4f us/iteration\n", dEndFullInit - dStartFullInit );
+
+
+
 	}
 
 

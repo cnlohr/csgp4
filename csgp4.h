@@ -510,7 +510,9 @@ CSGP4_DECORATOR int ConvertTLEToSGP4( struct elsetrec * satrec, struct TLEObject
 	satrec->ndot = obj->meanMotion1;
 
 	// can use 'a' or 'i' methods.
-	sgp4init( whichconst, 'a', /*satrec->satnum,*/ obj->jdsatepoch-2433281.5 + obj->jdsatepochF /* ???!!?? */, satrec->bstar,
+	// *	epoch	   - epoch time in days from jan 0, 1950. 0 hr
+	// But, jdsatepoch is in days from 4713 bc
+	sgp4init( whichconst, 'a', /*satrec->satnum,*/ obj->jdsatepoch-2433281.5 + obj->jdsatepochF, satrec->bstar,
 		 satrec->ndot, satrec->nddot, satrec->ecco, satrec->argpo, satrec->inclo, satrec->mo, satrec->no_kozai,
 		 satrec->nodeo, initial_time, initial_r, initial_v, satrec );
 

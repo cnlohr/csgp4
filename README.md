@@ -6,8 +6,10 @@ Approximate values per-core on a AMD 5800X:
 
 | Operation | Run Time |
 | --- | --- |
-| Init | 0.4692 us/iteration |
-| Run |  0.2261 us/iteration |
+| Init | 0.3993 us/iteration |
+| Run |  0.2270 us/iteration |
+| Init and Run (ISS) | 0.4059 us/iteration |
+| Init and Run (Beyond Geostationary) | 1.0818 us/iteration |
 
 This is kind of rough, so USE AT YOUR OWN RISK. All I've done to validate is that the orbital tracks betwen this and the Python SGP4 lib come up similiarly.
 
