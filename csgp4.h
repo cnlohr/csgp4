@@ -177,22 +177,44 @@ CSGP4_DECORATOR void invjday
 	int * year, int * mon, int * day,
 	int * hr, int * minute, SGPF * RESTRICT second
 	);
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+/*
+CSGP4_DECORATOR void Dumpelsetrec( struct elsetrec * obj )
+{
+	printf( "obj.a        = %18.15f\n", obj->a );
+	printf( "obj.alta     = %18.15f\n", obj->alta );
+	printf( "obj.altp     = %18.15f\n", obj->altp );
+	printf( "obj.am       = %18.15f <<<<<<\n", obj->am );
+	printf( "obj.argpdot  = %18.15f\n", obj->argpdot );
+	printf( "obj.argpo    = %18.15f\n", obj->argpo );
+	printf( "obj.bstar    = %18.15f\n", obj->bstar );
+	printf( "obj.ecco     = %18.15f\n", obj->ecco );
+	printf( "obj.em       = %18.15f <<<<<<\n", obj->em );
+	printf( "obj.error    = %d\n", obj->error );
+	printf( "obj.gsto     = %18.15f (!!!!!)\n", obj->gsto );
+	printf( "obj.im       = %18.15f\n", obj->im );
+	printf( "obj.inclo    = %18.15f\n", obj->inclo );
+	printf( "obj.j2       = %18.15f\n", obj->j2 );
+	printf( "obj.j3       = %18.15f\n", obj->j3 );
+	printf( "obj.j3oj2    = %18.15f\n", obj->j3oj2 );
+	printf( "obj.j4       = %18.15f\n", obj->j4 );
+	printf( "obj.mdot     = %18.15f\n", obj->mdot );
+	printf( "obj.method   = %d\n", obj->method );
+	printf( "obj.mm       = %18.15f <<<<<<<\n", obj->mm );
+	printf( "obj.mo       = %18.15f\n", obj->mo );
+	printf( "obj.mu       = %18.15f\n", obj->mu );
+	printf( "obj.nddot    = %18.15f\n", obj->nddot );
+	printf( "obj.ndot     = %18.15f\n", obj->ndot );
+	printf( "obj.nm       = %18.15f <<<<<<<\n", obj->nm );
+	printf( "obj.no_kozai = %18.15f\n", obj->no_kozai );
+	printf( "obj.nodedot  = %18.15f\n", obj->nodedot );
+	printf( "obj.nodeo    = %18.15f\n", obj->nodeo );
+	printf( "obj.om       = %18.15f\n", obj->om );
+	printf( "obj.radiusearthkm = %18.15f\n", obj->radiusearthkm );
+	printf( "obj.t        = %18.15f\n", obj->t );
+	printf( "obj.tumin    = %18.15f\n", obj->tumin );
+	printf( "obj.xke      = %18.15f\n", obj->xke );
+}
+*/
 CSGP4_DECORATOR float ParseFixedEponential( const char * le, int lineno, int * )
 {
 	int i;
@@ -483,7 +505,8 @@ CSGP4_DECORATOR int ConvertTLEToSGP4( struct elsetrec * satrec, struct TLEObject
 	satrec->bstar = obj->dragTerm;
 	satrec->ndot = obj->meanMotion1;
 
-	sgp4init( whichconst, 'a', /*satrec->satnum,*/ obj->jdsatepoch-2433281.5 /* ???!!?? */, satrec->bstar,
+	// can use 'a' or 'i' methods.
+	sgp4init( whichconst, 'a', /*satrec->satnum,*/ obj->jdsatepoch-2433281.5 + obj->jdsatepochF /* ???!!?? */, satrec->bstar,
 		 satrec->ndot, satrec->nddot, satrec->ecco, satrec->argpo, satrec->inclo, satrec->mo, satrec->no_kozai,
 		 satrec->nodeo, satrec );
 
@@ -1312,7 +1335,6 @@ CSGP4_DECORATOR void initl
 	else
 		*gsto = gstime(epoch + 2433281.5);
 
-
 	//#include "debug5.cpp"
 }  // end initl
 
@@ -2024,6 +2046,7 @@ CSGP4_DECORATOR void sgp4
 		// sgp4fix add return
 		//return false;
 	}
+
 	am = POW((satrec->xke / nm), x2o3) * tempa * tempa;
 	nm = satrec->xke / POW(am, 1.5);
 	em = em - tempe;

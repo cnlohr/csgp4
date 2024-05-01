@@ -11,6 +11,11 @@ Approximate values per-core on a AMD 5800X:
 
 This is kind of rough, so USE AT YOUR OWN RISK. All I've done to validate is that the orbital tracks betwen this and the Python SGP4 lib come up similiarly.
 
+## TODO
+ * Figure out why Deep Space is off some.
+ * Can we avoid extra call to sgp4 in sgp4init?
+ * I meanMotion1, meanMotion2 used at all?
+
 ## Resources
 
  * SGP4 Transliterated from https://celestrak.org/software/vallado-sw.php, specifically https://celestrak.org/software/vallado/cs.zip
