@@ -67,7 +67,7 @@
 
 enum gravconsttype { wgs72old, wgs72, wgs84 }; // wgs72 is the standard and should be used with JSPOC TLEs
 
-// For SGP4
+// For SGP4 - this is the internal state (between init and prediction)
 struct elsetrec
 {
 	int error;
@@ -107,7 +107,8 @@ struct elsetrec
 #endif
 };
 
-// Our TLE Objects
+// Our TLE Objects - this is just the information available for individual tracked objects, provided by
+// data sources on the web.
 struct TLEObject
 {
 	int valid; // 0 for invalid, 1 for name, 2 for line 1, 4 for line 2 (Should be 7)
