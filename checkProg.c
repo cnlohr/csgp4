@@ -1,9 +1,7 @@
 #include <stdio.h>
 #include "os_generic.h"
 
-#define CSGP4_USE_FLOAT 0
-
-#include "sattrack.h"
+#include "csgp4.h"
 
 int main( int argc, char ** argv )
 {
@@ -112,8 +110,8 @@ int main( int argc, char ** argv )
 		double startmfe = (1714240800 - ss->epoch)/60.0;
 		sgp4 (&iss, startmfe, ro,  vo);
 
-		SGPF jd = iss.jdsatepoch + iss.jdsatepochF;
-		SGPF jdfrac = startmfe/1440.0;
+		SGPF jd = ss->jdsatepoch + floor(startmfe/1440.0);
+		SGPF jdfrac = fmod(startmfe/1440.0, 1.0) + ss->jdsatepochF;
 		int year, mon, day, hr, min;
 		SGPF sec;
 		invjday( jd, jdfrac, &year, &mon, &day, &hr, &min, &sec );
@@ -145,7 +143,7 @@ e, r, v = satellite.sgp4(jd, fr)
 		double pysgp4[3] = { -4582.664719456509, -4356.875102968861, 2475.1474001054107 };
 		double pysgp4v[3] = { 5.036095414394779, -2.2591278380385664, 5.3188560672302145 };
 		double rmse = sqrt( (ro[0] - pysgp4[0])*(ro[0] - pysgp4[0]) + (ro[1] - pysgp4[1]) * (ro[1] - pysgp4[1]) + ( ro[2] - pysgp4[2] ) * (ro[2] - pysgp4[2]) );
-		printf( "Python / Our SGP4 Disagreement: %f %f %f RMS: %f km\n",
+		printf( "Python / Our SGP4 Disagreement: %f %f %f RMS: %f km ... ",
 			 ro[0] - pysgp4[0], ro[1] - pysgp4[1], ro[2] - pysgp4[2],
 			rmse );
 		if( rmse < 0.005 )
@@ -159,7 +157,7 @@ e, r, v = satellite.sgp4(jd, fr)
 		}
 
 		double vrmse = sqrt( (vo[0] - pysgp4v[0])*(vo[0] - pysgp4v[0]) + (vo[1] - pysgp4v[1]) * (vo[1] - pysgp4v[1]) + ( vo[2] - pysgp4v[2] ) * (vo[2] - pysgp4v[2]) );
-		printf( "Python / Our SGP4 Disagreement: %f %f %f RMS: %f km/s\n",
+		printf( "Python / Our SGP4 Disagreement: %f %f %f RMS: %f km/s ... ",
 			 vo[0] - pysgp4v[0], vo[1] - pysgp4v[1], vo[2] - pysgp4v[2],
 			vrmse );
 		if( vrmse < 0.00005 )
@@ -172,33 +170,33 @@ e, r, v = satellite.sgp4(jd, fr)
 			return -6;
 		}
 
-/* And forwarded out a month... 
-jd, fr = jday(2024, 5, 27, 18, 0, 0)
+/* And forwarded out a day... 
+jd, fr = jday(2024, 4, 28, 18, 0, 0)
 e, r, v = satellite.sgp4(jd, fr)
 	>>> r
-	(5099.551520031815, 1808.2683576301836, -4104.365753671076)
+	(-5357.955394050937, -2614.4147285937256, 3236.6540120050795)
 	>>> v
-	(0.7417244009740825, 6.593295105250736, 3.825415802504736)
+	(0.04217831766517118, -6.0043223779983865, -4.77009742984791)
 */
 
-		startmfe = (1716832800 - ss->epoch)/60.0;
+		startmfe = (1714327200 - ss->epoch)/60.0;
 		sgp4 (&iss, startmfe, ro,  vo);
 
-		jd = iss.jdsatepoch + iss.jdsatepochF;
-		jdfrac = startmfe/1440.0;
+		jd = ss->jdsatepoch + floor(startmfe/1440.0);
+		jdfrac = fmod(startmfe/1440.0, 1.0) + ss->jdsatepochF;
 		invjday( jd, jdfrac, &year, &mon, &day, &hr, &min, &sec );
 		printf( "%f %f %04d %02d %02d %02d:%02d:%05.02f\n", jd, jdfrac, year, mon, day, hr, min, sec );
 		printf( "[Δt%14.8f] %16.8f %16.8f %16.8f %16.8f \n                   %16.9f %16.9f %16.9f %16.9f\n",
 			startmfe,ro[0],ro[1],ro[2], sqrt(ro[0]*ro[0]+ro[1]*ro[1]+ro[2]*ro[2]),vo[0],vo[1],vo[2], sqrt(vo[0]*vo[0]+vo[1]*vo[1]+vo[2]*vo[2]));
 
-		pysgp4[0] = 5099.551520031815;
-		pysgp4[1] = 1808.2683576301836;
-		pysgp4[2] = -4104.365753671076;
-		pysgp4v[0] = 0.7417244009740825;
-		pysgp4v[1] = 6.593295105250736;
-		pysgp4v[2] = 3.825415802504736;
+		pysgp4[0] = 4435.874337686209; 
+		pysgp4[1] = 4191.117631955163;
+		pysgp4[2] = -2991.3331751931737;
+		pysgp4v[0] = -5.401088744185615;
+		pysgp4v[1] = 2.177125902892223;
+		pysgp4v[2] = -4.972896867609246;
 		rmse = sqrt( (ro[0] - pysgp4[0])*(ro[0] - pysgp4[0]) + (ro[1] - pysgp4[1]) * (ro[1] - pysgp4[1]) + ( ro[2] - pysgp4[2] ) * (ro[2] - pysgp4[2]) );
-		printf( "Python / Our SGP4 Disagreement: %f %f %f RMS: %f km\n",
+		printf( "Python / Our SGP4 Disagreement: %f %f %f RMS: %f km ... ",
 			 ro[0] - pysgp4[0], ro[1] - pysgp4[1], ro[2] - pysgp4[2],
 			rmse );
 		if( rmse < 0.005 + CSGP4_USE_FLOAT * 10 )
@@ -212,7 +210,59 @@ e, r, v = satellite.sgp4(jd, fr)
 		}
 
 		vrmse = sqrt( (vo[0] - pysgp4v[0])*(vo[0] - pysgp4v[0]) + (vo[1] - pysgp4v[1]) * (vo[1] - pysgp4v[1]) + ( vo[2] - pysgp4v[2] ) * (vo[2] - pysgp4v[2]) );
-		printf( "Python / Our SGP4 Disagreement: %f %f %f RMS: %f km/s\n",
+		printf( "Python / Our SGP4 Disagreement: %f %f %f RMS: %f km/s ... ",
+			 vo[0] - pysgp4v[0], vo[1] - pysgp4v[1], vo[2] - pysgp4v[2],
+			vrmse );
+		if( vrmse < 0.00005 + CSGP4_USE_FLOAT * 10 )
+		{
+			printf( "PASS\n" );
+		}
+		else
+		{
+			fprintf( stderr, "Error: SGP Algorithm disagrees in speed (%f).  Fail\n", vrmse );
+			return -6;
+		}
+/* And forwarded out a month... 
+jd, fr = jday(2024, 5, 27, 18, 0, 0)
+e, r, v = satellite.sgp4(jd, fr)
+	>>> r
+	(5099.551520031815, 1808.2683576301836, -4104.365753671076)
+	>>> v
+	(0.7417244009740825, 6.593295105250736, 3.825415802504736)
+*/
+
+		startmfe = (1716832800 - ss->epoch)/60.0;
+		sgp4 (&iss, startmfe, ro,  vo);
+
+		jd = ss->jdsatepoch + floor(startmfe/1440.0);
+		jdfrac = fmod(startmfe/1440.0, 1.0) + ss->jdsatepochF;
+		invjday( jd, jdfrac, &year, &mon, &day, &hr, &min, &sec );
+		printf( "%f %f %04d %02d %02d %02d:%02d:%05.02f\n", jd, jdfrac, year, mon, day, hr, min, sec );
+		printf( "[Δt%14.8f] %16.8f %16.8f %16.8f %16.8f \n                   %16.9f %16.9f %16.9f %16.9f\n",
+			startmfe,ro[0],ro[1],ro[2], sqrt(ro[0]*ro[0]+ro[1]*ro[1]+ro[2]*ro[2]),vo[0],vo[1],vo[2], sqrt(vo[0]*vo[0]+vo[1]*vo[1]+vo[2]*vo[2]));
+
+		pysgp4[0] = 5099.551520031815;
+		pysgp4[1] = 1808.2683576301836;
+		pysgp4[2] = -4104.365753671076;
+		pysgp4v[0] = 0.7417244009740825;
+		pysgp4v[1] = 6.593295105250736;
+		pysgp4v[2] = 3.825415802504736;
+		rmse = sqrt( (ro[0] - pysgp4[0])*(ro[0] - pysgp4[0]) + (ro[1] - pysgp4[1]) * (ro[1] - pysgp4[1]) + ( ro[2] - pysgp4[2] ) * (ro[2] - pysgp4[2]) );
+		printf( "Python / Our SGP4 Disagreement: %f %f %f RMS: %f km ... ",
+			 ro[0] - pysgp4[0], ro[1] - pysgp4[1], ro[2] - pysgp4[2],
+			rmse );
+		if( rmse < 0.005 + CSGP4_USE_FLOAT * 10 )
+		{
+			printf( "PASS\n" );
+		}
+		else
+		{
+			fprintf( stderr, "Error: SGP Algorithm disagrees in position.  Fail\n" );
+			return -5;
+		}
+
+		vrmse = sqrt( (vo[0] - pysgp4v[0])*(vo[0] - pysgp4v[0]) + (vo[1] - pysgp4v[1]) * (vo[1] - pysgp4v[1]) + ( vo[2] - pysgp4v[2] ) * (vo[2] - pysgp4v[2]) );
+		printf( "Python / Our SGP4 Disagreement: %f %f %f RMS: %f km/s ... ",
 			 vo[0] - pysgp4v[0], vo[1] - pysgp4v[1], vo[2] - pysgp4v[2],
 			vrmse );
 		if( vrmse < 0.00005 + CSGP4_USE_FLOAT * 10 )
@@ -225,6 +275,19 @@ e, r, v = satellite.sgp4(jd, fr)
 			return -6;
 		}
 
+
+
+
+
+
+
+
+
+
+
+
+
+#if 1
 
 		// Perf test
 
@@ -242,8 +305,18 @@ e, r, v = satellite.sgp4(jd, fr)
 			sgp4 (&iss, startmfe, ro,  vo);
 		}
 		double dEndRun = OGGetAbsoluteTime();
+		double dStartFull = OGGetAbsoluteTime();
+		for( iter = 0; iter < 1000000; iter++ )
+		{
+			double startmfe = (1714240800 + iter - ss->epoch)/60.0;
+			ConvertTLEToSGP4( &iss, &ss[0] );
+			sgp4 (&iss, startmfe, ro,  vo);
+		}
+		double dEndFull = OGGetAbsoluteTime();
 		printf( "Init: %.4f us/iteration\n", dEndSetup - dStartSetup );
 		printf( "Run:  %.4f us/iteration\n", dEndRun - dStartRun );
+		printf( "Full: %.4f us/iteration\n", dEndFull - dStartFull );
+#endif
 	}
 
 

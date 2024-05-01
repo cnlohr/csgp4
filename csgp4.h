@@ -4,11 +4,17 @@
 // I (Charles Lohr) just ported the code back to C from C#.
 // I cannot guaratee this code for precision or fitness beyond my simple tests in associated files.
 // USE AT YOUR OWN RISK
+//
+//
+// Please note, all SGP-Specific code is in the second part of the file.  Other features like
+// TLE reading code is in the first part.
+#ifndef _CSGP4_H
+#define _CSGP4_H
 
-#ifndef _SGP4_H
-#define _SGP4_H
-
+#include <stdint.h>
 #include <math.h>
+#include <string.h>
+#include <stdlib.h>
 
 #define RESTRICT restrict
 
@@ -22,6 +28,14 @@
 #ifndef CSGP4_INIT
 #define CSGP4_INIT 1
 #endif
+
+
+#ifndef CSGP4_DECORATOR
+#define CSGP4_DECORATOR static
+#endif
+
+
+
 
 #if CSGP4_USE_FLOAT
 
@@ -48,8 +62,12 @@
 
 #endif
 
+
+
+
 enum gravconsttype { wgs72old, wgs72, wgs84 }; // wgs72 is the standard and should be used with JSPOC TLEs
 
+// For SGP4
 struct elsetrec
 {
 	int error;
@@ -84,13 +102,399 @@ struct elsetrec
 
 
 #if CSGP4_INIT
-	int epochyr/*, epochtynumrev*/;
 	SGPF a, alta;
-	SGPF  no_kozai,rcse,ndot,nddot,jdsatepochF, jdsatepoch,epochdays,altp;
+	SGPF  no_kozai,rcse,ndot,nddot,altp;
 #endif
 };
 
+// Our TLE Objects
+struct TLEObject
+{
+	int valid; // 0 for invalid, 1 for name, 2 for line 1, 4 for line 2 (Should be 7)
 
+	// This is what "should" get passed around. (Below this line is actual useful data)
+
+	char objectName[28]; // Actually maxes at 25; [0] is the classification designator, but this pads
+	char internationalDesignator[12]; // Actually maxes at 8, but we pad.
+
+	SGPF jdsatepochF;
+	SGPF jdsatepoch;
+	SGPF meanMotion1;
+	SGPF meanMotion2; // I.e. 16003-4 = 0.000016003
+	SGPF dragTerm; // I.e. 34469-3 = 0.00034469
+	SGPF inclination;
+	SGPF rightAscensionOfTheAscendingNode;
+	SGPF eccentricity; // 0115263 = 0.0115263
+	SGPF argumentOfPerigee;
+	SGPF meanAnomaly;
+	SGPF meanMotion;
+
+	// Data that need not be passed around.
+	int revolutionNumberAtEpoch;
+	int elementSetNumber;
+	uint32_t catalogNumber; 
+	double epoch; // In Unix Time.
+};
+
+
+CSGP4_DECORATOR double ConvertEpochYearAndDayToUnix( int epochYear, double epochDay );
+
+CSGP4_DECORATOR int ParseFileOrString( FILE * f, const char * sLineSet, struct TLEObject ** objects, int * numObjects );
+
+CSGP4_DECORATOR int ConvertTLEToSGP4( struct elsetrec * satrec, struct TLEObject * obj );
+
+CSGP4_DECORATOR void sgp4
+	 (
+	   struct elsetrec * satrec, SGPF tsince,
+	   SGPF r[3], SGPF v[3]
+	 );
+
+
+CSGP4_DECORATOR void sgp4init
+	 (
+	   enum gravconsttype whichconst, char opsmode/*, char * satn*/, SGPF epoch,
+	   SGPF xbstar, SGPF xndot, SGPF xnddot, SGPF xecco, SGPF xargpo,
+	   SGPF xinclo, SGPF xmo, SGPF xno_kozai,
+	   SGPF xnodeo, struct elsetrec * satrec
+	 );
+
+CSGP4_DECORATOR void days2mdhms
+	(
+	int year, SGPF days,
+	int * mon, int * day, int * hr, int * minute, SGPF * RESTRICT second
+	);
+
+CSGP4_DECORATOR void jday
+		(
+		  int year, int mon, int day, int hr, int minute, SGPF sec,
+		  SGPF * RESTRICT jd, SGPF * RESTRICT jdFrac
+		);
+
+CSGP4_DECORATOR void invjday
+	(
+	SGPF jd, SGPF jdFrac,
+	int * year, int * mon, int * day,
+	int * hr, int * minute, SGPF * RESTRICT second
+	);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+CSGP4_DECORATOR float ParseFixedEponential( const char * le, int lineno, int * )
+{
+	int i;
+
+	// Get rid of white space.
+	while( le[0] == ' ' ) le++;
+
+	int len = strlen( le );
+	int eportion = 0;
+	int iportion = 0;
+	for( i = len-1; i >= 0; i-- )
+	{
+		char c = le[i];
+		if( c == '-' || c == '+' )
+		{
+			eportion = atoi( le + i );
+			break;
+		}
+	}
+	int iportiondigits = i;
+	if( le[0] == '-' ) iportiondigits--;
+	if( le[0] == '+' || le[0] == ' ' ) { iportiondigits--; le++; }
+	iportion = atoi( le );
+	float ret = iportion;
+	int shiftdown = iportiondigits - eportion;
+	for( i = 0; i < shiftdown; i++ )
+	{
+		ret /= 10;
+	}
+	for( i = 0; i < -shiftdown; i++ )
+	{
+		ret *= 10;
+	}
+	return ret;
+}
+
+
+CSGP4_DECORATOR double ConvertEpochYearAndDayToUnix( int epochYear, double epochDay )
+{
+	epochYear = ( epochYear > 56 ) ? ( epochYear + 1900 ) : ( epochYear + 2000 );
+	int year;
+	int day = 0;
+	for( year = 1970; year < epochYear; year++ )
+	{
+		if (year % 400 == 0) {
+			day += 366;
+		} else if (year % 100 == 0) {
+			day += 365;
+		} else if (year % 4 == 0) {
+			day += 366;
+		} else {
+			day += 365;
+		}
+	}
+
+	epochDay--; // It's 1 indexed.
+
+	return ( day + epochDay ) * 60 * 60 * 24;
+}
+
+
+CSGP4_DECORATOR int ParseFileOrString( FILE * f, const char * sLineSet, struct TLEObject ** objects, int * numObjects )
+{
+	int i;
+	ssize_t s;
+	char line[256];
+	char * lineptr = line;
+	size_t n = sizeof( line ) - 1;
+	int lineno = 0;
+
+	int thisValid = 0;
+	int aborted = 0;
+	int ret = 0;
+	struct TLEObject * thisObject;
+
+	const double deg2rad  =   SGPPI / 180.0;         //   0.0174532925199433
+	const double xpdotp   =  1440.0 / (2.0 *SGPPI);  // 229.1831180523293
+
+	while( 1 )
+	{
+		if( f )
+		{
+			s = getline( &lineptr, &n, f );
+			if( s < 0 )
+				break;
+		}
+		else if( sLineSet )
+		{
+			char c;
+			s = 0;
+			while( ( c = *(sLineSet++) ) )			{
+				line[s++] = c;
+				if( c == '\n' ) break;
+			}
+			if( c == 0 ) break;
+			line[s] = 0;
+			n = s;
+		}
+		if( line[s-1] == '\r' || line[s-1] == '\n' ) s--;
+		if( line[s-1] == '\r' || line[s-1] == '\n' ) s--;
+		lineno++;
+		if( thisValid == 0 )
+		{
+			int nObject = *numObjects;
+			if( !aborted )
+				++*numObjects;
+			else
+				ret = -5;
+
+			aborted = 0;
+			*objects = realloc( *objects, sizeof( **objects ) * *numObjects );
+			thisObject = *objects + nObject;
+			memset( thisObject, 0, sizeof( *thisObject ) );
+			thisObject->objectName[0] = ' ';
+			thisObject->objectName[1] = ' ';
+			memcpy( thisObject->objectName + 2, line, 24 );
+
+			int i;
+			for( i = 24; i > 0; i-- ) 
+				if( thisObject->objectName[i] == ' ' )
+					thisObject->objectName[i] = 0;
+				else
+					break;
+
+			thisValid = 1;
+			continue;
+		}
+
+		if( line[1] != ' ' )
+		{
+			fprintf( stderr, "Parsing error on line %d - unexpected char at space 1\n", lineno );
+			aborted = 1;
+			continue; 
+		}
+
+		int checksum_check, checksum;
+
+		switch( line[0] )
+		{
+		case '1':
+			// 1 25544U 98067A   24108.06679608  .00019473  00000+0  34469-3 0  9999
+			if( s < 68 )
+			{
+				fprintf( stderr, "Parsing error on line %d; too short\n", lineno );
+				aborted = 1;
+				continue;
+			}
+			checksum_check = 0;
+			for( i = 0; i < s-1; i++ )
+			{
+				char c = line[i];
+				if( c == '-' ) checksum_check++;
+				if( c >= '0' && c <= '9' ) checksum_check += c - '0';
+			}
+
+
+			thisObject->objectName[0] = line[7];
+			line[7] = 0;
+			thisObject->catalogNumber = atoi( line + 2 );
+			memcpy( thisObject->internationalDesignator, line + 9, 8 );
+
+			checksum = atoi( line + 68 );
+			line[68] = 0;
+			if( checksum != checksum_check % 10 )
+			{
+				fprintf( stderr, "Checkum error on line %d.  %d != %d\n", lineno, checksum, checksum_check % 10 );
+				aborted = 1;
+				continue;
+			}
+
+			thisObject->elementSetNumber = atoi( line + 64 );
+			line[61] = 0;
+			thisObject->dragTerm = ParseFixedEponential( line + 53, lineno, &aborted );
+			line[52] = 0;
+			thisObject->meanMotion2 = ParseFixedEponential( line + 44, lineno, &aborted ) / (xpdotp*1440.0*1440);
+			line[43] = 0;
+			thisObject->meanMotion1 = atof( line + 33 ) / (xpdotp*1440.0);
+			line[32] = 0;
+			double epochDay = atof( line + 20 );
+			line[20] = 0;
+			double epochYear = atoi( line + 18 );
+			line[17] = 0;
+
+			// ----------------------------------------------------------------
+			// find sgp4epoch time of element set
+			// remember that sgp4 uses units of days from 0 jan 1950 (sgp4epoch)
+			// and minutes from the epoch (time)
+			// ----------------------------------------------------------------
+
+			// ---------------- temp fix for years from 1957-2056 -------------------
+			// --------- correct fix will occur when year is 4-digit in tle ---------
+			int mon, day, hr, minute, year;
+			SGPF sec;
+			if (epochYear < 57)
+				year = epochYear + 2000;
+			else
+				year = epochYear + 1900;
+			days2mdhms(year, epochDay, &mon, &day, &hr, &minute, &sec);
+			jday(year, mon, day, hr, minute, sec, &thisObject->jdsatepoch, &thisObject->jdsatepochF);
+			thisObject->epoch = ConvertEpochYearAndDayToUnix( epochYear, epochDay );
+			break;
+		case '2':
+			// 2 25544  51.6384 258.4693 0004986  70.1481  42.8477 15.50291806449066
+			thisValid = 0; // Finalizing this record.
+
+			if( s < 68 )
+			{
+				fprintf( stderr, "Parsing error on line %d; too short\n", lineno );
+				aborted = 1;
+				continue;
+			}
+			checksum_check = 0;
+			for( i = 0; i < s-1; i++ )
+			{
+				char c = line[i];
+				if( c == '-' ) checksum_check++;
+				if( c >= '0' && c <= '9' ) checksum_check += c - '0';
+			}
+
+			int catalogNumber = atoi( line + 2 );
+			if( thisObject->catalogNumber != catalogNumber )
+			{
+				fprintf( stderr, "Error: Mismatching catalog numbers at line %d\n", lineno );
+				aborted = 1;
+			}
+
+			thisObject->objectName[0] = line[7];
+			memcpy( thisObject->internationalDesignator, line + 9, 8 );
+
+			checksum = atoi( line + 68 );
+			line[68] = 0;
+			if( checksum != checksum_check % 10 )
+			{
+				fprintf( stderr, "Checkum error on line %d.  %d != %d\n", lineno, checksum, checksum_check % 10 );
+				aborted = 1;
+				continue;
+			}
+
+			thisObject->revolutionNumberAtEpoch = atoi( line + 63 );
+			line[63] = 0;
+			thisObject->meanMotion = atof( line + 52 ) / xpdotp;
+			line[51] = 0;
+			thisObject->meanAnomaly = atof( line + 43 ) * deg2rad;
+			line[42] = 0;
+			thisObject->argumentOfPerigee = atof( line + 34 ) * deg2rad;
+			line[33] = 0;
+
+			thisObject->eccentricity = atof( line + 26 );
+			if( line[26] == '-' ) thisObject->eccentricity *= 0.000001;
+			else                  thisObject->eccentricity *= 0.0000001;
+			line[25] = 0;
+
+			thisObject->rightAscensionOfTheAscendingNode = atof( line + 17 ) * deg2rad;
+			line[16] = 0;
+			thisObject->inclination = atof( line + 8 ) * deg2rad ;
+			line[7] = 0;
+			thisObject->valid = 1;
+
+			break;
+		default:
+			fprintf( stderr, "Unknown record type %c on line %d\n", line[0], lineno );
+		}
+	}
+
+	// If last element is complete, drop it.
+	if( *numObjects && thisValid ) --*numObjects;
+
+	return ret;
+}
+
+
+
+
+#if CSGP4_INIT
+
+CSGP4_DECORATOR int ConvertTLEToSGP4( struct elsetrec * satrec, struct TLEObject * obj )
+{ 
+	if( !obj->valid ) return -1;
+
+	enum gravconsttype whichconst = wgs72;
+	satrec->no_kozai = obj->meanMotion;
+	satrec->ecco = obj->eccentricity;
+	satrec->inclo = obj->inclination;
+	satrec->nodeo = obj->rightAscensionOfTheAscendingNode;
+	satrec->argpo = obj->argumentOfPerigee;
+	satrec->mo = obj->meanAnomaly;
+	satrec->nddot = obj->meanMotion2;
+	satrec->bstar = obj->dragTerm;
+	satrec->ndot = obj->meanMotion1;
+
+	sgp4init( whichconst, 'a', /*satrec->satnum,*/ obj->jdsatepoch-2433281.5 /* ???!!?? */, satrec->bstar,
+		 satrec->ndot, satrec->nddot, satrec->ecco, satrec->argpo, satrec->inclo, satrec->mo, satrec->no_kozai,
+		 satrec->nodeo, satrec );
+
+	return 0;
+}
+
+#endif
+
+
+//////////////////////////////////////////////////////////////////////////////
+// SGP4 Code below here //////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////
 
 /* -----------------------------------------------------------------------------
 *
@@ -119,7 +523,7 @@ struct elsetrec
 *	vallado	   2004, 191, eq 3-45
 * --------------------------------------------------------------------------- */
 
-static SGPF gstime
+CSGP4_DECORATOR SGPF gstime
 		(
 		  SGPF jdut1
 		)
@@ -172,7 +576,7 @@ static SGPF gstime
 *	vallado, crawford, hujsak, kelso  2006
   --------------------------------------------------------------------------- */
 
-static void getgravconst
+CSGP4_DECORATOR void getgravconst
 	 (
 	  enum gravconsttype whichconst,
 	  SGPF * RESTRICT tumin,
@@ -313,7 +717,7 @@ static void getgravconst
 *	vallado, crawford, hujsak, kelso  2006
   ----------------------------------------------------------------------------*/
 
-static void dspace
+CSGP4_DECORATOR void dspace
 	 (
 	   int irez,
 	   SGPF d2201, SGPF d2211, SGPF d3210, SGPF d3222, SGPF d4410,
@@ -550,7 +954,7 @@ static void dspace
 *	vallado, crawford, hujsak, kelso  2006
   ----------------------------------------------------------------------------*/
 
-static void dsinit
+CSGP4_DECORATOR void dsinit
 	 (
 	// sgp4fix just send in xke as a constant and eliminate getgravconst call
 	// gravconsttype whichconst, 
@@ -830,7 +1234,7 @@ static void dsinit
 *	vallado, crawford, hujsak, kelso  2006
   ----------------------------------------------------------------------------*/
 
-static void initl
+CSGP4_DECORATOR void initl
 	 (
 	// sgp4fix satn not needed. include in satrec in case needed later  
 	// int satn,	  
@@ -982,7 +1386,7 @@ static void initl
 *	vallado, crawford, hujsak, kelso  2006
   ----------------------------------------------------------------------------*/
 
-static void dscom
+CSGP4_DECORATOR void dscom
 	 (
 	   SGPF epoch, SGPF ep, SGPF argpp, SGPF tc, SGPF inclp,
 	   SGPF nodep, SGPF np,
@@ -1293,7 +1697,7 @@ static void dscom
 *	vallado, crawford, hujsak, kelso  2006
   ----------------------------------------------------------------------------*/
 
-static void dpper
+CSGP4_DECORATOR void dpper
 	 (
 	   SGPF e3, SGPF ee2, SGPF peo, SGPF pgho, SGPF pho,
 	   SGPF pinco, SGPF plo, SGPF se2, SGPF se3, SGPF sgh2,
@@ -1511,7 +1915,7 @@ static void dpper
 *	vallado, crawford, hujsak, kelso  2006
   ----------------------------------------------------------------------------*/
 
-static void sgp4
+CSGP4_DECORATOR void sgp4
 	 (
 	   struct elsetrec * satrec, SGPF tsince,
 	   SGPF r[3], SGPF v[3]
@@ -1906,7 +2310,7 @@ static void sgp4
 *	vallado, crawford, hujsak, kelso  2006
   ----------------------------------------------------------------------------*/
 
-static void sgp4init
+CSGP4_DECORATOR void sgp4init
 	 (
 	   enum gravconsttype whichconst, char opsmode/*, char * satn*/, SGPF epoch,
 	   SGPF xbstar, SGPF xndot, SGPF xnddot, SGPF xecco, SGPF xargpo,
@@ -2244,7 +2648,7 @@ static void sgp4init
 *    none.
 * --------------------------------------------------------------------------- */
 
-static void days2mdhms
+CSGP4_DECORATOR void days2mdhms
 	(
 	int year, SGPF days,
 	int * mon, int * day, int * hr, int * minute, SGPF * RESTRICT second
@@ -2315,7 +2719,7 @@ static void days2mdhms
 *    vallado       2007, 189, alg 14, ex 3-14
 * --------------------------------------------------------------------------- */
 
-static void jday
+CSGP4_DECORATOR void jday
 		(
 		  int year, int mon, int day, int hr, int minute, SGPF sec,
 		  SGPF * RESTRICT jd, SGPF * RESTRICT jdFrac
@@ -2382,7 +2786,7 @@ static void jday
 *    vallado       2013, 202, alg 22, ex 3-13
 * --------------------------------------------------------------------------- */
 
-static void invjday
+CSGP4_DECORATOR void invjday
 	(
 	SGPF jd, SGPF jdFrac,
 	int * year, int * mon, int * day,

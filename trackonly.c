@@ -1,6 +1,5 @@
 #include <stdio.h>
 
-
 #define CSGP4_USE_FLOAT 0
 #define CSGP4_INIT 0
 
