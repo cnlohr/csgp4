@@ -102,8 +102,12 @@ struct elsetrec
 
 
 #if CSGP4_INIT
-	SGPF a, alta;
-	SGPF  no_kozai,rcse,ndot,nddot,altp;
+	SGPF a /* Not actually used in algo but fun to look at */;
+	SGPF no_kozai,rcse;
+	SGPF ndot /* Not actually used in algo*/;
+	SGPF nddot /* Not actually used in algo*/;
+	SGPF alta /* Not used in algo, but cool anyway to look at */;
+	SGPF altp /* Not used in algo, but cool anyway to look at */;
 #endif
 };
 
@@ -120,8 +124,8 @@ struct TLEObject
 
 	SGPF jdsatepochF;
 	SGPF jdsatepoch;
-	SGPF meanMotion1;
-	SGPF meanMotion2; // I.e. 16003-4 = 0.000016003
+	SGPF meanMotion1; // Not actually used in algo.
+	SGPF meanMotion2; // Not actually used in algo.
 	SGPF dragTerm; // I.e. 34469-3 = 0.00034469
 	SGPF inclination;
 	SGPF rightAscensionOfTheAscendingNode;
@@ -2398,7 +2402,7 @@ CSGP4_DECORATOR void sgp4init
 	satrec->xli = 0.0; satrec->xni = 0.0;
 
 	/* ------------------------ earth constants ----------------------- */
-	// sgp4fix identify constants and allow alternate values
+	// sgp4fix identify constants and allow aernate values
 	// this is now the only call for the constants
 	getgravconst(whichconst, &satrec->tumin, &satrec->mu, &satrec->radiusearthkm, &satrec->xke,
 				  &satrec->j2, &satrec->j3, &satrec->j4, &satrec->j3oj2);

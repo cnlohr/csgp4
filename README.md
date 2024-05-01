@@ -14,7 +14,7 @@ This is kind of rough, so USE AT YOUR OWN RISK. All I've done to validate is tha
 ## TODO
  * Figure out why Deep Space is off some.
  * Can we avoid extra call to sgp4 in sgp4init?
- * I meanMotion1, meanMotion2 used at all?
+ * Is meanMotion1, meanMotion2 used at all?  Can we just remove them?  (and ndot)
 
 ## Resources
 
