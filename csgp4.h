@@ -142,7 +142,7 @@ CSGP4_DECORATOR double ConvertEpochYearAndDayToUnix( int epochYear, double epoch
 
 CSGP4_DECORATOR int ParseFileOrString( FILE * f, const char * sLineSet, struct TLEObject ** objects, int * numObjects );
 
-CSGP4_DECORATOR int ConvertTLEToSGP4( struct elsetrec * satrec, struct TLEObject * obj );
+CSGP4_DECORATOR int ConvertTLEToSGP4( struct elsetrec * satrec, struct TLEObject * obj, SGPF initial_time, SGPF * initial_r, SGPF* initial_v );
 
 CSGP4_DECORATOR void sgp4
 	 (
@@ -156,7 +156,7 @@ CSGP4_DECORATOR void sgp4init
 	   enum gravconsttype whichconst, char opsmode/*, char * satn*/, SGPF epoch,
 	   SGPF xbstar, SGPF xndot, SGPF xnddot, SGPF xecco, SGPF xargpo,
 	   SGPF xinclo, SGPF xmo, SGPF xno_kozai,
-	   SGPF xnodeo, struct elsetrec * satrec
+	   SGPF xnodeo, SGPF initial_time, SGPF * initial_r, SGPF * initial_v, struct elsetrec * satrec
 	 );
 
 CSGP4_DECORATOR void days2mdhms
@@ -490,7 +490,7 @@ CSGP4_DECORATOR int ParseFileOrString( FILE * f, const char * sLineSet, struct T
 
 #if CSGP4_INIT
 
-CSGP4_DECORATOR int ConvertTLEToSGP4( struct elsetrec * satrec, struct TLEObject * obj )
+CSGP4_DECORATOR int ConvertTLEToSGP4( struct elsetrec * satrec, struct TLEObject * obj, SGPF initial_time, SGPF * initial_r, SGPF* initial_v )
 { 
 	if( !obj->valid ) return -1;
 
@@ -508,7 +508,7 @@ CSGP4_DECORATOR int ConvertTLEToSGP4( struct elsetrec * satrec, struct TLEObject
 	// can use 'a' or 'i' methods.
 	sgp4init( whichconst, 'a', /*satrec->satnum,*/ obj->jdsatepoch-2433281.5 + obj->jdsatepochF /* ???!!?? */, satrec->bstar,
 		 satrec->ndot, satrec->nddot, satrec->ecco, satrec->argpo, satrec->inclo, satrec->mo, satrec->no_kozai,
-		 satrec->nodeo, satrec );
+		 satrec->nodeo, initial_time, initial_r, initial_v, satrec );
 
 	return 0;
 }
@@ -2339,7 +2339,7 @@ CSGP4_DECORATOR void sgp4init
 	   enum gravconsttype whichconst, char opsmode/*, char * satn*/, SGPF epoch,
 	   SGPF xbstar, SGPF xndot, SGPF xnddot, SGPF xecco, SGPF xargpo,
 	   SGPF xinclo, SGPF xmo, SGPF xno_kozai,
-	   SGPF xnodeo, struct elsetrec * satrec
+	   SGPF xnodeo, SGPF initial_time, SGPF * initial_r, SGPF * initial_v, struct elsetrec * satrec
 	 )
 {
 	/* --------------------- local variables ------------------------ */
@@ -2358,8 +2358,6 @@ CSGP4_DECORATOR void sgp4init
 		 z21, z22, z23, z31, z32, z33,
 		 qzms2t, ss, x2o3,
 		 delmotemp, qzms2ttemp, qzms24temp;
-	SGPF r[3];
-	SGPF v[3];
 
 	/* ------------------------ initialization --------------------- */
 	// sgp4fix divisor for divide by zero check on inclination
@@ -2619,7 +2617,11 @@ CSGP4_DECORATOR void sgp4init
 	/* finally propagate to zero epoch to initialize all others. */
 	// sgp4fix take out check to let satellites process until they are actually below earth surface
 	//	   if(satrec->error == 0)
-	sgp4(satrec, 0.0, r, v);
+	SGPF r[3];
+	SGPF v[3];
+	if( !initial_r ) initial_r = r;
+	if( !initial_v ) initial_v = v;
+	sgp4(satrec, initial_time, initial_r, initial_v);
 
 	satrec->init = 'n';
 

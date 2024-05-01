@@ -43,14 +43,14 @@ int main( int argc, char ** argv )
 
 
 
-	if( 0 )
+	if( 1 )
 	{
 		struct TLEObject * o = &obj[0];
 
 		// Let's just pick out ISS (Zarya)	
 		struct elsetrec satrec;
 
-		if( ConvertTLEToSGP4( &satrec, o ) )
+		if( ConvertTLEToSGP4( &satrec, o, 0, 0, 0 ) )
 		{
 			printf( "failed to convert tle\n" );
 			return -5;
@@ -106,7 +106,7 @@ int main( int argc, char ** argv )
 			fprintf( stderr, "Error: SS can't load.\n" );
 			return -5;
 		}
-		if( ConvertTLEToSGP4( &iss, &ss[0] ) )
+		if( ConvertTLEToSGP4( &iss, &ss[0], 0, 0, 0 ) )
 		{
 			printf( "failed to convert tle\n" );
 			return -5;
@@ -123,7 +123,6 @@ int main( int argc, char ** argv )
 		printf( "%f %f %04d %02d %02d %02d:%02d:%05.02f\n", jd, jdfrac, year, mon, day, hr, min, sec );
 		printf( "[Δt%14.8f] %16.8f %16.8f %16.8f %16.8f \n                   %16.9f %16.9f %16.9f %16.9f\n",
 			startmfe,ro[0],ro[1],ro[2], sqrt(ro[0]*ro[0]+ro[1]*ro[1]+ro[2]*ro[2]),vo[0],vo[1],vo[2], sqrt(vo[0]*vo[0]+vo[1]*vo[1]+vo[2]*vo[2]));
-		printf( "NOTE (For anyone curious): Error seems to be primarily due to timing issues.\n" );
 
 		/*
 		  These are from the following python code:
@@ -206,7 +205,7 @@ e, r, v = satellite.sgp4(jd, fr)
 			fprintf( stderr, "Error: SS can't load.\n" );
 			return -5;
 		}
-		if( ConvertTLEToSGP4( &iss, &ss[0] ) )
+		if( ConvertTLEToSGP4( &iss, &ss[0], 0, 0, 0 ) )
 		{
 			printf( "failed to convert tle\n" );
 			return -5;
@@ -262,7 +261,7 @@ e, r, v = satellite.sgp4(jd, fr)
 	}
 
 
-// Forward a day, but, with Arase, a higher orbit satellite
+// Forward a day, but, with Arase, a higher orbit satellite, ALSO TEST wth only init.
 /*
 from sgp4.api import jday
 from sgp4.api import Satrec
@@ -291,14 +290,15 @@ e, r, v = satellite.sgp4(jd, fr)
 			fprintf( stderr, "Error: SS can't load.\n" );
 			return -5;
 		}
-		if( ConvertTLEToSGP4( &iss_arase, &ss_arase[0] ) )
+
+		double startmfe = (1714672800 - ss_arase->epoch)/60.0;
+//		sgp4 (&iss_arase, startmfe, ro,  vo);
+		if( ConvertTLEToSGP4( &iss_arase, &ss_arase[0], startmfe, ro,  vo ) )
 		{
 			printf( "failed to convert tle\n" );
 			return -5;
 		}
 		puts( ss_arase->objectName );
-		double startmfe = (1714672800 - ss_arase->epoch)/60.0;
-		sgp4 (&iss_arase, startmfe, ro,  vo);
 
 		double jd = ss_arase->jdsatepoch + floor(startmfe/1440.0);
 		double jdfrac = fmod(startmfe/1440.0, 1.0) + ss_arase->jdsatepochF;
@@ -374,7 +374,7 @@ e, r, v = satellite.sgp4(jd, fr)
 			fprintf( stderr, "Error: SS can't load.\n" );
 			return -5;
 		}
-		if( ConvertTLEToSGP4( &iss_THEMIS, &ss_THEMIS[0] ) )
+		if( ConvertTLEToSGP4( &iss_THEMIS, &ss_THEMIS[0], 0, 0, 0 ) )
 		{
 			printf( "failed to convert tle\n" );
 			return -5;
@@ -455,7 +455,7 @@ e, r, v = satellite.sgp4(jd, fr)
 			fprintf( stderr, "Error: SS can't load.\n" );
 			return -5;
 		}
-		if( ConvertTLEToSGP4( &iss, &ss[0] ) )
+		if( ConvertTLEToSGP4( &iss, &ss[0], 0, 0, 0 ) )
 		{
 			printf( "failed to convert tle\n" );
 			return -5;
@@ -535,7 +535,7 @@ e, r, v = satellite.sgp4(jd, fr)
 			fprintf( stderr, "Error: SS can't load.\n" );
 			return -5;
 		}
-		if( ConvertTLEToSGP4( &iss_THEMIS, &ss_THEMIS[0] ) )
+		if( ConvertTLEToSGP4( &iss_THEMIS, &ss_THEMIS[0], 0, 0, 0 ) )
 		{
 			printf( "failed to convert tle\n" );
 			return -5;
@@ -544,7 +544,7 @@ e, r, v = satellite.sgp4(jd, fr)
 		double dStartSetup = OGGetAbsoluteTime();
 		for( iter = 0; iter < 1000000; iter++ )
 		{
-			ConvertTLEToSGP4( &iss_THEMIS, &ss_THEMIS[0] );
+			ConvertTLEToSGP4( &iss_THEMIS, &ss_THEMIS[0], 0, 0, 0 );
 		}
 		double dEndSetup = OGGetAbsoluteTime();
 		double dStartRun = OGGetAbsoluteTime();
@@ -558,13 +558,21 @@ e, r, v = satellite.sgp4(jd, fr)
 		for( iter = 0; iter < 1000000; iter++ )
 		{
 			double startmfe = (1714240800 + iter - ss_THEMIS->epoch)/60.0;
-			ConvertTLEToSGP4( &iss_THEMIS, &ss_THEMIS[0] );
+			ConvertTLEToSGP4( &iss_THEMIS, &ss_THEMIS[0], 0, 0, 0 );
 			sgp4 (&iss_THEMIS, startmfe, ro,  vo);
 		}
 		double dEndFull = OGGetAbsoluteTime();
+		double dStartFullInit = OGGetAbsoluteTime();
+		for( iter = 0; iter < 1000000; iter++ )
+		{
+			double startmfe = (1714240800 + iter - ss_THEMIS->epoch)/60.0;
+			ConvertTLEToSGP4( &iss_THEMIS, &ss_THEMIS[0], startmfe, ro, vo );
+		}
+		double dEndFullInit = OGGetAbsoluteTime();
 		printf( "Init: %.4f us/iteration\n", dEndSetup - dStartSetup );
 		printf( "Run:  %.4f us/iteration\n", dEndRun - dStartRun );
 		printf( "Full: %.4f us/iteration\n", dEndFull - dStartFull );
+		printf( "FullAtInit: %.4f us/iteration\n", dEndFullInit - dStartFullInit );
 	}
 
 
