@@ -120,165 +120,6 @@ struct elsetrec_simple
 	SGPF altp /* Not used in algo, but cool anyway to look at */;
 };
 
-#if 0
-CSGP4_DECORATOR void dspace_simple
-	 (
-	   int irez,
-	   SGPF d2201, SGPF d2211, SGPF d3210, SGPF d3222, SGPF d4410,
-	   SGPF d4422, SGPF d5220, SGPF d5232, SGPF d5421, SGPF d5433,
-	   SGPF dedt, SGPF del1, SGPF del2, SGPF del3, SGPF didt,
-	   SGPF dmdt, SGPF dnodt, SGPF domdt, SGPF argpo, SGPF argpdot,
-	   SGPF t, SGPF tc, SGPF gsto, SGPF xfact, SGPF xlamo,
-	   SGPF no,
-	   SGPF CSGP4_OUT atime, SGPF CSGP4_OUT em, SGPF CSGP4_OUT argpm, SGPF CSGP4_OUT inclm, SGPF CSGP4_OUT xli,
-	   SGPF CSGP4_OUT mm, SGPF CSGP4_OUT xni, SGPF CSGP4_OUT nodem, SGPF CSGP4_OUT dndt, SGPF CSGP4_OUT nm
-	 )
-{
-	const SGPF twopi = 2.0 * SGPPI;
-	//int iretn;  //, iret;
-	SGPF delt, ft, theta, x2li, x2omi, xl, xldot, xnddt, xndt, xomi, g22, g32,
-		 g44, g52, g54, fasx2, fasx4, fasx6, rptim, step2, stepn, stepp;
-
-	fasx2 = 0.13130908;
-	fasx4 = 2.8843198;
-	fasx6 = 0.37448087;
-	g22 = 5.7686396;
-	g32 = 0.95240898;
-	g44 = 1.8014998;
-	g52 = 1.0508330;
-	g54 = 4.4108898;
-	rptim = 4.37526908801129966e-3; // this equates to 7.29211514668855e-5 rad/sec
-	stepp = 720.0;
-	stepn = -720.0;
-	step2 = 259200.0;
-
-	/* ----------- calculate deep space resonance effects ----------- */
-	CSGP4_DEREF(dndt) = 0.0;
-	theta = FMOD( (gsto + tc * rptim), twopi );
-	CSGP4_DEREF(em) = CSGP4_DEREF(em) + dedt * t;
-
-	CSGP4_DEREF(inclm) = CSGP4_DEREF(inclm) + didt * t;
-	CSGP4_DEREF(argpm) = CSGP4_DEREF(argpm) + domdt * t;
-	CSGP4_DEREF(nodem) = CSGP4_DEREF(nodem) + dnodt * t;
-	CSGP4_DEREF(mm) = CSGP4_DEREF(mm) + dmdt * t;
-
-	//   sgp4fix for negative inclinations
-	//   the following if statement should be commented out
-	//  if (inclm < 0.0)
-	// {
-	//	inclm = -inclm;
-	//	argpm = argpm - Math.PI;
-	//	nodem = nodem + Math.PI;
-	//  }
-
-	/* - update resonances : numerical (euler-maclaurin) integration - */
-	/* ------------------------- epoch restart ----------------------  */
-	//   sgp4fix for propagator problems
-	//   the following integration works for negative time steps and periods
-	//   the specific changes are unknown because the original code was so convoluted
-	// sgp4fix set initial values for c#
-	xndt = 0.0;
-	xnddt = 0.0;
-	xldot = 0.0;
-
-	// sgp4fix take out atime = 0.0 and fix for faster operation
-	ft = 0.0;
-	if (irez != 0)
-	{
-		// sgp4fix streamline check
-		if ((CSGP4_DEREF(atime) == 0.0) || (t * CSGP4_DEREF(atime) <= 0.0) || (FABS(t) < FABS(CSGP4_DEREF(atime))))
-		{
-			CSGP4_DEREF(atime) = 0.0;
-			CSGP4_DEREF(xni) = no;
-			CSGP4_DEREF(xli) = xlamo;
-		}
-		SGPF xli_cache = CSGP4_DEREF(xli);
-		// sgp4fix move check outside loop
-		if (t > 0.0)
-			delt = stepp;
-		else
-			delt = stepn;
-
-		//iretn = 381; // added for do loop
-		//iret = 0; // added for loop
-		//while (iretn == 381)
-		bool iretn = true;
-		do
-		{
-			/* ------------------- dot terms calculated ------------- */
-			/* ----------- near - synchronous resonance terms ------- */
-			if (irez != 2)
-			{
-				xndt = del1 * SIN(xli_cache - fasx2) + del2 * SIN(2.0 * (xli_cache - fasx4)) +
-						del3 * SIN(3.0 * (xli_cache - fasx6));
-				xldot = *xni + xfact;
-				xnddt = del1 * COS(xli_cache - fasx2) +
-						2.0 * del2 * COS(2.0 * (xli_cache - fasx4)) +
-						3.0 * del3 * COS(3.0 * (xli_cache - fasx6));
-				xnddt = xnddt * xldot;
-			}
-			else
-			{
-				/* --------- near - half-day resonance terms -------- */
-				xomi = argpo + argpdot * *atime;
-				x2omi = xomi + xomi;
-				x2li = xli_cache + xli_cache;
-				xndt = d2201 * SIN(x2omi + xli_cache - g22) + d2211 * SIN(xli_cache - g22) +
-					  d3210 * SIN(xomi + xli_cache - g32) + d3222 * SIN(-xomi + xli_cache - g32) +
-					  d4410 * SIN(x2omi + x2li - g44) + d4422 * SIN(x2li - g44) +
-					  d5220 * SIN(xomi + xli_cache- g52) + d5232 * SIN(-xomi + *xli - g52) +
-					  d5421 * SIN(xomi + x2li - g54) + d5433 * SIN(-xomi + x2li - g54);
-				xldot = CSGP4_DEREF(xni) + xfact;
-				xnddt = d2201 * COS(x2omi + xli_cache - g22) + d2211 * COS(xli_cache - g22) +
-					  d3210 * COS(xomi + xli_cache - g32) + d3222 * COS(-xomi + xli_cache - g32) +
-					  d5220 * COS(xomi + xli_cache - g52) + d5232 * COS(-xomi + xli_cache - g52) +
-					  2.0 * (d4410 * COS(x2omi + x2li - g44) +
-					  d4422 * COS(x2li - g44) + d5421 * COS(xomi + x2li - g54) +
-					  d5433 * COS(-xomi + x2li - g54));
-				xnddt = xnddt * xldot;
-			}
-
-			/* ----------------------- integrator ------------------- */
-			// sgp4fix move end checks to end of routine
-			if (FABS(t - CSGP4_DEREF(atime)) >= stepp)
-			{
-				//iret = 0;
-				iretn = true;
-			}
-			else // exit here
-			{
-				ft = t - CSGP4_DEREF(atime);
-				iretn = false;
-			}
-
-			if (iretn)
-			{
-				xli_cache = xli_cache + xldot * delt + xndt * step2;
-				CSGP4_DEREF(xni) = CSGP4_DEREF(xni) + xndt * delt + xnddt * step2;
-				CSGP4_DEREF(atime) = CSGP4_DEREF(atime) + delt;
-			}
-		} while( iretn );
-
-		CSGP4_DEREF(nm) = CSGP4_DEREF(xni) + xndt * ft + xnddt * ft * ft * 0.5;
-		xl = xli_cache + xldot * ft + xndt * ft * ft * 0.5;
-		CSGP4_DEREF(xli) = xli_cache;
-		if (irez != 1)
-		{
-			CSGP4_DEREF(mm) = xl - 2.0 * CSGP4_DEREF(nodem) + 2.0 * theta;
-			CSGP4_DEREF(dndt) = CSGP4_DEREF(nm) - no;
-		}
-		else
-		{
-			CSGP4_DEREF(mm) = xl - CSGP4_DEREF(nodem) - CSGP4_DEREF(argpm) + theta;
-			CSGP4_DEREF(dndt) = CSGP4_DEREF(nm) - no;
-		}
-		CSGP4_DEREF(nm) = no + CSGP4_DEREF(dndt);
-	}
-
-	//#include "debug4.cpp"
-}  // end dsspace
-#endif
-
 CSGP4_DECORATOR void dpper_simple
 	 (
 	   SGPF e3, SGPF ee2, SGPF peo, SGPF pgho, SGPF pho,
@@ -487,248 +328,6 @@ CSGP4_DECORATOR void initl_simple
 
 	//#include "debug5.cpp"
 }  // end initl
-
-
-CSGP4_DECORATOR void dscom_simple
-	 (
-	   SGPF epoch, SGPF ep, SGPF argpp, SGPF tc, SGPF inclp,
-	   SGPF nodep, SGPF np,
-	   SGPF CSGP4_OUT snodm, SGPF CSGP4_OUT cnodm, SGPF CSGP4_OUT sinim, SGPF CSGP4_OUT cosim, SGPF CSGP4_OUT sinomm,
-	   SGPF CSGP4_OUT cosomm, SGPF CSGP4_OUT day, SGPF CSGP4_OUT e3, SGPF CSGP4_OUT ee2, SGPF CSGP4_OUT em,
-	   SGPF CSGP4_OUT emsq, SGPF CSGP4_OUT gam, SGPF CSGP4_OUT peo, SGPF CSGP4_OUT pgho, SGPF CSGP4_OUT pho,
-	   SGPF CSGP4_OUT pinco, SGPF CSGP4_OUT plo, SGPF CSGP4_OUT rtemsq, SGPF CSGP4_OUT se2, SGPF CSGP4_OUT se3,
-	   SGPF CSGP4_OUT sgh2, SGPF CSGP4_OUT sgh3, SGPF CSGP4_OUT sgh4, SGPF CSGP4_OUT sh2, SGPF CSGP4_OUT sh3,
-	   SGPF CSGP4_OUT si2, SGPF CSGP4_OUT si3, SGPF CSGP4_OUT sl2, SGPF CSGP4_OUT sl3, SGPF CSGP4_OUT sl4,
-	   SGPF CSGP4_OUT s1, SGPF CSGP4_OUT s2, SGPF CSGP4_OUT s3, SGPF CSGP4_OUT s4, SGPF CSGP4_OUT s5,
-	   SGPF CSGP4_OUT s6, SGPF CSGP4_OUT s7, SGPF CSGP4_OUT ss1, SGPF CSGP4_OUT ss2, SGPF CSGP4_OUT ss3,
-	   SGPF CSGP4_OUT ss4, SGPF CSGP4_OUT ss5, SGPF CSGP4_OUT ss6, SGPF CSGP4_OUT ss7, SGPF CSGP4_OUT sz1,
-	   SGPF CSGP4_OUT sz2, SGPF CSGP4_OUT sz3, SGPF CSGP4_OUT sz11, SGPF CSGP4_OUT sz12, SGPF CSGP4_OUT sz13,
-	   SGPF CSGP4_OUT sz21, SGPF CSGP4_OUT sz22, SGPF CSGP4_OUT sz23, SGPF CSGP4_OUT sz31, SGPF CSGP4_OUT sz32,
-	   SGPF CSGP4_OUT sz33, SGPF CSGP4_OUT xgh2, SGPF CSGP4_OUT xgh3, SGPF CSGP4_OUT xgh4, SGPF CSGP4_OUT xh2,
-	   SGPF CSGP4_OUT xh3, SGPF CSGP4_OUT xi2, SGPF CSGP4_OUT xi3, SGPF CSGP4_OUT xl2, SGPF CSGP4_OUT xl3,
-	   SGPF CSGP4_OUT xl4, SGPF CSGP4_OUT nm, SGPF CSGP4_OUT z1, SGPF CSGP4_OUT z2, SGPF CSGP4_OUT z3,
-	   SGPF CSGP4_OUT z11, SGPF CSGP4_OUT z12, SGPF CSGP4_OUT z13, SGPF CSGP4_OUT z21, SGPF CSGP4_OUT z22,
-	   SGPF CSGP4_OUT z23, SGPF CSGP4_OUT z31, SGPF CSGP4_OUT z32, SGPF CSGP4_OUT z33, SGPF CSGP4_OUT zmol,
-	   SGPF CSGP4_OUT zmos
-	 )
-{
-	/* -------------------------- constants ------------------------- */
-	const SGPF zes = 0.01675;
-	const SGPF zel = 0.05490;
-	const SGPF c1ss = 2.9864797e-6;
-	const SGPF c1l = 4.7968065e-7;
-	const SGPF zsinis = 0.39785416;
-	const SGPF zcosis = 0.91744867;
-	const SGPF zcosgs = 0.1945905;
-	const SGPF zsings = -0.98088458;
-	const SGPF twopi = 2.0 * SGPPI;
-
-	/* --------------------- local variables ------------------------ */
-	int lsflg;
-	SGPF a1, a2, a3, a4, a5, a6, a7,
-	   a8, a9, a10, betasq, cc, ctem, stem,
-	   x1, x2, x3, x4, x5, x6, x7,
-	   x8, xnodce, xnoi, zcosg, zcosgl, zcosh, zcoshl,
-	   zcosi, zcosil, zsing, zsingl, zsinh, zsinhl, zsini,
-	   zsinil, zx, zy;
-
-	// sgp4fix - initialize the parameters for c#
-	CSGP4_DEREF(ss1) = 0.0;
-	CSGP4_DEREF(ss2) = 0.0;
-	CSGP4_DEREF(ss3) = 0.0;
-	CSGP4_DEREF(ss4) = 0.0;
-	CSGP4_DEREF(ss5) = 0.0;
-	CSGP4_DEREF(ss6) = 0.0;
-	CSGP4_DEREF(ss7) = 0.0;
-	CSGP4_DEREF(s1) = 0.0;
-	CSGP4_DEREF(s2) = 0.0;
-	CSGP4_DEREF(s3) = 0.0;
-	CSGP4_DEREF(s4) = 0.0;
-	CSGP4_DEREF(s5) = 0.0;
-	CSGP4_DEREF(s6) = 0.0;
-	CSGP4_DEREF(s7) = 0.0;
-	CSGP4_DEREF(sz11) = 0.0;
-	CSGP4_DEREF(sz12) = 0.0;
-	CSGP4_DEREF(sz13) = 0.0;
-	CSGP4_DEREF(sz1) = 0.0;
-	CSGP4_DEREF(sz2) = 0.0;
-	CSGP4_DEREF(sz3) = 0.0;
-	CSGP4_DEREF(sz21) = 0.0;
-	CSGP4_DEREF(sz22) = 0.0;
-	CSGP4_DEREF(sz23) = 0.0;
-	CSGP4_DEREF(sz31) = 0.0;
-	CSGP4_DEREF(sz32) = 0.0;
-	CSGP4_DEREF(sz33) = 0.0;
-	CSGP4_DEREF(z13) = 0.0;
-	CSGP4_DEREF(z21) = 0.0;
-	CSGP4_DEREF(z1) = 0.0;
-	CSGP4_DEREF(z2) = 0.0;
-	CSGP4_DEREF(z3) = 0.0;
-	CSGP4_DEREF(z11) = 0.0;
-	CSGP4_DEREF(z12) = 0.0;
-	CSGP4_DEREF(z31) = 0.0;
-	CSGP4_DEREF(z21) = 0.0;
-	CSGP4_DEREF(z22) = 0.0;
-	CSGP4_DEREF(z23) = 0.0;
-	CSGP4_DEREF(z32) = 0.0;
-	CSGP4_DEREF(z33) = 0.0;
-
-	CSGP4_DEREF(nm) = np;
-	CSGP4_DEREF(em) = ep;
-	CSGP4_DEREF(snodm) = SIN(nodep);
-	CSGP4_DEREF(cnodm) = COS(nodep);
-	CSGP4_DEREF(sinomm) = SIN(argpp);
-	CSGP4_DEREF(cosomm) = COS(argpp);
-	CSGP4_DEREF(sinim) = SIN(inclp);
-	CSGP4_DEREF(cosim) = COS(inclp);
-	CSGP4_DEREF(emsq) = CSGP4_DEREF(em) * CSGP4_DEREF(em);
-	betasq = 1.0 - CSGP4_DEREF(emsq);
-	CSGP4_DEREF(rtemsq) = SQRT(betasq);
-
-	/* ----------------- initialize lunar solar terms --------------- */
-	CSGP4_DEREF(peo) = 0.0;
-	CSGP4_DEREF(pinco) = 0.0;
-	CSGP4_DEREF(plo) = 0.0;
-	CSGP4_DEREF(pgho) = 0.0;
-	CSGP4_DEREF(pho) = 0.0;
-	CSGP4_DEREF(day) = epoch + 18261.5 + tc / 1440.0;
-	xnodce = FMOD(4.5236020 - 9.2422029e-4 * CSGP4_DEREF(day), twopi);
-	stem = SIN(xnodce);
-	ctem = COS(xnodce);
-	zcosil = 0.91375164 - 0.03568096 * ctem;
-	zsinil = SQRT(1.0 - zcosil * zcosil);
-	zsinhl = 0.089683511 * stem / zsinil;
-	zcoshl = SQRT(1.0 - zsinhl * zsinhl);
-	CSGP4_DEREF(gam) = 5.8351514 + 0.0019443680 * CSGP4_DEREF(day);
-	zx = 0.39785416 * stem / zsinil;
-	zy = zcoshl * ctem + 0.91744867 * zsinhl * stem;
-	zx = ATAN2(zx, zy);
-	zx = CSGP4_DEREF(gam) + zx - xnodce;
-	zcosgl = COS(zx);
-	zsingl = SIN(zx);
-
-	/* ------------------------- do solar terms --------------------- */
-	zcosg = zcosgs;
-	zsing = zsings;
-	zcosi = zcosis;
-	zsini = zsinis;
-	zcosh = CSGP4_DEREF(cnodm);
-	zsinh = CSGP4_DEREF(snodm);
-	cc = c1ss;
-	xnoi = 1.0 / *nm;
-
-	for (lsflg = 1; lsflg <= 2; lsflg++)
-	{
-		a1 = zcosg * zcosh + zsing * zcosi * zsinh;
-		a3 = -zsing * zcosh + zcosg * zcosi * zsinh;
-		a7 = -zcosg * zsinh + zsing * zcosi * zcosh;
-		a8 = zsing * zsini;
-		a9 = zsing * zsinh + zcosg * zcosi * zcosh;
-		a10 = zcosg * zsini;
-		a2 = CSGP4_DEREF(cosim) * a7 + CSGP4_DEREF(sinim) * a8;
-		a4 = CSGP4_DEREF(cosim) * a9 + CSGP4_DEREF(sinim) * a10;
-		a5 = -CSGP4_DEREF(sinim) * a7 + CSGP4_DEREF(cosim) * a8;
-		a6 = -CSGP4_DEREF(sinim) * a9 + CSGP4_DEREF(cosim) * a10;
-
-		x1 = a1 * CSGP4_DEREF(cosomm) + a2 * CSGP4_DEREF(sinomm);
-		x2 = a3 * CSGP4_DEREF(cosomm) + a4 * CSGP4_DEREF(sinomm);
-		x3 = -a1 * CSGP4_DEREF(sinomm) + a2 * CSGP4_DEREF(cosomm);
-		x4 = -a3 * CSGP4_DEREF(sinomm) + a4 * CSGP4_DEREF(cosomm);
-		x5 = a5 * CSGP4_DEREF(sinomm);
-		x6 = a6 * CSGP4_DEREF(sinomm);
-		x7 = a5 * CSGP4_DEREF(cosomm);
-		x8 = a6 * CSGP4_DEREF(cosomm);
-
-		CSGP4_DEREF(z31) = 12.0 * x1 * x1 - 3.0 * x3 * x3;
-		CSGP4_DEREF(z32) = 24.0 * x1 * x2 - 6.0 * x3 * x4;
-		CSGP4_DEREF(z33) = 12.0 * x2 * x2 - 3.0 * x4 * x4;
-		CSGP4_DEREF(z1) = 3.0 * (a1 * a1 + a2 * a2) + *z31 * CSGP4_DEREF(emsq);
-		CSGP4_DEREF(z2) = 6.0 * (a1 * a3 + a2 * a4) + *z32 * CSGP4_DEREF(emsq);
-		CSGP4_DEREF(z3) = 3.0 * (a3 * a3 + a4 * a4) + *z33 * CSGP4_DEREF(emsq);
-		CSGP4_DEREF(z11) = -6.0 * a1 * a5 + CSGP4_DEREF(emsq) * (-24.0 * x1 * x7 - 6.0 * x3 * x5);
-		CSGP4_DEREF(z12) = -6.0 * (a1 * a6 + a3 * a5) + CSGP4_DEREF(emsq) *
-			   (-24.0 * (x2 * x7 + x1 * x8) - 6.0 * (x3 * x6 + x4 * x5));
-		CSGP4_DEREF(z13) = -6.0 * a3 * a6 + CSGP4_DEREF(emsq) * (-24.0 * x2 * x8 - 6.0 * x4 * x6);
-		CSGP4_DEREF(z21) = 6.0 * a2 * a5 + CSGP4_DEREF(emsq) * (24.0 * x1 * x5 - 6.0 * x3 * x7);
-		CSGP4_DEREF(z22) = 6.0 * (a4 * a5 + a2 * a6) + CSGP4_DEREF(emsq) *
-			   (24.0 * (x2 * x5 + x1 * x6) - 6.0 * (x4 * x7 + x3 * x8));
-		CSGP4_DEREF(z23) = 6.0 * a4 * a6 + CSGP4_DEREF(emsq) * (24.0 * x2 * x6 - 6.0 * x4 * x8);
-		CSGP4_DEREF(z1) = CSGP4_DEREF(z1) + CSGP4_DEREF(z1) + betasq * CSGP4_DEREF(z31);
-		CSGP4_DEREF(z2) = CSGP4_DEREF(z2) + CSGP4_DEREF(z2) + betasq * CSGP4_DEREF(z32);
-		CSGP4_DEREF(z3) = CSGP4_DEREF(z3) + CSGP4_DEREF(z3) + betasq * CSGP4_DEREF(z33);
-		CSGP4_DEREF(s3) = cc * xnoi;
-		CSGP4_DEREF(s2) = -0.5 * CSGP4_DEREF(s3) / CSGP4_DEREF(rtemsq);
-		CSGP4_DEREF(s4) = CSGP4_DEREF(s3) * CSGP4_DEREF(rtemsq);
-		CSGP4_DEREF(s1) = -15.0 * CSGP4_DEREF(em) * CSGP4_DEREF(s4);
-		CSGP4_DEREF(s5) = x1 * x3 + x2 * x4;
-		CSGP4_DEREF(s6) = x2 * x3 + x1 * x4;
-		CSGP4_DEREF(s7) = x2 * x4 - x1 * x3;
-
-		/* ----------------------- do lunar terms ------------------- */
-		if (lsflg == 1)
-		{
-			CSGP4_DEREF(ss1) = CSGP4_DEREF(s1);
-			CSGP4_DEREF(ss2) = CSGP4_DEREF(s2);
-			CSGP4_DEREF(ss3) = CSGP4_DEREF(s3);
-			CSGP4_DEREF(ss4) = CSGP4_DEREF(s4);
-			CSGP4_DEREF(ss5) = CSGP4_DEREF(s5);
-			CSGP4_DEREF(ss6) = CSGP4_DEREF(s6);
-			CSGP4_DEREF(ss7) = CSGP4_DEREF(s7);
-			CSGP4_DEREF(sz1) = CSGP4_DEREF(z1);
-			CSGP4_DEREF(sz2) = CSGP4_DEREF(z2);
-			CSGP4_DEREF(sz3) = CSGP4_DEREF(z3);
-			CSGP4_DEREF(sz11) = CSGP4_DEREF(z11);
-			CSGP4_DEREF(sz12) = CSGP4_DEREF(z12);
-			CSGP4_DEREF(sz13) = CSGP4_DEREF(z13);
-			CSGP4_DEREF(sz21) = CSGP4_DEREF(z21);
-			CSGP4_DEREF(sz22) = CSGP4_DEREF(z22);
-			CSGP4_DEREF(sz23) = CSGP4_DEREF(z23);
-			CSGP4_DEREF(sz31) = CSGP4_DEREF(z31);
-			CSGP4_DEREF(sz32) = CSGP4_DEREF(z32);
-			CSGP4_DEREF(sz33) = CSGP4_DEREF(z33);
-			zcosg = zcosgl;
-			zsing = zsingl;
-			zcosi = zcosil;
-			zsini = zsinil;
-			zcosh = zcoshl * CSGP4_DEREF(cnodm) + zsinhl * CSGP4_DEREF(snodm);
-			zsinh = CSGP4_DEREF(snodm) * zcoshl - CSGP4_DEREF(cnodm) * zsinhl;
-			cc = c1l;
-		}
-	}
-
-	CSGP4_DEREF(zmol) = FMOD( (4.7199672 + 0.22997150 * CSGP4_DEREF(day) - CSGP4_DEREF(gam)), twopi );
-	CSGP4_DEREF(zmos) = FMOD( (6.2565837 + 0.017201977 * CSGP4_DEREF(day)), twopi );
-
-	/* ------------------------ do solar terms ---------------------- */
-	CSGP4_DEREF(se2) = 2.0 * CSGP4_DEREF(ss1) * CSGP4_DEREF(ss6);
-	CSGP4_DEREF(se3) = 2.0 * CSGP4_DEREF(ss1) * CSGP4_DEREF(ss7);
-	CSGP4_DEREF(si2) = 2.0 * CSGP4_DEREF(ss2) * CSGP4_DEREF(sz12);
-	CSGP4_DEREF(si3) = 2.0 * CSGP4_DEREF(ss2) * (CSGP4_DEREF(sz13) - CSGP4_DEREF(sz11));
-	CSGP4_DEREF(sl2) = -2.0 * CSGP4_DEREF(ss3) * CSGP4_DEREF(sz2);
-	CSGP4_DEREF(sl3) = -2.0 * CSGP4_DEREF(ss3) * (CSGP4_DEREF(sz3) - CSGP4_DEREF(sz1));
-	CSGP4_DEREF(sl4) = -2.0 * CSGP4_DEREF(ss3) * (-21.0 - 9.0 * CSGP4_DEREF(emsq)) * zes;
-	CSGP4_DEREF(sgh2) = 2.0 * CSGP4_DEREF(ss4) * CSGP4_DEREF(sz32);
-	CSGP4_DEREF(sgh3) = 2.0 * CSGP4_DEREF(ss4) * (CSGP4_DEREF(sz33) - CSGP4_DEREF(sz31));
-	CSGP4_DEREF(sgh4) = -18.0 * CSGP4_DEREF(ss4) * zes;
-	CSGP4_DEREF(sh2) = -2.0 * CSGP4_DEREF(ss2) * CSGP4_DEREF(sz22);
-	CSGP4_DEREF(sh3) = -2.0 * CSGP4_DEREF(ss2) * (CSGP4_DEREF(sz23) - CSGP4_DEREF(sz21));
-
-	/* ------------------------ do lunar terms ---------------------- */
-	CSGP4_DEREF(ee2) = 2.0 * CSGP4_DEREF(s1) * CSGP4_DEREF(s6);
-	CSGP4_DEREF(e3) = 2.0 * CSGP4_DEREF(s1) * CSGP4_DEREF(s7);
-	CSGP4_DEREF(xi2) = 2.0 * CSGP4_DEREF(s2) * CSGP4_DEREF(z12);
-	CSGP4_DEREF(xi3) = 2.0 * CSGP4_DEREF(s2) * (CSGP4_DEREF(z13) - CSGP4_DEREF(z11));
-	CSGP4_DEREF(xl2) = -2.0 * CSGP4_DEREF(s3) * CSGP4_DEREF(z2);
-	CSGP4_DEREF(xl3) = -2.0 * CSGP4_DEREF(s3) * (CSGP4_DEREF(z3) - CSGP4_DEREF(z1));
-	CSGP4_DEREF(xl4) = -2.0 * CSGP4_DEREF(s3) * (-21.0 - 9.0 * CSGP4_DEREF(emsq)) * zel;
-	CSGP4_DEREF(xgh2) = 2.0 * CSGP4_DEREF(s4) * CSGP4_DEREF(z32);
-	CSGP4_DEREF(xgh3) = 2.0 * CSGP4_DEREF(s4) * (CSGP4_DEREF(z33) - CSGP4_DEREF(z31));
-	CSGP4_DEREF(xgh4) = -18.0 * CSGP4_DEREF(s4) * zel;
-	CSGP4_DEREF(xh2) = -2.0 * CSGP4_DEREF(s2) * CSGP4_DEREF(z22);
-	CSGP4_DEREF(xh3) = -2.0 * CSGP4_DEREF(s2) * (CSGP4_DEREF(z23) - CSGP4_DEREF(z21));
-
-	//#include "debug2.cpp"
-}  // end dscom
 
 
 CSGP4_DECORATOR void dsinit_simple
@@ -958,31 +557,6 @@ CSGP4_DECORATOR void dsinit_simple
 }  // end dsinit
 
 
-CSGP4_DECORATOR void getgravconst_simple
-	 (
-	  SGPF CSGP4_OUT tumin,
-	  SGPF CSGP4_OUT mu,
-	  SGPF CSGP4_OUT radiusearthkm,
-	  SGPF CSGP4_OUT xke,
-	  SGPF CSGP4_OUT j2,
-	  SGPF CSGP4_OUT j3,
-	  SGPF CSGP4_OUT j4,
-	  SGPF CSGP4_OUT j3oj2
-	 )
-{
-	//Hard-coded WGS72
-			CSGP4_DEREF(mu) = 398600.8;			// in km3 / s2
-			CSGP4_DEREF(radiusearthkm) = 6378.135;	 // km
-			CSGP4_DEREF(xke) = 60.0 / SQRT(CSGP4_DEREF(radiusearthkm) * CSGP4_DEREF(radiusearthkm) * CSGP4_DEREF(radiusearthkm) / CSGP4_DEREF(mu));
-			CSGP4_DEREF(tumin) = 1.0 / CSGP4_DEREF(xke);
-			CSGP4_DEREF(j2) = 0.001082616;
-			CSGP4_DEREF(j3) = -0.00000253881;
-			CSGP4_DEREF(j4) = -0.00000165597;
-			CSGP4_DEREF(j3oj2) = CSGP4_DEREF(j3) / CSGP4_DEREF(j2);
-
-}   // end getgravconst
-
-
 CSGP4_DECORATOR int sgp4init_simple
 	 (
 	   /*enum gravconsttype whichconst,*/ SGPF epoch,
@@ -1054,8 +628,19 @@ CSGP4_DECORATOR int sgp4init_simple
 	/* ------------------------ earth constants ----------------------- */
 	// sgp4fix identify constants and allow aernate values
 	// this is now the only call for the constants
-	getgravconst_simple(/*whichconst,*/ CSGP4_REF(gsr.tumin), CSGP4_REF(gsr.mu), CSGP4_REF(gsr.radiusearthkm), CSGP4_REF(gsr.xke),
-				  CSGP4_REF(gsr.j2), CSGP4_REF(gsr.j3), CSGP4_REF(gsr.j4), CSGP4_REF(gsr.j3oj2));
+//	getgravconst_simple(/*whichconst,*/ CSGP4_REF(gsr.tumin), CSGP4_REF(gsr.mu), CSGP4_REF(gsr.radiusearthkm), CSGP4_REF(gsr.xke),
+//				  CSGP4_REF(gsr.j2), CSGP4_REF(gsr.j3), CSGP4_REF(gsr.j4), CSGP4_REF(gsr.j3oj2));
+	//Hard-coded WGS72
+			(gsr.mu) = 398600.8;			// in km3 / s2
+			(gsr.radiusearthkm) = 6378.135;	 // km
+			(gsr.xke) = 60.0 / SQRT(CSGP4_DEREF(radiusearthkm) * CSGP4_DEREF(radiusearthkm) * CSGP4_DEREF(radiusearthkm) / CSGP4_DEREF(mu));
+			(gsr.tumin) = 1.0 / CSGP4_DEREF(xke);
+			(gsr.j2) = 0.001082616;
+			(gsr.j3) = -0.00000253881;
+			(gsr.j4) = -0.00000165597;
+			(gsr.j3oj2) = CSGP4_DEREF(j3) / CSGP4_DEREF(j2);
+
+
 	//-------------------------------------------------------------------------
 	gsr.error = 0;
 	//gsr.operationmode = opsmode;
@@ -1202,36 +787,230 @@ CSGP4_DECORATOR int sgp4init_simple
 			tc = 0.0;
 			inclm = gsr.inclo;
 
-			dscom_simple
-				(
-				  epoch, gsr.ecco, gsr.argpo, tc, gsr.inclo, gsr.nodeo,
-				  gsr.no_unkozai, CSGP4_REF(snodm), CSGP4_REF(cnodm), CSGP4_REF(sinim), CSGP4_REF(cosim), CSGP4_REF(sinomm), CSGP4_REF(cosomm),
-				  CSGP4_REF(day), CSGP4_REF(gsr.e3), CSGP4_REF(gsr.ee2), CSGP4_REF(em), CSGP4_REF(emsq), CSGP4_REF(gam),
-				  CSGP4_REF(gsr.peo), CSGP4_REF(gsr.pgho), CSGP4_REF(gsr.pho), CSGP4_REF(gsr.pinco),
-				  CSGP4_REF(gsr.plo), CSGP4_REF(rtemsq), CSGP4_REF(gsr.se2), CSGP4_REF(gsr.se3),
-				  CSGP4_REF(gsr.sgh2), CSGP4_REF(gsr.sgh3), CSGP4_REF(gsr.sgh4),
-				  CSGP4_REF(gsr.sh2), CSGP4_REF(gsr.sh3), CSGP4_REF(gsr.si2), CSGP4_REF(gsr.si3),
-				  CSGP4_REF(gsr.sl2), CSGP4_REF(gsr.sl3), CSGP4_REF(gsr.sl4), CSGP4_REF(s1), CSGP4_REF(s2), CSGP4_REF(s3), CSGP4_REF(s4), CSGP4_REF(s5),
-				  CSGP4_REF(s6), CSGP4_REF(s7), CSGP4_REF(ss1), CSGP4_REF(ss2), CSGP4_REF(ss3), CSGP4_REF(ss4), CSGP4_REF(ss5), CSGP4_REF(ss6), CSGP4_REF(ss7), CSGP4_REF(sz1), CSGP4_REF(sz2), CSGP4_REF(sz3),
-				  CSGP4_REF(sz11), CSGP4_REF(sz12), CSGP4_REF(sz13), CSGP4_REF(sz21), CSGP4_REF(sz22), CSGP4_REF(sz23), CSGP4_REF(sz31), CSGP4_REF(sz32), CSGP4_REF(sz33),
-				  CSGP4_REF(gsr.xgh2), CSGP4_REF(gsr.xgh3), CSGP4_REF(gsr.xgh4), CSGP4_REF(gsr.xh2),
-				  CSGP4_REF(gsr.xh3), CSGP4_REF(gsr.xi2), CSGP4_REF(gsr.xi3), CSGP4_REF(gsr.xl2),
-				  CSGP4_REF(gsr.xl3), CSGP4_REF(gsr.xl4), CSGP4_REF(nm), CSGP4_REF(z1), CSGP4_REF(z2), CSGP4_REF(z3), CSGP4_REF(z11),
-				  CSGP4_REF(z12), CSGP4_REF(z13), CSGP4_REF(z21), CSGP4_REF(z22), CSGP4_REF(z23), CSGP4_REF(z31), CSGP4_REF(z32), CSGP4_REF(z33),
-				  CSGP4_REF(gsr.zmol), CSGP4_REF(gsr.zmos)
-				);
-			dpper_simple
-				(
-				  gsr.e3, gsr.ee2, gsr.peo, gsr.pgho,
-				  gsr.pho, gsr.pinco, gsr.plo, gsr.se2,
-				  gsr.se3, gsr.sgh2, gsr.sgh3, gsr.sgh4,
-				  gsr.sh2, gsr.sh3, gsr.si2, gsr.si3,
-				  gsr.sl2, gsr.sl3, gsr.sl4, gsr.t,
-				  gsr.xgh2, gsr.xgh3, gsr.xgh4, gsr.xh2,
-				  gsr.xh3, gsr.xi2, gsr.xi3, gsr.xl2,
-				  gsr.xl3, gsr.xl4, gsr.zmol, gsr.zmos, inclm, true,
-				  CSGP4_REF(gsr.ecco), CSGP4_REF(gsr.inclo), CSGP4_REF(gsr.nodeo), CSGP4_REF(gsr.argpo), CSGP4_REF(gsr.mo)
-				);
+			//dscom_simple begin.
+
+				SGPF nodep = gsr.nodeo;
+				SGPF argpp = gsr.argpo;
+				SGPF inclp = gsr.inclo;
+				/* -------------------------- constants ------------------------- */
+				const SGPF zes = 0.01675;
+				const SGPF zel = 0.05490;
+				const SGPF c1ss = 2.9864797e-6;
+				const SGPF c1l = 4.7968065e-7;
+				const SGPF zsinis = 0.39785416;
+				const SGPF zcosis = 0.91744867;
+				const SGPF zcosgs = 0.1945905;
+				const SGPF zsings = -0.98088458;
+				const SGPF twopi = 2.0 * SGPPI;
+
+				/* --------------------- local variables ------------------------ */
+				int lsflg;
+				SGPF a1, a2, a3, a4, a5, a6, a7,
+				   a8, a9, a10, betasq, cc, ctem, stem,
+				   x1, x2, x3, x4, x5, x6, x7,
+				   x8, xnodce, xnoi, zcosg, zcosgl, zcosh, zcoshl,
+				   zcosi, zcosil, zsing, zsingl, zsinh, zsinhl, zsini,
+				   zsinil, zx, zy;
+
+				// sgp4fix - initialize the parameters for c#
+				(ss1) = 0.0;
+				(ss2) = 0.0;
+				(ss3) = 0.0;
+				(ss4) = 0.0;
+				(ss5) = 0.0;
+				(ss6) = 0.0;
+				(ss7) = 0.0;
+				(s1) = 0.0;
+				(s2) = 0.0;
+				(s3) = 0.0;
+				(s4) = 0.0;
+				(s5) = 0.0;
+				(s6) = 0.0;
+				(s7) = 0.0;
+				(sz11) = 0.0;
+				(sz12) = 0.0;
+				(sz13) = 0.0;
+				(sz1) = 0.0;
+				(sz2) = 0.0;
+				(sz3) = 0.0;
+				(sz21) = 0.0;
+				(sz22) = 0.0;
+				(sz23) = 0.0;
+				(sz31) = 0.0;
+				(sz32) = 0.0;
+				(sz33) = 0.0;
+				(z13) = 0.0;
+				(z21) = 0.0;
+				(z1) = 0.0;
+				(z2) = 0.0;
+				(z3) = 0.0;
+				(z11) = 0.0;
+				(z12) = 0.0;
+				(z31) = 0.0;
+				(z21) = 0.0;
+				(z22) = 0.0;
+				(z23) = 0.0;
+				(z32) = 0.0;
+				(z33) = 0.0;
+
+				(nm) = gsr.no_unkozai;
+				(em) = gsr.ecco;
+				(snodm) = SIN(nodep);
+				(cnodm) = COS(nodep);
+				(sinomm) = SIN(argpp);
+				(cosomm) = COS(argpp);
+				(sinim) = SIN(inclp);
+				(cosim) = COS(inclp);
+				(emsq) = (em) * (em);
+				betasq = 1.0 - (emsq);
+				(rtemsq) = SQRT(betasq);
+
+				/* ----------------- initialize lunar solar terms --------------- */
+				(gsr.peo) = 0.0;
+				(gsr.pinco) = 0.0;
+				(gsr.plo) = 0.0;
+				(gsr.pgho) = 0.0;
+				(gsr.pho) = 0.0;
+				(day) = epoch + 18261.5 + tc / 1440.0;
+				xnodce = FMOD(4.5236020 - 9.2422029e-4 * (day), twopi);
+				stem = SIN(xnodce);
+				ctem = COS(xnodce);
+				zcosil = 0.91375164 - 0.03568096 * ctem;
+				zsinil = SQRT(1.0 - zcosil * zcosil);
+				zsinhl = 0.089683511 * stem / zsinil;
+				zcoshl = SQRT(1.0 - zsinhl * zsinhl);
+				(gam) = 5.8351514 + 0.0019443680 * (day);
+				zx = 0.39785416 * stem / zsinil;
+				zy = zcoshl * ctem + 0.91744867 * zsinhl * stem;
+				zx = ATAN2(zx, zy);
+				zx = (gam) + zx - xnodce;
+				zcosgl = COS(zx);
+				zsingl = SIN(zx);
+
+				/* ------------------------- do solar terms --------------------- */
+				zcosg = zcosgs;
+				zsing = zsings;
+				zcosi = zcosis;
+				zsini = zsinis;
+				zcosh = (cnodm);
+				zsinh = (snodm);
+				cc = c1ss;
+				xnoi = 1.0 / nm;
+
+				for (lsflg = 1; lsflg <= 2; lsflg++)
+				{
+					a1 = zcosg * zcosh + zsing * zcosi * zsinh;
+					a3 = -zsing * zcosh + zcosg * zcosi * zsinh;
+					a7 = -zcosg * zsinh + zsing * zcosi * zcosh;
+					a8 = zsing * zsini;
+					a9 = zsing * zsinh + zcosg * zcosi * zcosh;
+					a10 = zcosg * zsini;
+					a2 = (cosim) * a7 + (sinim) * a8;
+					a4 = (cosim) * a9 + (sinim) * a10;
+					a5 = -(sinim) * a7 + (cosim) * a8;
+					a6 = -(sinim) * a9 + (cosim) * a10;
+
+					x1 = a1 * (cosomm) + a2 * (sinomm);
+					x2 = a3 * (cosomm) + a4 * (sinomm);
+					x3 = -a1 * (sinomm) + a2 * (cosomm);
+					x4 = -a3 * (sinomm) + a4 * (cosomm);
+					x5 = a5 * (sinomm);
+					x6 = a6 * (sinomm);
+					x7 = a5 * (cosomm);
+					x8 = a6 * (cosomm);
+
+					(z31) = 12.0 * x1 * x1 - 3.0 * x3 * x3;
+					(z32) = 24.0 * x1 * x2 - 6.0 * x3 * x4;
+					(z33) = 12.0 * x2 * x2 - 3.0 * x4 * x4;
+					(z1) = 3.0 * (a1 * a1 + a2 * a2) + z31 * (emsq);
+					(z2) = 6.0 * (a1 * a3 + a2 * a4) + z32 * (emsq);
+					(z3) = 3.0 * (a3 * a3 + a4 * a4) + z33 * (emsq);
+					(z11) = -6.0 * a1 * a5 + (emsq) * (-24.0 * x1 * x7 - 6.0 * x3 * x5);
+					(z12) = -6.0 * (a1 * a6 + a3 * a5) + (emsq) *
+						   (-24.0 * (x2 * x7 + x1 * x8) - 6.0 * (x3 * x6 + x4 * x5));
+					(z13) = -6.0 * a3 * a6 + (emsq) * (-24.0 * x2 * x8 - 6.0 * x4 * x6);
+					(z21) = 6.0 * a2 * a5 + (emsq) * (24.0 * x1 * x5 - 6.0 * x3 * x7);
+					(z22) = 6.0 * (a4 * a5 + a2 * a6) + (emsq) *
+						   (24.0 * (x2 * x5 + x1 * x6) - 6.0 * (x4 * x7 + x3 * x8));
+					(z23) = 6.0 * a4 * a6 + (emsq) * (24.0 * x2 * x6 - 6.0 * x4 * x8);
+					(z1) = (z1) + (z1) + betasq * (z31);
+					(z2) = (z2) + (z2) + betasq * (z32);
+					(z3) = (z3) + (z3) + betasq * (z33);
+					(s3) = cc * xnoi;
+					(s2) = -0.5 * (s3) / (rtemsq);
+					(s4) = (s3) * (rtemsq);
+					(s1) = -15.0 * (em) * (s4);
+					(s5) = x1 * x3 + x2 * x4;
+					(s6) = x2 * x3 + x1 * x4;
+					(s7) = x2 * x4 - x1 * x3;
+
+					/* ----------------------- do lunar terms ------------------- */
+					if (lsflg == 1)
+					{
+						(ss1) = (s1);
+						(ss2) = (s2);
+						(ss3) = (s3);
+						(ss4) = (s4);
+						(ss5) = (s5);
+						(ss6) = (s6);
+						(ss7) = (s7);
+						(sz1) = (z1);
+						(sz2) = (z2);
+						(sz3) = (z3);
+						(sz11) = (z11);
+						(sz12) = (z12);
+						(sz13) = (z13);
+						(sz21) = (z21);
+						(sz22) = (z22);
+						(sz23) = (z23);
+						(sz31) = (z31);
+						(sz32) = (z32);
+						(sz33) = (z33);
+						zcosg = zcosgl;
+						zsing = zsingl;
+						zcosi = zcosil;
+						zsini = zsinil;
+						zcosh = zcoshl * (cnodm) + zsinhl * (snodm);
+						zsinh = (snodm) * zcoshl - (cnodm) * zsinhl;
+						cc = c1l;
+					}
+				}
+
+				(gsr.zmol) = FMOD( (4.7199672 + 0.22997150 * (day) - (gam)), twopi );
+				(gsr.zmos) = FMOD( (6.2565837 + 0.017201977 * (day)), twopi );
+
+				/* ------------------------ do solar terms ---------------------- */
+				(gsr.se2) = 2.0 * (ss1) * (ss6);
+				(gsr.se3) = 2.0 * (ss1) * (ss7);
+				(gsr.si2) = 2.0 * (ss2) * (sz12);
+				(gsr.si3) = 2.0 * (ss2) * ((sz13) - (sz11));
+				(gsr.sl2) = -2.0 * (ss3) * (sz2);
+				(gsr.sl3) = -2.0 * (ss3) * ((sz3) - (sz1));
+				(gsr.sl4) = -2.0 * (ss3) * (-21.0 - 9.0 * (emsq)) * zes;
+				(gsr.sgh2) = 2.0 * (ss4) * (sz32);
+				(gsr.sgh3) = 2.0 * (ss4) * ((sz33) - (sz31));
+				(gsr.sgh4) = -18.0 * (ss4) * zes;
+				(gsr.sh2) = -2.0 * (ss2) * (sz22);
+				(gsr.sh3) = -2.0 * (ss2) * ((sz23) - (sz21));
+
+				/* ------------------------ do lunar terms ---------------------- */
+				(gsr.ee2) = 2.0 * (s1) * (s6);
+				(gsr.e3) = 2.0 * (s1) * (s7);
+				(gsr.xi2) = 2.0 * (s2) * (z12);
+				(gsr.xi3) = 2.0 * (s2) * ((z13) - (z11));
+				(gsr.xl2) = -2.0 * (s3) * (z2);
+				(gsr.xl3) = -2.0 * (s3) * ((z3) - (z1));
+				(gsr.xl4) = -2.0 * (s3) * (-21.0 - 9.0 * (emsq)) * zel;
+				(gsr.xgh2) = 2.0 * (s4) * (z32);
+				(gsr.xgh3) = 2.0 * (s4) * ((z33) - (z31));
+				(gsr.xgh4) = -18.0 * (s4) * zel;
+				(gsr.xh2) = -2.0 * (s2) * (z22);
+				(gsr.xh3) = -2.0 * (s2) * ((z23) - (z21));
+
+
+			//dscom_simple end.
+
+			// Original code ran dpper_simple( ... true ... ) here. But we don't actually need to.
 
 			argpm = 0.0;
 			nodem = 0.0;

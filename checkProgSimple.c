@@ -375,6 +375,92 @@ e, r, v = satellite.sgp4(jd, fr)
 	}
 
 
+// Forward a month, but, with THEMIS, a much higher orbit satellite
+/*
+from sgp4.api import jday
+from sgp4.api import Satrec
+s = "1 30798U 07004E   24121.56859868 -.00000520  00000+0  00000+0 0  9999"
+t = "2 30798   7.9414 283.2653 8322119 302.3633 341.0652  0.87832507 59071"
+satellite = Satrec.twoline2rv(s, t)
+jd, fr = jday(2024, 5, 3, 18, 0, 0)
+e, r, v = satellite.sgp4(jd, fr)
+	>>> r
+	(60379.65507502841, 48486.94962512441, 9400.346222767417)
+	>>> v
+	(0.031163591993459357, 1.2500171299737175, 0.037585511101346745)
+*/
+	{
+		struct TLEObject * ss_THEMIS = 0;
+		int numSS_THEMIS = 0;
+		int r = ParseFileOrString( 0, ""
+			"THEMIS E                \n"
+			"1 30798U 07004E   24121.56859868 -.00000520  00000+0  00000+0 0  9999\n"
+			"2 30798   7.9414 283.2653 8322119 302.3633 341.0652  0.87832507 59071\n",
+			&ss_THEMIS, &numSS_THEMIS );
+		if( r || numSS_THEMIS != 1 )
+		{
+			fprintf( stderr, "Error: SS can't load.\n" );
+			return -5;
+		}
+		puts( ss_THEMIS->objectName );
+		double startmfe = (1717178400 - ss_THEMIS->epoch)/60.0;
+		if( ConvertTLEToSGP4GPU( &ss_THEMIS[0], startmfe, ro,  vo, 0 ) )
+		{
+			printf( "failed to convert tle\n" );
+			return -5;
+		}
+
+		//Dumpelsetrec( &iss_THEMIS );
+
+		double jd = ss_THEMIS->jdsatepoch + floor(startmfe/1440.0);
+		double jdfrac = FMOD(startmfe/1440.0, 1.0) + ss_THEMIS->jdsatepochF;
+		int year, mon, day, hr, min;
+		SGPF sec;
+		invjday( jd, jdfrac, &year, &mon, &day, &hr, &min, &sec );
+		printf( "%f %f %04d %02d %02d %02d:%02d:%05.02f\n", jd, jdfrac, year, mon, day, hr, min, sec );
+		printf( "[Δt%14.8f] %16.8f %16.8f %16.8f %16.8f \n                   %16.9f %16.9f %16.9f %16.9f\n                   %16.9f %16.9f %16.9f\n",
+			startmfe,ro[0],ro[1],ro[2], sqrt(ro[0]*ro[0]+ro[1]*ro[1]+ro[2]*ro[2]),vo[0],vo[1],vo[2], sqrt(vo[0]*vo[0]+vo[1]*vo[1]+vo[2]*vo[2]),
+			a_alta_altp[0], a_alta_altp[1], a_alta_altp[2]
+		);
+
+		pysgp4[0] = 60379.65507502841;
+		pysgp4[1] = 48486.94962512441;
+		pysgp4[2] = 9400.346222767417;
+		pysgp4v[0] = 0.031163591993459357;
+		pysgp4v[1] = 1.2500171299737175;
+		pysgp4v[2] = 0.037585511101346745;
+		rmse = sqrt( (ro[0] - pysgp4[0])*(ro[0] - pysgp4[0]) + (ro[1] - pysgp4[1]) * (ro[1] - pysgp4[1]) + ( ro[2] - pysgp4[2] ) * (ro[2] - pysgp4[2]) );
+		printf( "Python / Our SGP4 Disagreement: %f %f %f RMS: %f km ... ",
+			 ro[0] - pysgp4[0], ro[1] - pysgp4[1], ro[2] - pysgp4[2],
+			rmse );
+		if( rmse < 0.0005 + CSGP4_USE_FLOAT * .365 )
+		{
+			printf( "PASS\n" );
+		}
+		else
+		{
+			printf( "FAIL\n" );
+			fprintf( stderr, "Error: SGP Algorithm disagrees in position.  Fail\n" );
+			return -5;
+		}
+
+		double vrmse = sqrt( (vo[0] - pysgp4v[0])*(vo[0] - pysgp4v[0]) + (vo[1] - pysgp4v[1]) * (vo[1] - pysgp4v[1]) + ( vo[2] - pysgp4v[2] ) * (vo[2] - pysgp4v[2]) );
+		printf( "Python / Our SGP4 Disagreement: %f %f %f RMS: %f km/s ... ",
+			 vo[0] - pysgp4v[0], vo[1] - pysgp4v[1], vo[2] - pysgp4v[2],
+			vrmse );
+		if( vrmse < 0.00005 + CSGP4_USE_FLOAT * .001 )
+		{
+			printf( "PASS\n" );
+		}
+		else
+		{
+			printf( "FAIL\n" );
+			fprintf( stderr, "Error: SGP Algorithm disagrees in speed (%f).  Fail\n", vrmse );
+			return -6;
+		}
+	}
+
+
 /* And forwarded out a month... 
 jd, fr = jday(2024, 5, 27, 18, 0, 0)
 e, r, v = satellite.sgp4(jd, fr)
