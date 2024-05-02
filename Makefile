@@ -20,6 +20,7 @@ test : checkProg spacestations.txt trackonly checkProg.float checkProgSimple
 	./checkProg spacestations.txt
 	./checkProg.float spacestations.txt
 	./checkProgSimple
+	size checkProg checkProg.float checkProgSimple
 
 clean :
 	rm -rf *.o *~ checkProg trackonly checkProg.float checkProgSimple
