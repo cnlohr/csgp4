@@ -120,6 +120,7 @@ struct elsetrec_simple
 	SGPF altp /* Not used in algo, but cool anyway to look at */;
 };
 
+#if 0
 CSGP4_DECORATOR void dpper_simple
 	 (
 	   SGPF e3, SGPF ee2, SGPF peo, SGPF pgho, SGPF pho,
@@ -246,7 +247,7 @@ CSGP4_DECORATOR void dpper_simple
 	}   // if init == 'n'
 	//#include "debug1.cpp"
 }  // end dpper
-
+#endif
 
 CSGP4_DECORATOR void initl_simple
 	 (
@@ -631,14 +632,14 @@ CSGP4_DECORATOR int sgp4init_simple
 //	getgravconst_simple(/*whichconst,*/ CSGP4_REF(gsr.tumin), CSGP4_REF(gsr.mu), CSGP4_REF(gsr.radiusearthkm), CSGP4_REF(gsr.xke),
 //				  CSGP4_REF(gsr.j2), CSGP4_REF(gsr.j3), CSGP4_REF(gsr.j4), CSGP4_REF(gsr.j3oj2));
 	//Hard-coded WGS72
-			(gsr.mu) = 398600.8;			// in km3 / s2
-			(gsr.radiusearthkm) = 6378.135;	 // km
-			(gsr.xke) = 60.0 / SQRT((gsr.radiusearthkm) * (gsr.radiusearthkm) * (gsr.radiusearthkm) / (gsr.mu));
-			(gsr.tumin) = 1.0 / (gsr.xke);
-			(gsr.j2) = 0.001082616;
-			(gsr.j3) = -0.00000253881;
-			(gsr.j4) = -0.00000165597;
-			(gsr.j3oj2) = (gsr.j3) / (gsr.j2);
+	(gsr.mu) = 398600.8;			// in km3 / s2
+	(gsr.radiusearthkm) = 6378.135;	 // km
+	(gsr.xke) = 60.0 / SQRT((gsr.radiusearthkm) * (gsr.radiusearthkm) * (gsr.radiusearthkm) / (gsr.mu));
+	(gsr.tumin) = 1.0 / (gsr.xke);
+	(gsr.j2) = 0.001082616;
+	(gsr.j3) = -0.00000253881;
+	(gsr.j4) = -0.00000165597;
+	(gsr.j3oj2) = (gsr.j3) / (gsr.j2);
 
 
 	//-------------------------------------------------------------------------
@@ -1363,6 +1364,7 @@ CSGP4_DECORATOR int sgp4init_simple
 	cosip = cosim;
 	if (gsr.method)
 	{
+/*
 		dpper_simple
 			(
 			  gsr.e3, gsr.ee2, gsr.peo,
@@ -1378,6 +1380,123 @@ CSGP4_DECORATOR int sgp4init_simple
 			  gsr.zmol, gsr.zmos, gsr.inclo,
 			  false, CSGP4_REF(ep), CSGP4_REF(xincp), CSGP4_REF(nodep), CSGP4_REF(argpp), CSGP4_REF(mp)
 			);
+*/
+
+		//dpper_simple
+			/* --------------------- local variables ------------------------ */
+			const SGPF twopi = 2.0 * SGPPI;
+			SGPF alfdp, betdp, cosip, cosop, dalf, dbet, dls,
+				 f2, f3, pe, pgh, ph, pinc, pl,
+				 sel, ses, sghl, sghs, shll, shs, sil,
+				 sinip, sinop, sinzf, sis, sll, sls, xls,
+				 xnoh, zf, zm, zel, zes, znl, zns;
+
+			/* ---------------------- constants ----------------------------- */
+			zns = 1.19459e-5;
+			zes = 0.01675;
+			znl = 1.5835218e-4;
+			zel = 0.05490;
+
+			/* --------------- calculate time varying periodics ----------- */
+			zm = gsr.zmos + zns * gsr.t;
+			// be sure that the initial call has time set to zero
+			//if (init)
+			//	zm = gsr.zmos;
+			zf = zm + 2.0 * zes * SIN(zm);
+			sinzf = SIN(zf);
+			f2 = 0.5 * sinzf * sinzf - 0.25;
+			f3 = -0.5 * sinzf * COS(zf);
+			ses = gsr.se2 * f2 + gsr.se3 * f3;
+			sis = gsr.si2 * f2 + gsr.si3 * f3;
+			sls = gsr.sl2 * f2 + gsr.sl3 * f3 + gsr.sl4 * sinzf;
+			sghs = gsr.sgh2 * f2 + gsr.sgh3 * f3 + gsr.sgh4 * sinzf;
+			shs = gsr.sh2 * f2 + gsr.sh3 * f3;
+			zm = gsr.zmol + znl * gsr.t;
+			//if (init)
+			//	zm = gsr.zmol;
+			zf = zm + 2.0 * zel * SIN(zm);
+			sinzf = SIN(zf);
+			f2 = 0.5 * sinzf * sinzf - 0.25;
+			f3 = -0.5 * sinzf * COS(zf);
+			sel = gsr.ee2 * f2 + gsr.e3 * f3;
+			sil = gsr.xi2 * f2 + gsr.xi3 * f3;
+			sll = gsr.xl2 * f2 + gsr.xl3 * f3 + gsr.xl4 * sinzf;
+			sghl = gsr.xgh2 * f2 + gsr.xgh3 * f3 + gsr.xgh4 * sinzf;
+			shll = gsr.xh2 * f2 + gsr.xh3 * f3;
+			pe = ses + sel;
+			pinc = sis + sil;
+			pl = sls + sll;
+			pgh = sghs + sghl;
+			ph = shs + shll;
+
+			// not init
+			{
+				pe = pe - gsr.peo;
+				pinc = pinc - gsr.pinco;
+				pl = pl - gsr.plo;
+				pgh = pgh - gsr.pgho;
+				ph = ph - gsr.pho;
+				(xincp) = (xincp) + pinc;
+				(ep) = (ep) + pe;
+				sinip = SIN((xincp));
+				cosip = COS((xincp));
+
+				/* ----------------- apply periodics directly ------------ */
+				//  sgp4fix for lyddane choice
+				//  strn3 used original inclination - this is technically feasible
+				//  gsfc used perturbed inclination - also technically feasible
+				//  probably best to readjust the 0.2 limit value and limit discontinuity
+				//  0.2 rad = 11.45916 deg
+				//  use next line for original strn3 approach and original inclination
+				//  if (inclo >= 0.2)
+				//  use next line for gsfc version and perturbed inclination
+				if ((xincp) >= 0.2)
+				{
+					ph = ph / sinip;
+					pgh = pgh - cosip * ph;
+					(argpp) = (argpp) + pgh;
+					(nodep) = (nodep) + ph;
+					(mp) = (mp) + pl;
+				}
+				else
+				{
+					/* ---- apply periodics with lyddane modification ---- */
+					sinop = SIN((nodep));
+					cosop = COS((nodep));
+					alfdp = sinip * sinop;
+					betdp = sinip * cosop;
+					dalf = ph * cosop + pinc * cosip * sinop;
+					dbet = -ph * sinop + pinc * cosip * cosop;
+					alfdp = alfdp + dalf;
+					betdp = betdp + dbet;
+					(nodep) = FMOD( (nodep), twopi );
+					//  sgp4fix for afspc written intrinsic functions
+					// nodep used without a trigonometric function ahead
+					if (((nodep) < 0.0)) // && (opsmode == 'a'))
+						(nodep) = (nodep) + twopi;
+					xls = (mp) + (argpp) + cosip * (nodep);
+					dls = pl + pgh - pinc * (nodep) * sinip;
+					xls = xls + dls;
+					xnoh = (nodep);
+					(nodep) = ATAN2(alfdp, betdp);
+					//  sgp4fix for afspc written intrinsic functions
+					// nodep used without a trigonometric function ahead
+					if (((nodep) < 0.0)) // && (opsmode == 'a'))
+						(nodep) = (nodep) + twopi;
+					if (FABS(xnoh - (nodep)) > SGPPI)
+					{
+						if ((nodep) < xnoh)
+							(nodep) = (nodep) + twopi;
+						else
+							(nodep) = (nodep) - twopi;
+					}
+					(mp) = (mp) + pl;
+					(argpp) = xls - (mp) - cosip * (nodep);
+				}
+			}   // if init == 'n'
+		//end dpper_simple
+
+
 		if (xincp < 0.0)
 		{
 			xincp = -xincp;
@@ -1391,6 +1510,7 @@ CSGP4_DECORATOR int sgp4init_simple
 			// sgp4fix add return
 			//return false;
 		}
+
 	} // if method = true
 
 	/* -------------------- long period periodics ------------------ */
