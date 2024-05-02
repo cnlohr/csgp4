@@ -16,7 +16,7 @@
 #include <string.h>
 #include <stdlib.h>
 
-#define RESTRICT restrict
+#define CSGP4_OUT * restrict
 
 #define SGPPI 3.1415926535897932384626433
 
@@ -41,14 +41,14 @@
 
 // Use single precision.
 #define SGPF float
-#define FLOOR floor
-#define FABS  fabs
-#define COS   cos
-#define SIN   sin
-#define ATAN2 atan2
-#define SQRT  sqrt
-#define POW   pow
-
+#define FLOOR floorf
+#define FABS  fabsf
+#define COS   cosf
+#define SIN   sinf
+#define ATAN2 atan2f
+#define SQRT  sqrtf
+#define POW   powf
+#define FMOD  fmodf
 #else
 // Use double precision.
 #define SGPF double
@@ -59,7 +59,7 @@
 #define ATAN2 atan2
 #define SQRT  sqrt
 #define POW   pow
-
+#define FMOD fmod
 #endif
 
 
@@ -166,62 +166,26 @@ CSGP4_DECORATOR void sgp4init
 CSGP4_DECORATOR void days2mdhms
 	(
 	int year, SGPF days,
-	int * mon, int * day, int * hr, int * minute, SGPF * RESTRICT second
+	int * mon, int * day, int * hr, int * minute, SGPF CSGP4_OUT second
 	);
 
 CSGP4_DECORATOR void jday
 		(
 		  int year, int mon, int day, int hr, int minute, SGPF sec,
-		  SGPF * RESTRICT jd, SGPF * RESTRICT jdFrac
+		  SGPF CSGP4_OUT jd, SGPF CSGP4_OUT jdFrac
 		);
 
 CSGP4_DECORATOR void invjday
 	(
 	SGPF jd, SGPF jdFrac,
 	int * year, int * mon, int * day,
-	int * hr, int * minute, SGPF * RESTRICT second
+	int * hr, int * minute, SGPF CSGP4_OUT second
 	);
-/*
-CSGP4_DECORATOR void Dumpelsetrec( struct elsetrec * obj )
-{
-	printf( "obj.a        = %18.15f\n", obj->a );
-	printf( "obj.alta     = %18.15f\n", obj->alta );
-	printf( "obj.altp     = %18.15f\n", obj->altp );
-	printf( "obj.am       = %18.15f <<<<<<\n", obj->am );
-	printf( "obj.argpdot  = %18.15f\n", obj->argpdot );
-	printf( "obj.argpo    = %18.15f\n", obj->argpo );
-	printf( "obj.bstar    = %18.15f\n", obj->bstar );
-	printf( "obj.ecco     = %18.15f\n", obj->ecco );
-	printf( "obj.em       = %18.15f <<<<<<\n", obj->em );
-	printf( "obj.error    = %d\n", obj->error );
-	printf( "obj.gsto     = %18.15f (!!!!!)\n", obj->gsto );
-	printf( "obj.im       = %18.15f\n", obj->im );
-	printf( "obj.inclo    = %18.15f\n", obj->inclo );
-	printf( "obj.j2       = %18.15f\n", obj->j2 );
-	printf( "obj.j3       = %18.15f\n", obj->j3 );
-	printf( "obj.j3oj2    = %18.15f\n", obj->j3oj2 );
-	printf( "obj.j4       = %18.15f\n", obj->j4 );
-	printf( "obj.mdot     = %18.15f\n", obj->mdot );
-	printf( "obj.method   = %d\n", obj->method );
-	printf( "obj.mm       = %18.15f <<<<<<<\n", obj->mm );
-	printf( "obj.mo       = %18.15f\n", obj->mo );
-	printf( "obj.mu       = %18.15f\n", obj->mu );
-	printf( "obj.nddot    = %18.15f\n", obj->nddot );
-	printf( "obj.ndot     = %18.15f\n", obj->ndot );
-	printf( "obj.nm       = %18.15f <<<<<<<\n", obj->nm );
-	printf( "obj.no_kozai = %18.15f\n", obj->no_kozai );
-	printf( "obj.nodedot  = %18.15f\n", obj->nodedot );
-	printf( "obj.nodeo    = %18.15f\n", obj->nodeo );
-	printf( "obj.om       = %18.15f\n", obj->om );
-	printf( "obj.radiusearthkm = %18.15f\n", obj->radiusearthkm );
-	printf( "obj.t        = %18.15f\n", obj->t );
-	printf( "obj.tumin    = %18.15f\n", obj->tumin );
-	printf( "obj.xke      = %18.15f\n", obj->xke );
-}
-*/
-CSGP4_DECORATOR float ParseFixedEponential( const char * le, int lineno, int * )
+
+CSGP4_DECORATOR float ParseFixedEponential( const char * le, int lineno, int * aborted )
 {
 	int i;
+	// TODO: Handle aborted case.
 
 	// Get rid of white space.
 	while( le[0] == ' ' ) le++;
@@ -565,7 +529,7 @@ CSGP4_DECORATOR SGPF gstime
 	tut1 = (jdut1 - 2451545.0) / 36525.0;
 	temp = -6.2e-6 * tut1 * tut1 * tut1 + 0.093104 * tut1 * tut1 +
 			(876600.0 * 3600 + 8640184.812866) * tut1 + 67310.54841;  // sec
-	temp = fmod(temp * deg2rad / 240.0, twopi); //360/86400 = 1/240, to deg, to rad
+	temp = FMOD(temp * deg2rad / 240.0, twopi); //360/86400 = 1/240, to deg, to rad
 
 	// ------------------------ check quadrants ---------------------
 	if (temp < 0.0)
@@ -609,14 +573,14 @@ CSGP4_DECORATOR SGPF gstime
 CSGP4_DECORATOR void getgravconst
 	 (
 	  enum gravconsttype whichconst,
-	  SGPF * RESTRICT tumin,
-	  SGPF * RESTRICT mu,
-	  SGPF * RESTRICT radiusearthkm,
-	  SGPF * RESTRICT xke,
-	  SGPF * RESTRICT j2,
-	  SGPF * RESTRICT j3,
-	  SGPF * RESTRICT j4,
-	  SGPF * RESTRICT j3oj2
+	  SGPF CSGP4_OUT tumin,
+	  SGPF CSGP4_OUT mu,
+	  SGPF CSGP4_OUT radiusearthkm,
+	  SGPF CSGP4_OUT xke,
+	  SGPF CSGP4_OUT j2,
+	  SGPF CSGP4_OUT j3,
+	  SGPF CSGP4_OUT j4,
+	  SGPF CSGP4_OUT j3oj2
 	 )
 {
 
@@ -756,8 +720,8 @@ CSGP4_DECORATOR void dspace
 	   SGPF dmdt, SGPF dnodt, SGPF domdt, SGPF argpo, SGPF argpdot,
 	   SGPF t, SGPF tc, SGPF gsto, SGPF xfact, SGPF xlamo,
 	   SGPF no,
-	   SGPF * RESTRICT atime, SGPF * RESTRICT em, SGPF * RESTRICT argpm, SGPF * RESTRICT inclm, SGPF * RESTRICT xli,
-	   SGPF * RESTRICT mm, SGPF * RESTRICT xni, SGPF * RESTRICT nodem, SGPF * RESTRICT dndt, SGPF * RESTRICT nm
+	   SGPF CSGP4_OUT atime, SGPF CSGP4_OUT em, SGPF CSGP4_OUT argpm, SGPF CSGP4_OUT inclm, SGPF CSGP4_OUT xli,
+	   SGPF CSGP4_OUT mm, SGPF CSGP4_OUT xni, SGPF CSGP4_OUT nodem, SGPF CSGP4_OUT dndt, SGPF CSGP4_OUT nm
 	 )
 {
 	const SGPF twopi = 2.0 * SGPPI;
@@ -780,7 +744,7 @@ CSGP4_DECORATOR void dspace
 
 	/* ----------- calculate deep space resonance effects ----------- */
 	*dndt = 0.0;
-	theta = fmod( (gsto + tc * rptim), twopi );
+	theta = FMOD( (gsto + tc * rptim), twopi );
 	*em = *em + dedt * t;
 
 	*inclm = *inclm + didt * t;
@@ -997,14 +961,14 @@ CSGP4_DECORATOR void dsinit
 	   SGPF mo, SGPF mdot, SGPF no, SGPF nodeo, SGPF nodedot,
 	   SGPF xpidot, SGPF z1, SGPF z3, SGPF z11, SGPF z13,
 	   SGPF z21, SGPF z23, SGPF z31, SGPF z33, SGPF ecco,
-	   SGPF eccsq, SGPF * RESTRICT em, SGPF * RESTRICT argpm, SGPF * RESTRICT inclm, SGPF * RESTRICT mm,
-	   SGPF * RESTRICT nm, SGPF * RESTRICT nodem,
+	   SGPF eccsq, SGPF CSGP4_OUT em, SGPF CSGP4_OUT argpm, SGPF CSGP4_OUT inclm, SGPF CSGP4_OUT mm,
+	   SGPF CSGP4_OUT nm, SGPF CSGP4_OUT nodem,
 	   int * irez,
-	   SGPF * RESTRICT atime, SGPF * RESTRICT d2201, SGPF * RESTRICT d2211, SGPF * RESTRICT d3210, SGPF * RESTRICT d3222,
-	   SGPF * RESTRICT d4410, SGPF * RESTRICT d4422, SGPF * RESTRICT d5220, SGPF * RESTRICT d5232, SGPF * RESTRICT d5421,
-	   SGPF * RESTRICT d5433, SGPF * RESTRICT dedt, SGPF * RESTRICT didt, SGPF * RESTRICT dmdt, SGPF * RESTRICT dndt,
-	   SGPF * RESTRICT dnodt, SGPF * RESTRICT domdt, SGPF * RESTRICT del1, SGPF * RESTRICT del2, SGPF * RESTRICT del3,
-	   SGPF * RESTRICT xfact, SGPF * RESTRICT xlamo, SGPF * RESTRICT xli, SGPF * RESTRICT xni
+	   SGPF CSGP4_OUT atime, SGPF CSGP4_OUT d2201, SGPF CSGP4_OUT d2211, SGPF CSGP4_OUT d3210, SGPF CSGP4_OUT d3222,
+	   SGPF CSGP4_OUT d4410, SGPF CSGP4_OUT d4422, SGPF CSGP4_OUT d5220, SGPF CSGP4_OUT d5232, SGPF CSGP4_OUT d5421,
+	   SGPF CSGP4_OUT d5433, SGPF CSGP4_OUT dedt, SGPF CSGP4_OUT didt, SGPF CSGP4_OUT dmdt, SGPF CSGP4_OUT dndt,
+	   SGPF CSGP4_OUT dnodt, SGPF CSGP4_OUT domdt, SGPF CSGP4_OUT del1, SGPF CSGP4_OUT del2, SGPF CSGP4_OUT del3,
+	   SGPF CSGP4_OUT xfact, SGPF CSGP4_OUT xlamo, SGPF CSGP4_OUT xli, SGPF CSGP4_OUT xni
 	 )
 {
 	/* --------------------- local variables ------------------------ */
@@ -1075,7 +1039,7 @@ CSGP4_DECORATOR void dsinit
 
 	/* ----------- calculate deep space resonance effects -------- */
 	*dndt = 0.0;
-	theta = fmod((gsto + tc * rptim), twopi );
+	theta = FMOD((gsto + tc * rptim), twopi );
 	*em = *em + *dedt * t;
 	*inclm = *inclm + *didt * t;
 	*argpm = *argpm + *domdt * t;
@@ -1176,7 +1140,7 @@ CSGP4_DECORATOR void dsinit
 			temp = 2.0 * temp1 * root54;
 			*d5421 = temp * f542 * g521;
 			*d5433 = temp * f543 * g533;
-			*xlamo = fmod( (mo + nodeo + nodeo - theta - theta), twopi );
+			*xlamo = FMOD( (mo + nodeo + nodeo - theta - theta), twopi );
 			*xfact = mdot + *dmdt + 2.0 * (nodedot + *dnodt - rptim) - no;
 			*em = emo;
 			emsq = emsqo;
@@ -1196,7 +1160,7 @@ CSGP4_DECORATOR void dsinit
 			*del2 = 2.0 * *del1 * f220 * g200 * q22;
 			*del3 = 3.0 * *del1 * f330 * g300 * q33 * aonv;
 			*del1 = *del1 * f311 * g310 * q31 * aonv;
-			*xlamo = fmod(mo + nodeo + argpo - theta, twopi );
+			*xlamo = FMOD(mo + nodeo + argpo - theta, twopi );
 			*xfact = mdot + xpidot - rptim + *dmdt + *domdt + *dnodt - no;
 		}
 
@@ -1275,10 +1239,10 @@ CSGP4_DECORATOR void initl
 
 	// Output params:
 	   char * method,
-	   SGPF * RESTRICT ainv, SGPF * RESTRICT ao, SGPF * RESTRICT con41, SGPF * RESTRICT con42, SGPF * RESTRICT cosio,
-	   SGPF * RESTRICT cosio2, SGPF * RESTRICT eccsq, SGPF * RESTRICT omeosq, SGPF * RESTRICT posq,
-	   SGPF * RESTRICT rp, SGPF * RESTRICT rteosq, SGPF * RESTRICT sinio, SGPF * RESTRICT gsto,
-	   char opsmode, SGPF * RESTRICT no_unkozai
+	   SGPF CSGP4_OUT ainv, SGPF CSGP4_OUT ao, SGPF CSGP4_OUT con41, SGPF CSGP4_OUT con42, SGPF CSGP4_OUT cosio,
+	   SGPF CSGP4_OUT cosio2, SGPF CSGP4_OUT eccsq, SGPF CSGP4_OUT omeosq, SGPF CSGP4_OUT posq,
+	   SGPF CSGP4_OUT rp, SGPF CSGP4_OUT rteosq, SGPF CSGP4_OUT sinio, SGPF CSGP4_OUT gsto,
+	   char opsmode, SGPF CSGP4_OUT no_unkozai
 	 )
 {
 	/* --------------------- local variables ------------------------ */
@@ -1334,7 +1298,7 @@ CSGP4_DECORATOR void initl
 		thgr70 = 1.7321343856509374;
 		fk5r = 5.07551419432269442e-15;
 		c1p2p = c1 + twopi;
-		*gsto = fmod(thgr70 + c1 * ds70 + c1p2p * tfrac + ts70 * ts70 * fk5r, twopi);
+		*gsto = FMOD(thgr70 + c1 * ds70 + c1p2p * tfrac + ts70 * ts70 * fk5r, twopi);
 		if (*gsto < 0.0)
 			*gsto = *gsto + twopi;
 	}
@@ -1419,23 +1383,23 @@ CSGP4_DECORATOR void dscom
 	 (
 	   SGPF epoch, SGPF ep, SGPF argpp, SGPF tc, SGPF inclp,
 	   SGPF nodep, SGPF np,
-	   SGPF * RESTRICT snodm, SGPF * RESTRICT cnodm, SGPF * RESTRICT sinim, SGPF * RESTRICT cosim, SGPF * RESTRICT sinomm,
-	   SGPF * RESTRICT cosomm, SGPF * RESTRICT day, SGPF * RESTRICT e3, SGPF * RESTRICT ee2, SGPF * RESTRICT em,
-	   SGPF * RESTRICT emsq, SGPF * RESTRICT gam, SGPF * RESTRICT peo, SGPF * RESTRICT pgho, SGPF * RESTRICT pho,
-	   SGPF * RESTRICT pinco, SGPF * RESTRICT plo, SGPF * RESTRICT rtemsq, SGPF * RESTRICT se2, SGPF * RESTRICT se3,
-	   SGPF * RESTRICT sgh2, SGPF * RESTRICT sgh3, SGPF * RESTRICT sgh4, SGPF * RESTRICT sh2, SGPF * RESTRICT sh3,
-	   SGPF * RESTRICT si2, SGPF * RESTRICT si3, SGPF * RESTRICT sl2, SGPF * RESTRICT sl3, SGPF * RESTRICT sl4,
-	   SGPF * RESTRICT s1, SGPF * RESTRICT s2, SGPF * RESTRICT s3, SGPF * RESTRICT s4, SGPF * RESTRICT s5,
-	   SGPF * RESTRICT s6, SGPF * RESTRICT s7, SGPF * RESTRICT ss1, SGPF * RESTRICT ss2, SGPF * RESTRICT ss3,
-	   SGPF * RESTRICT ss4, SGPF * RESTRICT ss5, SGPF * RESTRICT ss6, SGPF * RESTRICT ss7, SGPF * RESTRICT sz1,
-	   SGPF * RESTRICT sz2, SGPF * RESTRICT sz3, SGPF * RESTRICT sz11, SGPF * RESTRICT sz12, SGPF * RESTRICT sz13,
-	   SGPF * RESTRICT sz21, SGPF * RESTRICT sz22, SGPF * RESTRICT sz23, SGPF * RESTRICT sz31, SGPF * RESTRICT sz32,
-	   SGPF * RESTRICT sz33, SGPF * RESTRICT xgh2, SGPF * RESTRICT xgh3, SGPF * RESTRICT xgh4, SGPF * RESTRICT xh2,
-	   SGPF * RESTRICT xh3, SGPF * RESTRICT xi2, SGPF * RESTRICT xi3, SGPF * RESTRICT xl2, SGPF * RESTRICT xl3,
-	   SGPF * RESTRICT xl4, SGPF * RESTRICT nm, SGPF * RESTRICT z1, SGPF * RESTRICT z2, SGPF * RESTRICT z3,
-	   SGPF * RESTRICT z11, SGPF * RESTRICT z12, SGPF * RESTRICT z13, SGPF * RESTRICT z21, SGPF * RESTRICT z22,
-	   SGPF * RESTRICT z23, SGPF * RESTRICT z31, SGPF * RESTRICT z32, SGPF * RESTRICT z33, SGPF * RESTRICT zmol,
-	   SGPF * RESTRICT zmos
+	   SGPF CSGP4_OUT snodm, SGPF CSGP4_OUT cnodm, SGPF CSGP4_OUT sinim, SGPF CSGP4_OUT cosim, SGPF CSGP4_OUT sinomm,
+	   SGPF CSGP4_OUT cosomm, SGPF CSGP4_OUT day, SGPF CSGP4_OUT e3, SGPF CSGP4_OUT ee2, SGPF CSGP4_OUT em,
+	   SGPF CSGP4_OUT emsq, SGPF CSGP4_OUT gam, SGPF CSGP4_OUT peo, SGPF CSGP4_OUT pgho, SGPF CSGP4_OUT pho,
+	   SGPF CSGP4_OUT pinco, SGPF CSGP4_OUT plo, SGPF CSGP4_OUT rtemsq, SGPF CSGP4_OUT se2, SGPF CSGP4_OUT se3,
+	   SGPF CSGP4_OUT sgh2, SGPF CSGP4_OUT sgh3, SGPF CSGP4_OUT sgh4, SGPF CSGP4_OUT sh2, SGPF CSGP4_OUT sh3,
+	   SGPF CSGP4_OUT si2, SGPF CSGP4_OUT si3, SGPF CSGP4_OUT sl2, SGPF CSGP4_OUT sl3, SGPF CSGP4_OUT sl4,
+	   SGPF CSGP4_OUT s1, SGPF CSGP4_OUT s2, SGPF CSGP4_OUT s3, SGPF CSGP4_OUT s4, SGPF CSGP4_OUT s5,
+	   SGPF CSGP4_OUT s6, SGPF CSGP4_OUT s7, SGPF CSGP4_OUT ss1, SGPF CSGP4_OUT ss2, SGPF CSGP4_OUT ss3,
+	   SGPF CSGP4_OUT ss4, SGPF CSGP4_OUT ss5, SGPF CSGP4_OUT ss6, SGPF CSGP4_OUT ss7, SGPF CSGP4_OUT sz1,
+	   SGPF CSGP4_OUT sz2, SGPF CSGP4_OUT sz3, SGPF CSGP4_OUT sz11, SGPF CSGP4_OUT sz12, SGPF CSGP4_OUT sz13,
+	   SGPF CSGP4_OUT sz21, SGPF CSGP4_OUT sz22, SGPF CSGP4_OUT sz23, SGPF CSGP4_OUT sz31, SGPF CSGP4_OUT sz32,
+	   SGPF CSGP4_OUT sz33, SGPF CSGP4_OUT xgh2, SGPF CSGP4_OUT xgh3, SGPF CSGP4_OUT xgh4, SGPF CSGP4_OUT xh2,
+	   SGPF CSGP4_OUT xh3, SGPF CSGP4_OUT xi2, SGPF CSGP4_OUT xi3, SGPF CSGP4_OUT xl2, SGPF CSGP4_OUT xl3,
+	   SGPF CSGP4_OUT xl4, SGPF CSGP4_OUT nm, SGPF CSGP4_OUT z1, SGPF CSGP4_OUT z2, SGPF CSGP4_OUT z3,
+	   SGPF CSGP4_OUT z11, SGPF CSGP4_OUT z12, SGPF CSGP4_OUT z13, SGPF CSGP4_OUT z21, SGPF CSGP4_OUT z22,
+	   SGPF CSGP4_OUT z23, SGPF CSGP4_OUT z31, SGPF CSGP4_OUT z32, SGPF CSGP4_OUT z33, SGPF CSGP4_OUT zmol,
+	   SGPF CSGP4_OUT zmos
 	 )
 {
 	/* -------------------------- constants ------------------------- */
@@ -1518,7 +1482,7 @@ CSGP4_DECORATOR void dscom
 	*pgho = 0.0;
 	*pho = 0.0;
 	*day = epoch + 18261.5 + tc / 1440.0;
-	xnodce = fmod(4.5236020 - 9.2422029e-4 * *day, twopi);
+	xnodce = FMOD(4.5236020 - 9.2422029e-4 * *day, twopi);
 	stem = SIN(xnodce);
 	ctem = COS(xnodce);
 	zcosil = 0.91375164 - 0.03568096 * ctem;
@@ -1622,8 +1586,8 @@ CSGP4_DECORATOR void dscom
 		}
 	}
 
-	*zmol = fmod( (4.7199672 + 0.22997150 * *day - *gam), twopi );
-	*zmos = fmod( (6.2565837 + 0.017201977 * *day), twopi );
+	*zmol = FMOD( (4.7199672 + 0.22997150 * *day - *gam), twopi );
+	*zmos = FMOD( (6.2565837 + 0.017201977 * *day), twopi );
 
 	/* ------------------------ do solar terms ---------------------- */
 	*se2 = 2.0 * *ss1 * *ss6;
@@ -1736,7 +1700,7 @@ CSGP4_DECORATOR void dpper
 	   SGPF xi2, SGPF xi3, SGPF xl2, SGPF xl3, SGPF xl4,
 	   SGPF zmol, SGPF zmos, SGPF inclo,
 	   char init,
-	   SGPF * RESTRICT ep, SGPF * RESTRICT inclp, SGPF * RESTRICT nodep, SGPF * RESTRICT argpp, SGPF * RESTRICT mp,
+	   SGPF CSGP4_OUT ep, SGPF CSGP4_OUT inclp, SGPF CSGP4_OUT nodep, SGPF CSGP4_OUT argpp, SGPF CSGP4_OUT mp,
 	   char opsmode
 	 )
 {
@@ -1826,7 +1790,7 @@ CSGP4_DECORATOR void dpper
 			dbet = -ph * sinop + pinc * cosip * cosop;
 			alfdp = alfdp + dalf;
 			betdp = betdp + dbet;
-			*nodep = fmod( *nodep, twopi );
+			*nodep = FMOD( *nodep, twopi );
 			//  sgp4fix for afspc written intrinsic functions
 			// nodep used without a trigonometric function ahead
 			if ((*nodep < 0.0) && (opsmode == 'a'))
@@ -2074,10 +2038,10 @@ CSGP4_DECORATOR void sgp4
 	emsq = em * em;
 	temp = 1.0 - emsq;
 
-	nodem = fmod((nodem), twopi );
-	argpm = fmod((argpm), twopi );
-	xlm = fmod((xlm), twopi );
-	mm = fmod((xlm - argpm - nodem), twopi);
+	nodem = FMOD((nodem), twopi );
+	argpm = FMOD((argpm), twopi );
+	xlm = FMOD((xlm), twopi );
+	mm = FMOD((xlm - argpm - nodem), twopi);
 
 	// sgp4fix recover singly averaged mean elements
 	satrec->am = am;
@@ -2150,7 +2114,7 @@ CSGP4_DECORATOR void sgp4
 	xl = mp + argpp + nodep + temp * satrec->xlcof * axnl;
 
 	/* --------------------- solve kepler's equation --------------- */
-	u = fmod( (xl - nodep), twopi );
+	u = FMOD( (xl - nodep), twopi );
 	eo1 = u;
 	tem5 = 9999.9;
 	ktr = 1;
@@ -2683,7 +2647,7 @@ CSGP4_DECORATOR void sgp4init
 CSGP4_DECORATOR void days2mdhms
 	(
 	int year, SGPF days,
-	int * mon, int * day, int * hr, int * minute, SGPF * RESTRICT second
+	int * mon, int * day, int * hr, int * minute, SGPF CSGP4_OUT second
 	)
 {
 	int i, inttemp, dayofyr;
@@ -2754,7 +2718,7 @@ CSGP4_DECORATOR void days2mdhms
 CSGP4_DECORATOR void jday
 		(
 		  int year, int mon, int day, int hr, int minute, SGPF sec,
-		  SGPF * RESTRICT jd, SGPF * RESTRICT jdFrac
+		  SGPF CSGP4_OUT jd, SGPF CSGP4_OUT jdFrac
 		)
 {
 	*jd = 367.0 * year -
@@ -2822,7 +2786,7 @@ CSGP4_DECORATOR void invjday
 	(
 	SGPF jd, SGPF jdFrac,
 	int * year, int * mon, int * day,
-	int * hr, int * minute, SGPF * RESTRICT second
+	int * hr, int * minute, SGPF CSGP4_OUT second
 	)
 {
 	int leapyrs;
@@ -2864,6 +2828,48 @@ CSGP4_DECORATOR void invjday
 	days2mdhms(*year, days + jdFrac, mon, day, hr, minute, second);
 }  // invjday
 
+
+
+
+
+/*
+CSGP4_DECORATOR void Dumpelsetrec( struct elsetrec * obj )
+{
+	printf( "obj.a        = %18.15f\n", obj->a );
+	printf( "obj.alta     = %18.15f\n", obj->alta );
+	printf( "obj.altp     = %18.15f\n", obj->altp );
+	printf( "obj.am       = %18.15f <<<<<<\n", obj->am );
+	printf( "obj.argpdot  = %18.15f\n", obj->argpdot );
+	printf( "obj.argpo    = %18.15f\n", obj->argpo );
+	printf( "obj.bstar    = %18.15f\n", obj->bstar );
+	printf( "obj.ecco     = %18.15f\n", obj->ecco );
+	printf( "obj.em       = %18.15f <<<<<<\n", obj->em );
+	printf( "obj.error    = %d\n", obj->error );
+	printf( "obj.gsto     = %18.15f (!!!!!)\n", obj->gsto );
+	printf( "obj.im       = %18.15f\n", obj->im );
+	printf( "obj.inclo    = %18.15f\n", obj->inclo );
+	printf( "obj.j2       = %18.15f\n", obj->j2 );
+	printf( "obj.j3       = %18.15f\n", obj->j3 );
+	printf( "obj.j3oj2    = %18.15f\n", obj->j3oj2 );
+	printf( "obj.j4       = %18.15f\n", obj->j4 );
+	printf( "obj.mdot     = %18.15f\n", obj->mdot );
+	printf( "obj.method   = %d\n", obj->method );
+	printf( "obj.mm       = %18.15f <<<<<<<\n", obj->mm );
+	printf( "obj.mo       = %18.15f\n", obj->mo );
+	printf( "obj.mu       = %18.15f\n", obj->mu );
+	printf( "obj.nddot    = %18.15f\n", obj->nddot );
+	printf( "obj.ndot     = %18.15f\n", obj->ndot );
+	printf( "obj.nm       = %18.15f <<<<<<<\n", obj->nm );
+	printf( "obj.no_kozai = %18.15f\n", obj->no_kozai );
+	printf( "obj.nodedot  = %18.15f\n", obj->nodedot );
+	printf( "obj.nodeo    = %18.15f\n", obj->nodeo );
+	printf( "obj.om       = %18.15f\n", obj->om );
+	printf( "obj.radiusearthkm = %18.15f\n", obj->radiusearthkm );
+	printf( "obj.t        = %18.15f\n", obj->t );
+	printf( "obj.tumin    = %18.15f\n", obj->tumin );
+	printf( "obj.xke      = %18.15f\n", obj->xke );
+}
+*/
 
 
 #endif
