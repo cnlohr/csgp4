@@ -8,7 +8,7 @@ checkProg.float : checkProg.c
 	gcc -g -Os -flto -o $@ $< -lm -DCSGP4_USE_FLOAT=1
 
 checkProgSimple : checkProgSimple.c
-	gcc -g -Os -flto -o $@ $< -lm -DCSGP4_USE_FLOAT=1 -pedantic
+	gcc -g -Os -flto -o $@ $< -lm -DCSGP4_USE_FLOAT=1 -pedantic -Wall
 
 trackonly : trackonly.c csgp4.h
 	gcc -g -Os -flto -o $@ $< -lm

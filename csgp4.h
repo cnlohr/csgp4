@@ -1805,10 +1805,12 @@ CSGP4_DECORATOR void dpper
 			if ((*nodep < 0.0) && (opsmode == 'a'))
 				*nodep = *nodep + twopi;
 			if (FABS(xnoh - *nodep) > SGPPI)
+			{
 				if (*nodep < xnoh)
 					*nodep = *nodep + twopi;
 				else
 					*nodep = *nodep - twopi;
+			}
 			*mp = *mp + pl;
 			*argpp = xls - *mp - cosip * *nodep;
 		}

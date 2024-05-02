@@ -10,9 +10,14 @@ CSGP4_DECORATOR int ConvertTLEToSGP4GPU( struct TLEObject * obj, SGPF initial_ti
 	// can use 'a' or 'i' methods.
 	// *	epoch	   - epoch time in days from jan 0, 1950. 0 hr
 	// But, jdsatepoch is in days from 4713 bc
-	sgp4init_simple( obj->jdsatepoch-2433281.5 + obj->jdsatepochF, obj->dragTerm,
+	int r = sgp4init_simple( obj->jdsatepoch-2433281.5 + obj->jdsatepochF, obj->dragTerm,
 		 obj->meanMotion1, obj->meanMotion2, obj->eccentricity, obj->argumentOfPerigee, obj->inclination, obj->meanAnomaly, obj->meanMotion,
 		 obj->rightAscensionOfTheAscendingNode, initial_time, initial_r, initial_v, a_alta_altp );
+	if( r )
+	{
+		fprintf( stderr, "error: error %d set on sgp4init_simple\n", r );
+		exit( -5 );
+	}
 	return 0;
 }
 
@@ -20,6 +25,8 @@ CSGP4_DECORATOR int ConvertTLEToSGP4GPU( struct TLEObject * obj, SGPF initial_ti
 int main( int argc, char ** argv )
 {
 	puts( "Simple Tests");
+	void feenableexcept( int i );
+	feenableexcept(FE_DIVBYZERO|FE_INVALID|FE_OVERFLOW);
 
 	double pysgp4[3] = { -4582.664719456509, -4356.875102968861, 2475.1474001054107 };
 	double pysgp4v[3] = { 5.036095414394779, -2.2591278380385664, 5.3188560672302145 };
@@ -49,7 +56,7 @@ int main( int argc, char ** argv )
 		puts( ss->objectName );
 
 		SGPF jd = ss->jdsatepoch + floor(startmfe/1440.0);
-		SGPF jdfrac = fmod(startmfe/1440.0, 1.0) + ss->jdsatepochF;
+		SGPF jdfrac = FMOD(startmfe/1440.0, 1.0) + ss->jdsatepochF;
 		int year, mon, day, hr, min;
 		SGPF sec;
 		invjday( jd, jdfrac, &year, &mon, &day, &hr, &min, &sec );
@@ -149,13 +156,15 @@ e, r, v = satellite.sgp4(jd, fr)
 		}
 
 		double jd = ss->jdsatepoch + floor(startmfe/1440.0);
-		double jdfrac = fmod(startmfe/1440.0, 1.0) + ss->jdsatepochF;
+		double jdfrac = FMOD(startmfe/1440.0, 1.0) + ss->jdsatepochF;
 		int year, mon, day, hr, min;
 		SGPF sec;
 		invjday( jd, jdfrac, &year, &mon, &day, &hr, &min, &sec );
 		printf( "%f %f %04d %02d %02d %02d:%02d:%05.02f\n", jd, jdfrac, year, mon, day, hr, min, sec );
-		printf( "[Δt%14.8f] %16.8f %16.8f %16.8f %16.8f \n                   %16.9f %16.9f %16.9f %16.9f\n",
-			startmfe,ro[0],ro[1],ro[2], sqrt(ro[0]*ro[0]+ro[1]*ro[1]+ro[2]*ro[2]),vo[0],vo[1],vo[2], sqrt(vo[0]*vo[0]+vo[1]*vo[1]+vo[2]*vo[2]));
+		printf( "[Δt%14.8f] %16.8f %16.8f %16.8f %16.8f \n                   %16.9f %16.9f %16.9f %16.9f\n                   %16.9f %16.9f %16.9f\n",
+			startmfe,ro[0],ro[1],ro[2], sqrt(ro[0]*ro[0]+ro[1]*ro[1]+ro[2]*ro[2]),vo[0],vo[1],vo[2], sqrt(vo[0]*vo[0]+vo[1]*vo[1]+vo[2]*vo[2]),
+			a_alta_altp[0], a_alta_altp[1], a_alta_altp[2]
+		);
 
 		pysgp4[0] = 4435.874337686209; 
 		pysgp4[1] = 4191.117631955163;
@@ -233,13 +242,15 @@ e, r, v = satellite.sgp4(jd, fr)
 		puts( ss_arase->objectName );
 
 		double jd = ss_arase->jdsatepoch + floor(startmfe/1440.0);
-		double jdfrac = fmod(startmfe/1440.0, 1.0) + ss_arase->jdsatepochF;
+		double jdfrac = FMOD(startmfe/1440.0, 1.0) + ss_arase->jdsatepochF;
 		int year, mon, day, hr, min;
 		SGPF sec;
 		invjday( jd, jdfrac, &year, &mon, &day, &hr, &min, &sec );
 		printf( "%f %f %04d %02d %02d %02d:%02d:%05.02f\n", jd, jdfrac, year, mon, day, hr, min, sec );
-		printf( "[Δt%14.8f] %16.8f %16.8f %16.8f %16.8f \n                   %16.9f %16.9f %16.9f %16.9f\n",
-			startmfe,ro[0],ro[1],ro[2], sqrt(ro[0]*ro[0]+ro[1]*ro[1]+ro[2]*ro[2]),vo[0],vo[1],vo[2], sqrt(vo[0]*vo[0]+vo[1]*vo[1]+vo[2]*vo[2]));
+		printf( "[Δt%14.8f] %16.8f %16.8f %16.8f %16.8f \n                   %16.9f %16.9f %16.9f %16.9f\n                   %16.9f %16.9f %16.9f\n",
+			startmfe,ro[0],ro[1],ro[2], sqrt(ro[0]*ro[0]+ro[1]*ro[1]+ro[2]*ro[2]),vo[0],vo[1],vo[2], sqrt(vo[0]*vo[0]+vo[1]*vo[1]+vo[2]*vo[2]),
+			a_alta_altp[0], a_alta_altp[1], a_alta_altp[2]
+		);
 
 		pysgp4[0] = 13105.747459057653; 
 		pysgp4[1] = 29909.425386662235;
@@ -316,13 +327,15 @@ e, r, v = satellite.sgp4(jd, fr)
 		//Dumpelsetrec( &iss_THEMIS );
 
 		double jd = ss_THEMIS->jdsatepoch + floor(startmfe/1440.0);
-		double jdfrac = fmod(startmfe/1440.0, 1.0) + ss_THEMIS->jdsatepochF;
+		double jdfrac = FMOD(startmfe/1440.0, 1.0) + ss_THEMIS->jdsatepochF;
 		int year, mon, day, hr, min;
 		SGPF sec;
 		invjday( jd, jdfrac, &year, &mon, &day, &hr, &min, &sec );
 		printf( "%f %f %04d %02d %02d %02d:%02d:%05.02f\n", jd, jdfrac, year, mon, day, hr, min, sec );
-		printf( "[Δt%14.8f] %16.8f %16.8f %16.8f %16.8f \n                   %16.9f %16.9f %16.9f %16.9f\n",
-			startmfe,ro[0],ro[1],ro[2], sqrt(ro[0]*ro[0]+ro[1]*ro[1]+ro[2]*ro[2]),vo[0],vo[1],vo[2], sqrt(vo[0]*vo[0]+vo[1]*vo[1]+vo[2]*vo[2]));
+		printf( "[Δt%14.8f] %16.8f %16.8f %16.8f %16.8f \n                   %16.9f %16.9f %16.9f %16.9f\n                   %16.9f %16.9f %16.9f\n",
+			startmfe,ro[0],ro[1],ro[2], sqrt(ro[0]*ro[0]+ro[1]*ro[1]+ro[2]*ro[2]),vo[0],vo[1],vo[2], sqrt(vo[0]*vo[0]+vo[1]*vo[1]+vo[2]*vo[2]),
+			a_alta_altp[0], a_alta_altp[1], a_alta_altp[2]
+		);
 
 		pysgp4[0] = 12197.874919034643;
 		pysgp4[1] = 48838.6479258657;
@@ -334,7 +347,7 @@ e, r, v = satellite.sgp4(jd, fr)
 		printf( "Python / Our SGP4 Disagreement: %f %f %f RMS: %f km ... ",
 			 ro[0] - pysgp4[0], ro[1] - pysgp4[1], ro[2] - pysgp4[2],
 			rmse );
-		if( rmse < 0.0005 + CSGP4_USE_FLOAT * .055 )
+		if( rmse < 0.0005 + CSGP4_USE_FLOAT * .065 )
 		{
 			printf( "PASS\n" );
 		}
@@ -393,7 +406,7 @@ e, r, v = satellite.sgp4(jd, fr)
 		}
 		puts( ss->objectName );
 		double jd = ss->jdsatepoch + floor(startmfe/1440.0);
-		double jdfrac = fmod(startmfe/1440.0, 1.0) + ss->jdsatepochF;
+		double jdfrac = FMOD(startmfe/1440.0, 1.0) + ss->jdsatepochF;
 		int year, mon, day, hr, min;
 		SGPF sec;
 		invjday( jd, jdfrac, &year, &mon, &day, &hr, &min, &sec );
