@@ -120,6 +120,7 @@ struct elsetrec_simple
 	SGPF altp /* Not used in algo, but cool anyway to look at */;
 };
 
+#if 0
 CSGP4_DECORATOR void dspace_simple
 	 (
 	   int irez,
@@ -276,6 +277,7 @@ CSGP4_DECORATOR void dspace_simple
 
 	//#include "debug4.cpp"
 }  // end dsspace
+#endif
 
 CSGP4_DECORATOR void dpper_simple
 	 (
@@ -1364,6 +1366,7 @@ CSGP4_DECORATOR int sgp4init_simple
 	if (gsr.method)
 	{
 		tc = gsr.t;
+/*
 		dspace_simple
 			(
 			  gsr.irez,
@@ -1379,6 +1382,149 @@ CSGP4_DECORATOR int sgp4init_simple
 			  CSGP4_REF(em), CSGP4_REF(argpm), CSGP4_REF(inclm), CSGP4_REF(gsr.xli), CSGP4_REF(mm), CSGP4_REF(gsr.xni),
 			  CSGP4_REF(nodem), CSGP4_REF(dndt), CSGP4_REF(nm)
 			);
+*/
+		const SGPF twopi = 2.0 * SGPPI;
+		//int iretn;  //, iret;
+		SGPF delt, ft, theta, x2li, x2omi, xl, xldot, xnddt, xndt, xomi, g22, g32,
+			 g44, g52, g54, fasx2, fasx4, fasx6, rptim, step2, stepn, stepp;
+
+		fasx2 = 0.13130908;
+		fasx4 = 2.8843198;
+		fasx6 = 0.37448087;
+		g22 = 5.7686396;
+		g32 = 0.95240898;
+		g44 = 1.8014998;
+		g52 = 1.0508330;
+		g54 = 4.4108898;
+		rptim = 4.37526908801129966e-3; // this equates to 7.29211514668855e-5 rad/sec
+		stepp = 720.0;
+		stepn = -720.0;
+		step2 = 259200.0;
+
+		/* ----------- calculate deep space resonance effects ----------- */
+		dndt = 0.0;
+		theta = FMOD( (gsr.gsto + tc * rptim), twopi );
+		em = em + gsr.dedt * gsr.t;
+
+		inclm = inclm + gsr.didt * gsr.t;
+		argpm = argpm + gsr.domdt * gsr.t;
+		nodem = nodem + gsr.dnodt * gsr.t;
+		mm = mm + gsr.dmdt * gsr.t;
+
+		//   sgp4fix for negative inclinations
+		//   the following if statement should be commented out
+		//  if (inclm < 0.0)
+		// {
+		//	inclm = -inclm;
+		//	argpm = argpm - Math.PI;
+		//	nodem = nodem + Math.PI;
+		//  }
+
+		/* - update resonances : numerical (euler-maclaurin) integration - */
+		/* ------------------------- epoch restart ----------------------  */
+		//   sgp4fix for propagator problems
+		//   the following integration works for negative time steps and periods
+		//   the specific changes are unknown because the original code was so convoluted
+		// sgp4fix set initial values for c#
+		xndt = 0.0;
+		xnddt = 0.0;
+		xldot = 0.0;
+
+		// sgp4fix take out atime = 0.0 and fix for faster operation
+		ft = 0.0;
+		if (gsr.irez != 0)
+		{
+			// sgp4fix streamline check
+			if ((gsr.atime == 0.0) || (gsr.t * gsr.atime <= 0.0) || (FABS(gsr.t) < FABS(gsr.atime)))
+			{
+				gsr.atime = 0.0;
+				gsr.xni = gsr.no_unkozai;
+				gsr.xli = gsr.xlamo;
+			}
+			SGPF xli_cache = gsr.xli;
+			// sgp4fix move check outside loop
+			if (gsr.t > 0.0)
+				delt = stepp;
+			else
+				delt = stepn;
+
+			//iretn = 381; // added for do loop
+			//iret = 0; // added for loop
+			//while (iretn == 381)
+			bool iretn = true;
+			do
+			{
+				/* ------------------- dot terms calculated ------------- */
+				/* ----------- near - synchronous resonance terms ------- */
+				if (gsr.irez != 2)
+				{
+					xndt = gsr.del1 * SIN(xli_cache - fasx2) + gsr.del2 * SIN(2.0 * (xli_cache - fasx4)) +
+							gsr.del3 * SIN(3.0 * (xli_cache - fasx6));
+					xldot = gsr.xni + gsr.xfact;
+					xnddt = gsr.del1 * COS(xli_cache - fasx2) +
+							2.0 * gsr.del2 * COS(2.0 * (xli_cache - fasx4)) +
+							3.0 * gsr.del3 * COS(3.0 * (xli_cache - fasx6));
+					xnddt = xnddt * xldot;
+				}
+				else
+				{
+					/* --------- near - half-day resonance terms -------- */
+					xomi = gsr.argpo + gsr.argpdot * gsr.atime;
+					x2omi = xomi + xomi;
+					x2li = xli_cache + xli_cache;
+					xndt = gsr.d2201 * SIN(x2omi + xli_cache - g22) + gsr.d2211 * SIN(xli_cache - g22) +
+						  gsr.d3210 * SIN(xomi + xli_cache - g32) + gsr.d3222 * SIN(-xomi + xli_cache - g32) +
+						  gsr.d4410 * SIN(x2omi + x2li - g44) + gsr.d4422 * SIN(x2li - g44) +
+						  gsr.d5220 * SIN(xomi + xli_cache- g52) + gsr.d5232 * SIN(-xomi + gsr.xli - g52) +
+						  gsr.d5421 * SIN(xomi + x2li - g54) + gsr.d5433 * SIN(-xomi + x2li - g54);
+					xldot = gsr.xni + gsr.xfact;
+					xnddt = gsr.d2201 * COS(x2omi + xli_cache - g22) + gsr.d2211 * COS(xli_cache - g22) +
+						  gsr.d3210 * COS(xomi + xli_cache - g32) + gsr.d3222 * COS(-xomi + xli_cache - g32) +
+						  gsr.d5220 * COS(xomi + xli_cache - g52) + gsr.d5232 * COS(-xomi + xli_cache - g52) +
+						  2.0 * (gsr.d4410 * COS(x2omi + x2li - g44) +
+						  gsr.d4422 * COS(x2li - g44) + gsr.d5421 * COS(xomi + x2li - g54) +
+						  gsr.d5433 * COS(-xomi + x2li - g54));
+					xnddt = xnddt * xldot;
+				}
+
+				/* ----------------------- integrator ------------------- */
+				// sgp4fix move end checks to end of routine
+				if (FABS(gsr.t - gsr.atime) >= stepp)
+				{
+					//iret = 0;
+					iretn = true;
+				}
+				else // exit here
+				{
+					ft = gsr.t - gsr.atime;
+					iretn = false;
+				}
+
+				if (iretn)
+				{
+					xli_cache = xli_cache + xldot * delt + xndt * step2;
+					gsr.xni = gsr.xni + xndt * delt + xnddt * step2;
+					gsr.atime = gsr.atime + delt;
+				}
+			} while( iretn );
+
+			nm = gsr.xni + xndt * ft + xnddt * ft * ft * 0.5;
+			xl = xli_cache + xldot * ft + xndt * ft * ft * 0.5;
+			gsr.xli = xli_cache;
+			if (gsr.irez != 1)
+			{
+				mm = xl - 2.0 * nodem + 2.0 * theta;
+				dndt = nm - gsr.no_unkozai;
+			}
+			else
+			{
+				mm = xl - nodem - argpm + theta;
+				dndt = nm - gsr.no_unkozai;
+			}
+			nm = gsr.no_unkozai + dndt;
+		}
+
+
 	} // if method = true
 
 	if (nm <= 0.0)
