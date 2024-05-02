@@ -633,7 +633,7 @@ CSGP4_DECORATOR int sgp4init_simple
 	//Hard-coded WGS72
 			(gsr.mu) = 398600.8;			// in km3 / s2
 			(gsr.radiusearthkm) = 6378.135;	 // km
-			(gsr.xke) = 60.0 / SQRT(CSGP4_DEREF(radiusearthkm) * CSGP4_DEREF(radiusearthkm) * CSGP4_DEREF(radiusearthkm) / CSGP4_DEREF(mu));
+			(gsr.xke) = 60.0 / SQRT((gsr.radiusearthkm) * (gsr.radiusearthkm) * (gsr.radiusearthkm) / (gsr.mu));
 			(gsr.tumin) = 1.0 / CSGP4_DEREF(xke);
 			(gsr.j2) = 0.001082616;
 			(gsr.j3) = -0.00000253881;
