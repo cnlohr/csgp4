@@ -634,11 +634,11 @@ CSGP4_DECORATOR int sgp4init_simple
 			(gsr.mu) = 398600.8;			// in km3 / s2
 			(gsr.radiusearthkm) = 6378.135;	 // km
 			(gsr.xke) = 60.0 / SQRT((gsr.radiusearthkm) * (gsr.radiusearthkm) * (gsr.radiusearthkm) / (gsr.mu));
-			(gsr.tumin) = 1.0 / CSGP4_DEREF(xke);
+			(gsr.tumin) = 1.0 / (gsr.xke);
 			(gsr.j2) = 0.001082616;
 			(gsr.j3) = -0.00000253881;
 			(gsr.j4) = -0.00000165597;
-			(gsr.j3oj2) = CSGP4_DEREF(j3) / CSGP4_DEREF(j2);
+			(gsr.j3oj2) = (gsr.j3) / (gsr.j2);
 
 
 	//-------------------------------------------------------------------------
