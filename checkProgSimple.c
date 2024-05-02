@@ -1,102 +1,43 @@
 #include <stdio.h>
 #include "os_generic.h"
 
+#include "csgp4_simple.h"
+
 #include "csgp4.h"
+
+CSGP4_DECORATOR int ConvertTLEToSGP4GPU( struct TLEObject * obj, SGPF initial_time, SGPF * initial_r, SGPF* initial_v, SGPF * a_alta_altp )
+{
+	// can use 'a' or 'i' methods.
+	// *	epoch	   - epoch time in days from jan 0, 1950. 0 hr
+	// But, jdsatepoch is in days from 4713 bc
+	int r = sgp4init_simple( obj->jdsatepoch-2433281.5 + obj->jdsatepochF, obj->dragTerm,
+		 obj->meanMotion1, obj->meanMotion2, obj->eccentricity, obj->argumentOfPerigee, obj->inclination, obj->meanAnomaly, obj->meanMotion,
+		 obj->rightAscensionOfTheAscendingNode, initial_time, initial_r, initial_v, a_alta_altp );
+	if( r )
+	{
+		fprintf( stderr, "error: error %d set on sgp4init_simple\n", r );
+		exit( -5 );
+	}
+	return 0;
+}
+
 
 int main( int argc, char ** argv )
 {
-	if( argc != 2 )
-	{
-		fprintf( stderr, "Error: Usage: checkProg [.txt TLE file]\n" );
-		return -6;
-	}
-
-	FILE * f = fopen( argv[1], "r" );
-	if( !f || ferror( f ) )
-	{
-		fprintf( stderr, "Error: could not open %s\n", argv[1] );
-		return -6;
-	}
-
-	struct TLEObject * obj = 0;
-	int numObjects = 0;
-	int r = ParseFileOrString( f, 0, &obj, &numObjects );
-	if( r )
-	{
-		fprintf( stderr, "Error: Parsing failed\n" );
-		return r;
-	}
-	printf( "Read %d objects.\n", numObjects );
-	if( numObjects < 1 )
-	{
-		fprintf( stderr, "Did not read any objects\n" );
-		return -4;
-	}
-	int i;
-	for( i = 0; i < numObjects; i++ )
-	{
-		struct TLEObject * o = &obj[i];
-		//double diff = OGGetAbsoluteTime() - o->epoch;
-		printf( "%24s %f\n", o->objectName, o->epoch );//, diff, OGGetAbsoluteTime(), o->epoch );
-	}
-
-
-
-
-	if( 1 )
-	{
-		struct TLEObject * o = &obj[0];
-
-		// Let's just pick out ISS (Zarya)	
-		struct elsetrec satrec;
-
-		if( ConvertTLEToSGP4( &satrec, o, 0, 0, 0 ) )
-		{
-			printf( "failed to convert tle\n" );
-			return -5;
-		}
-
-		// set start/stop times for propagation, in minutes.
-		double startmfe = (OGGetAbsoluteTime() - o->epoch)/60.0; // Convert to minutes.
-		double stopmfe  = startmfe + 45.0;
-		double deltamin = 1.0;
-
-		double tsince = startmfe;
-		while ((tsince < stopmfe) && (satrec.error == 0))
-		{
-			SGPF ro[3], vo[3];
-
-			if(tsince > stopmfe)
-				tsince = stopmfe;
-
-			// .25us per call
-			sgp4 (&satrec, tsince, ro,  vo);
-	#if 0
-			double jd = satrec.jdsatepoch + satrec.jdsatepochF;
-			double jdfrac = tsince/1440.0;
-			int year, mon, day, hr, min;
-			double sec;
-			invjday( jd, jdfrac, &year, &mon, &day, &hr, &min, &sec );
-			printf( "%f %f %04d %02d %02d %02d:%02d:%05.02f /", jd, jdfrac, year, mon, day, hr, min, sec );
-	#endif
-			printf( "%16.8f %16.8f %16.8f %16.8f [%f] %12.9f %12.9f %12.9f\n",
-				tsince,ro[0],ro[1],ro[2], sqrt(ro[0]*ro[0]+ro[1]*ro[1]+ro[2]*ro[2]),vo[0],vo[1],vo[2]);
-
-			tsince = tsince + deltamin;
-		}
-	}
+	puts( "Simple Tests");
+	void feenableexcept( int i );
+	feenableexcept(FE_DIVBYZERO|FE_INVALID|FE_OVERFLOW);
 
 	double pysgp4[3] = { -4582.664719456509, -4356.875102968861, 2475.1474001054107 };
 	double pysgp4v[3] = { 5.036095414394779, -2.2591278380385664, 5.3188560672302145 };
-	SGPF ro[3], vo[3];
+	SGPF ro[3], vo[3], a_alta_altp[3];
 	double rmse;
 
 	if( 1 )
 	{
 		struct TLEObject * ss = 0;
-		struct elsetrec iss;
 		int numSS = 0;
-		r = ParseFileOrString( 0, ""
+		int r = ParseFileOrString( 0, ""
 			"ISS (ZARYA)             \n"
 			"1 25544U 98067A   24118.69784154  .00029521  00000+0  51116-3 0  9995\n"
 			"2 25544  51.6397 205.7509 0003603 115.2045 341.2688 15.50662375450710\n",
@@ -106,23 +47,24 @@ int main( int argc, char ** argv )
 			fprintf( stderr, "Error: SS can't load.\n" );
 			return -5;
 		}
-		if( ConvertTLEToSGP4( &iss, &ss[0], 0, 0, 0 ) )
+		double startmfe = (1714240800 - ss->epoch)/60.0;
+		if( ConvertTLEToSGP4GPU( &ss[0], startmfe, ro,  vo, a_alta_altp ) )
 		{
 			printf( "failed to convert tle\n" );
 			return -5;
 		}
 		puts( ss->objectName );
-		double startmfe = (1714240800 - ss->epoch)/60.0;
-		sgp4 (&iss, startmfe, ro,  vo);
 
 		SGPF jd = ss->jdsatepoch + floor(startmfe/1440.0);
-		SGPF jdfrac = fmod(startmfe/1440.0, 1.0) + ss->jdsatepochF;
+		SGPF jdfrac = FMOD(startmfe/1440.0, 1.0) + ss->jdsatepochF;
 		int year, mon, day, hr, min;
 		SGPF sec;
 		invjday( jd, jdfrac, &year, &mon, &day, &hr, &min, &sec );
 		printf( "%f %f %04d %02d %02d %02d:%02d:%05.02f\n", jd, jdfrac, year, mon, day, hr, min, sec );
-		printf( "[Δt%14.8f] %16.8f %16.8f %16.8f %16.8f \n                   %16.9f %16.9f %16.9f %16.9f\n",
-			startmfe,ro[0],ro[1],ro[2], sqrt(ro[0]*ro[0]+ro[1]*ro[1]+ro[2]*ro[2]),vo[0],vo[1],vo[2], sqrt(vo[0]*vo[0]+vo[1]*vo[1]+vo[2]*vo[2]));
+		printf( "[Δt%14.8f] %16.8f %16.8f %16.8f %16.8f \n                   %16.9f %16.9f %16.9f %16.9f\n                   %16.9f %16.9f %16.9f\n",
+			startmfe,ro[0],ro[1],ro[2], sqrt(ro[0]*ro[0]+ro[1]*ro[1]+ro[2]*ro[2]),vo[0],vo[1],vo[2], sqrt(vo[0]*vo[0]+vo[1]*vo[1]+vo[2]*vo[2]),
+			a_alta_altp[0], a_alta_altp[1], a_alta_altp[2]
+		);
 
 		/*
 		  These are from the following python code:
@@ -190,12 +132,12 @@ e, r, v = satellite.sgp4(jd, fr)
 */
 	}
 
+
 	if( 1 )
 	{
 		struct TLEObject * ss = 0;
-		struct elsetrec iss;
 		int numSS = 0;
-		r = ParseFileOrString( 0, ""
+		int r = ParseFileOrString( 0, ""
 			"ISS (ZARYA)             \n"
 			"1 25544U 98067A   24118.69784154  .00029521  00000+0  51116-3 0  9995\n"
 			"2 25544  51.6397 205.7509 0003603 115.2045 341.2688 15.50662375450710\n",
@@ -205,23 +147,24 @@ e, r, v = satellite.sgp4(jd, fr)
 			fprintf( stderr, "Error: SS can't load.\n" );
 			return -5;
 		}
-		if( ConvertTLEToSGP4( &iss, &ss[0], 0, 0, 0 ) )
+		puts( ss->objectName );
+		double startmfe = (1714327200 - ss->epoch)/60.0;
+		if( ConvertTLEToSGP4GPU( &ss[0], startmfe, ro,  vo, 0 ) )
 		{
 			printf( "failed to convert tle\n" );
 			return -5;
 		}
-		puts( ss->objectName );
-		double startmfe = (1714327200 - ss->epoch)/60.0;
-		sgp4 (&iss, startmfe, ro,  vo);
 
 		double jd = ss->jdsatepoch + floor(startmfe/1440.0);
-		double jdfrac = fmod(startmfe/1440.0, 1.0) + ss->jdsatepochF;
+		double jdfrac = FMOD(startmfe/1440.0, 1.0) + ss->jdsatepochF;
 		int year, mon, day, hr, min;
 		SGPF sec;
 		invjday( jd, jdfrac, &year, &mon, &day, &hr, &min, &sec );
 		printf( "%f %f %04d %02d %02d %02d:%02d:%05.02f\n", jd, jdfrac, year, mon, day, hr, min, sec );
-		printf( "[Δt%14.8f] %16.8f %16.8f %16.8f %16.8f \n                   %16.9f %16.9f %16.9f %16.9f\n",
-			startmfe,ro[0],ro[1],ro[2], sqrt(ro[0]*ro[0]+ro[1]*ro[1]+ro[2]*ro[2]),vo[0],vo[1],vo[2], sqrt(vo[0]*vo[0]+vo[1]*vo[1]+vo[2]*vo[2]));
+		printf( "[Δt%14.8f] %16.8f %16.8f %16.8f %16.8f \n                   %16.9f %16.9f %16.9f %16.9f\n                   %16.9f %16.9f %16.9f\n",
+			startmfe,ro[0],ro[1],ro[2], sqrt(ro[0]*ro[0]+ro[1]*ro[1]+ro[2]*ro[2]),vo[0],vo[1],vo[2], sqrt(vo[0]*vo[0]+vo[1]*vo[1]+vo[2]*vo[2]),
+			a_alta_altp[0], a_alta_altp[1], a_alta_altp[2]
+		);
 
 		pysgp4[0] = 4435.874337686209; 
 		pysgp4[1] = 4191.117631955163;
@@ -278,9 +221,8 @@ e, r, v = satellite.sgp4(jd, fr)
 	if( 1 )
 	{
 		struct TLEObject * ss_arase = 0;
-		struct elsetrec iss_arase;
 		int numSS_arase = 0;
-		r = ParseFileOrString( 0, ""
+		int r = ParseFileOrString( 0, ""
 			"ARASE (ERG)             \n"
 			"1 41896U 16080A   24120.85435253  .00000361  00000+0  77632-3 0  9994\n"
 			"2 41896  31.9360 317.6417 7003302 291.8988  10.4729  2.55468020 68280\n",
@@ -292,8 +234,7 @@ e, r, v = satellite.sgp4(jd, fr)
 		}
 
 		double startmfe = (1714672800 - ss_arase->epoch)/60.0;
-//		sgp4 (&iss_arase, startmfe, ro,  vo);
-		if( ConvertTLEToSGP4( &iss_arase, &ss_arase[0], startmfe, ro,  vo ) )
+		if( ConvertTLEToSGP4GPU( &ss_arase[0], startmfe, ro,  vo, 0 ) )
 		{
 			printf( "failed to convert tle\n" );
 			return -5;
@@ -301,13 +242,15 @@ e, r, v = satellite.sgp4(jd, fr)
 		puts( ss_arase->objectName );
 
 		double jd = ss_arase->jdsatepoch + floor(startmfe/1440.0);
-		double jdfrac = fmod(startmfe/1440.0, 1.0) + ss_arase->jdsatepochF;
+		double jdfrac = FMOD(startmfe/1440.0, 1.0) + ss_arase->jdsatepochF;
 		int year, mon, day, hr, min;
 		SGPF sec;
 		invjday( jd, jdfrac, &year, &mon, &day, &hr, &min, &sec );
 		printf( "%f %f %04d %02d %02d %02d:%02d:%05.02f\n", jd, jdfrac, year, mon, day, hr, min, sec );
-		printf( "[Δt%14.8f] %16.8f %16.8f %16.8f %16.8f \n                   %16.9f %16.9f %16.9f %16.9f\n",
-			startmfe,ro[0],ro[1],ro[2], sqrt(ro[0]*ro[0]+ro[1]*ro[1]+ro[2]*ro[2]),vo[0],vo[1],vo[2], sqrt(vo[0]*vo[0]+vo[1]*vo[1]+vo[2]*vo[2]));
+		printf( "[Δt%14.8f] %16.8f %16.8f %16.8f %16.8f \n                   %16.9f %16.9f %16.9f %16.9f\n                   %16.9f %16.9f %16.9f\n",
+			startmfe,ro[0],ro[1],ro[2], sqrt(ro[0]*ro[0]+ro[1]*ro[1]+ro[2]*ro[2]),vo[0],vo[1],vo[2], sqrt(vo[0]*vo[0]+vo[1]*vo[1]+vo[2]*vo[2]),
+			a_alta_altp[0], a_alta_altp[1], a_alta_altp[2]
+		);
 
 		pysgp4[0] = 13105.747459057653; 
 		pysgp4[1] = 29909.425386662235;
@@ -362,9 +305,8 @@ e, r, v = satellite.sgp4(jd, fr)
 */
 	{
 		struct TLEObject * ss_THEMIS = 0;
-		struct elsetrec iss_THEMIS;
 		int numSS_THEMIS = 0;
-		r = ParseFileOrString( 0, ""
+		int r = ParseFileOrString( 0, ""
 			"THEMIS E                \n"
 			"1 30798U 07004E   24121.56859868 -.00000520  00000+0  00000+0 0  9999\n"
 			"2 30798   7.9414 283.2653 8322119 302.3633 341.0652  0.87832507 59071\n",
@@ -374,25 +316,26 @@ e, r, v = satellite.sgp4(jd, fr)
 			fprintf( stderr, "Error: SS can't load.\n" );
 			return -5;
 		}
-		if( ConvertTLEToSGP4( &iss_THEMIS, &ss_THEMIS[0], 0, 0, 0 ) )
+		puts( ss_THEMIS->objectName );
+		double startmfe = (1714672800 - ss_THEMIS->epoch)/60.0;
+		if( ConvertTLEToSGP4GPU( &ss_THEMIS[0], startmfe, ro,  vo, 0 ) )
 		{
 			printf( "failed to convert tle\n" );
 			return -5;
 		}
-		puts( ss_THEMIS->objectName );
-		double startmfe = (1714672800 - ss_THEMIS->epoch)/60.0;
-		sgp4 (&iss_THEMIS, startmfe, ro,  vo);
 
 		//Dumpelsetrec( &iss_THEMIS );
 
 		double jd = ss_THEMIS->jdsatepoch + floor(startmfe/1440.0);
-		double jdfrac = fmod(startmfe/1440.0, 1.0) + ss_THEMIS->jdsatepochF;
+		double jdfrac = FMOD(startmfe/1440.0, 1.0) + ss_THEMIS->jdsatepochF;
 		int year, mon, day, hr, min;
 		SGPF sec;
 		invjday( jd, jdfrac, &year, &mon, &day, &hr, &min, &sec );
 		printf( "%f %f %04d %02d %02d %02d:%02d:%05.02f\n", jd, jdfrac, year, mon, day, hr, min, sec );
-		printf( "[Δt%14.8f] %16.8f %16.8f %16.8f %16.8f \n                   %16.9f %16.9f %16.9f %16.9f\n",
-			startmfe,ro[0],ro[1],ro[2], sqrt(ro[0]*ro[0]+ro[1]*ro[1]+ro[2]*ro[2]),vo[0],vo[1],vo[2], sqrt(vo[0]*vo[0]+vo[1]*vo[1]+vo[2]*vo[2]));
+		printf( "[Δt%14.8f] %16.8f %16.8f %16.8f %16.8f \n                   %16.9f %16.9f %16.9f %16.9f\n                   %16.9f %16.9f %16.9f\n",
+			startmfe,ro[0],ro[1],ro[2], sqrt(ro[0]*ro[0]+ro[1]*ro[1]+ro[2]*ro[2]),vo[0],vo[1],vo[2], sqrt(vo[0]*vo[0]+vo[1]*vo[1]+vo[2]*vo[2]),
+			a_alta_altp[0], a_alta_altp[1], a_alta_altp[2]
+		);
 
 		pysgp4[0] = 12197.874919034643;
 		pysgp4[1] = 48838.6479258657;
@@ -443,9 +386,8 @@ e, r, v = satellite.sgp4(jd, fr)
 	if( 1 )
 	{
 		struct TLEObject * ss = 0;
-		struct elsetrec iss;
 		int numSS = 0;
-		r = ParseFileOrString( 0, ""
+		int r = ParseFileOrString( 0, ""
 			"ISS (ZARYA)             \n"
 			"1 25544U 98067A   24118.69784154  .00029521  00000+0  51116-3 0  9995\n"
 			"2 25544  51.6397 205.7509 0003603 115.2045 341.2688 15.50662375450710\n",
@@ -455,17 +397,16 @@ e, r, v = satellite.sgp4(jd, fr)
 			fprintf( stderr, "Error: SS can't load.\n" );
 			return -5;
 		}
-		if( ConvertTLEToSGP4( &iss, &ss[0], 0, 0, 0 ) )
+
+		double startmfe = (1716832800 - ss->epoch)/60.0;
+		if( ConvertTLEToSGP4GPU( &ss[0], startmfe, ro,  vo, 0 ) )
 		{
 			printf( "failed to convert tle\n" );
 			return -5;
 		}
 		puts( ss->objectName );
-		double startmfe = (1716832800 - ss->epoch)/60.0;
-		sgp4 (&iss, startmfe, ro,  vo);
-
 		double jd = ss->jdsatepoch + floor(startmfe/1440.0);
-		double jdfrac = fmod(startmfe/1440.0, 1.0) + ss->jdsatepochF;
+		double jdfrac = FMOD(startmfe/1440.0, 1.0) + ss->jdsatepochF;
 		int year, mon, day, hr, min;
 		SGPF sec;
 		invjday( jd, jdfrac, &year, &mon, &day, &hr, &min, &sec );
@@ -523,59 +464,10 @@ e, r, v = satellite.sgp4(jd, fr)
 	// Perf test
 	{
 		struct TLEObject * ss = 0;
-		struct elsetrec iss;
 		int numss = 0;
-		r = ParseFileOrString( 0, ""
-			"ISS (ZARYA)             \n"
-			"1 25544U 98067A   24118.69784154  .00029521  00000+0  51116-3 0  9995\n"
-			"2 25544  51.6397 205.7509 0003603 115.2045 341.2688 15.50662375450710\n",
-			&ss, &numss );
-		if( r || numss != 1 )
-		{
-			fprintf( stderr, "Error: SS can't load.\n" );
-			return -5;
-		}
-		if( ConvertTLEToSGP4( &iss, &ss[0], 0, 0, 0 ) )
-		{
-			printf( "failed to convert tle\n" );
-			return -5;
-		}
-		int iter;
-		double dStartSetup = OGGetAbsoluteTime();
-		for( iter = 0; iter < 1000000; iter++ )
-		{
-			ConvertTLEToSGP4( &iss, &ss[0], 0, 0, 0 );
-		}
-		double dEndSetup = OGGetAbsoluteTime();
-		double dStartRun = OGGetAbsoluteTime();
-		for( iter = 0; iter < 1000000; iter++ )
-		{
-			double startmfe = (1714240800 + iter - ss->epoch)/60.0;
-			sgp4 (&iss, startmfe, ro,  vo);
-		}
-		double dEndRun = OGGetAbsoluteTime();
-		double dStartFull = OGGetAbsoluteTime();
-		for( iter = 0; iter < 1000000; iter++ )
-		{
-			double startmfe = (1714240800 + iter - ss->epoch)/60.0;
-			ConvertTLEToSGP4( &iss, &ss[0], 0, 0, 0 );
-			sgp4 (&iss, startmfe, ro,  vo);
-		}
-		double dEndFull = OGGetAbsoluteTime();
-		double dStartFullInit = OGGetAbsoluteTime();
-		for( iter = 0; iter < 1000000; iter++ )
-		{
-			double startmfe = (1714240800 + iter - ss->epoch)/60.0;
-			ConvertTLEToSGP4( &iss, &ss[0], startmfe, ro, vo );
-		}
-		double dEndFullInit = OGGetAbsoluteTime();
-		printf( "Init: %.4f us/iteration\n", dEndSetup - dStartSetup );
-		printf( "Run:  %.4f us/iteration\n", dEndRun - dStartRun );
-		printf( "Full: %.4f us/iteration\n", dEndFull - dStartFull );
-		printf( "FullAtInit: %.4f us/iteration\n", dEndFullInit - dStartFullInit );
-
+		int iter = 0;
 		numss = 0;
-		r = ParseFileOrString( 0, ""
+		int r = ParseFileOrString( 0, ""
 			"THEMIS E                \n"
 			"1 30798U 07004E   24121.56859868 -.00000520  00000+0  00000+0 0  9999\n"
 			"2 30798   7.9414 283.2653 8322119 302.3633 341.0652  0.87832507 59071\n",
@@ -585,25 +477,16 @@ e, r, v = satellite.sgp4(jd, fr)
 			fprintf( stderr, "Error: THEMIS can't load.\n" );
 			return -5;
 		}
-		if( ConvertTLEToSGP4( &iss, &ss[0], 0, 0, 0 ) )
-		{
-			printf( "failed to convert tle\n" );
-			return -5;
-		}
-		dStartFullInit = OGGetAbsoluteTime();
+		double dStartFullInit = OGGetAbsoluteTime();
 		for( iter = 0; iter < 1000000; iter++ )
 		{
 			double startmfe = (1714240800 + iter - ss->epoch)/60.0;
-			ConvertTLEToSGP4( &iss, &ss[0], startmfe, ro, vo );
+			ConvertTLEToSGP4GPU( &ss[0], startmfe, ro, vo, 0 );
 		}
-		dEndFullInit = OGGetAbsoluteTime();
+		double dEndFullInit = OGGetAbsoluteTime();
 		printf( "Deep Space Full At Init: %.4f us/iteration\n", dEndFullInit - dStartFullInit );
 
 
 
 	}
-
-
-	return 0;
 }
-
