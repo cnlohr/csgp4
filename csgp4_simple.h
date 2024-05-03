@@ -120,216 +120,6 @@ struct elsetrec_simple
 	SGPF altp /* Not used in algo, but cool anyway to look at */;
 };
 
-#if 0
-CSGP4_DECORATOR void dpper_simple
-	 (
-	   SGPF e3, SGPF ee2, SGPF peo, SGPF pgho, SGPF pho,
-	   SGPF pinco, SGPF plo, SGPF se2, SGPF se3, SGPF sgh2,
-	   SGPF sgh3, SGPF sgh4, SGPF sh2, SGPF sh3, SGPF si2,
-	   SGPF si3, SGPF sl2, SGPF sl3, SGPF sl4, SGPF t,
-	   SGPF xgh2, SGPF xgh3, SGPF xgh4, SGPF xh2, SGPF xh3,
-	   SGPF xi2, SGPF xi3, SGPF xl2, SGPF xl3, SGPF xl4,
-	   SGPF zmol, SGPF zmos, SGPF inclo,
-	   BOOL init,
-	   SGPF CSGP4_OUT ep, SGPF CSGP4_OUT inclp, SGPF CSGP4_OUT nodep, SGPF CSGP4_OUT argpp, SGPF CSGP4_OUT mp
-	 )
-{
-	/* --------------------- local variables ------------------------ */
-	const SGPF twopi = 2.0 * SGPPI;
-	SGPF alfdp, betdp, cosip, cosop, dalf, dbet, dls,
-		 f2, f3, pe, pgh, ph, pinc, pl,
-		 sel, ses, sghl, sghs, shll, shs, sil,
-		 sinip, sinop, sinzf, sis, sll, sls, xls,
-		 xnoh, zf, zm, zel, zes, znl, zns;
-
-	/* ---------------------- constants ----------------------------- */
-	zns = 1.19459e-5;
-	zes = 0.01675;
-	znl = 1.5835218e-4;
-	zel = 0.05490;
-
-	/* --------------- calculate time varying periodics ----------- */
-	zm = zmos + zns * t;
-	// be sure that the initial call has time set to zero
-	if (init)
-		zm = zmos;
-	zf = zm + 2.0 * zes * SIN(zm);
-	sinzf = SIN(zf);
-	f2 = 0.5 * sinzf * sinzf - 0.25;
-	f3 = -0.5 * sinzf * COS(zf);
-	ses = se2 * f2 + se3 * f3;
-	sis = si2 * f2 + si3 * f3;
-	sls = sl2 * f2 + sl3 * f3 + sl4 * sinzf;
-	sghs = sgh2 * f2 + sgh3 * f3 + sgh4 * sinzf;
-	shs = sh2 * f2 + sh3 * f3;
-	zm = zmol + znl * t;
-	if (init)
-		zm = zmol;
-	zf = zm + 2.0 * zel * SIN(zm);
-	sinzf = SIN(zf);
-	f2 = 0.5 * sinzf * sinzf - 0.25;
-	f3 = -0.5 * sinzf * COS(zf);
-	sel = ee2 * f2 + e3 * f3;
-	sil = xi2 * f2 + xi3 * f3;
-	sll = xl2 * f2 + xl3 * f3 + xl4 * sinzf;
-	sghl = xgh2 * f2 + xgh3 * f3 + xgh4 * sinzf;
-	shll = xh2 * f2 + xh3 * f3;
-	pe = ses + sel;
-	pinc = sis + sil;
-	pl = sls + sll;
-	pgh = sghs + sghl;
-	ph = shs + shll;
-
-	if (!init)
-	{
-		pe = pe - peo;
-		pinc = pinc - pinco;
-		pl = pl - plo;
-		pgh = pgh - pgho;
-		ph = ph - pho;
-		CSGP4_DEREF(inclp) = CSGP4_DEREF(inclp) + pinc;
-		CSGP4_DEREF(ep) = CSGP4_DEREF(ep) + pe;
-		sinip = SIN(CSGP4_DEREF(inclp));
-		cosip = COS(CSGP4_DEREF(inclp));
-
-		/* ----------------- apply periodics directly ------------ */
-		//  sgp4fix for lyddane choice
-		//  strn3 used original inclination - this is technically feasible
-		//  gsfc used perturbed inclination - also technically feasible
-		//  probably best to readjust the 0.2 limit value and limit discontinuity
-		//  0.2 rad = 11.45916 deg
-		//  use next line for original strn3 approach and original inclination
-		//  if (inclo >= 0.2)
-		//  use next line for gsfc version and perturbed inclination
-		if (CSGP4_DEREF(inclp) >= 0.2)
-		{
-			ph = ph / sinip;
-			pgh = pgh - cosip * ph;
-			CSGP4_DEREF(argpp) = CSGP4_DEREF(argpp) + pgh;
-			CSGP4_DEREF(nodep) = CSGP4_DEREF(nodep) + ph;
-			CSGP4_DEREF(mp) = CSGP4_DEREF(mp) + pl;
-		}
-		else
-		{
-			/* ---- apply periodics with lyddane modification ---- */
-			sinop = SIN(CSGP4_DEREF(nodep));
-			cosop = COS(CSGP4_DEREF(nodep));
-			alfdp = sinip * sinop;
-			betdp = sinip * cosop;
-			dalf = ph * cosop + pinc * cosip * sinop;
-			dbet = -ph * sinop + pinc * cosip * cosop;
-			alfdp = alfdp + dalf;
-			betdp = betdp + dbet;
-			CSGP4_DEREF(nodep) = FMOD( CSGP4_DEREF(nodep), twopi );
-			//  sgp4fix for afspc written intrinsic functions
-			// nodep used without a trigonometric function ahead
-			if ((CSGP4_DEREF(nodep) < 0.0)) // && (opsmode == 'a'))
-				CSGP4_DEREF(nodep) = CSGP4_DEREF(nodep) + twopi;
-			xls = CSGP4_DEREF(mp) + CSGP4_DEREF(argpp) + cosip * CSGP4_DEREF(nodep);
-			dls = pl + pgh - pinc * CSGP4_DEREF(nodep) * sinip;
-			xls = xls + dls;
-			xnoh = CSGP4_DEREF(nodep);
-			CSGP4_DEREF(nodep) = ATAN2(alfdp, betdp);
-			//  sgp4fix for afspc written intrinsic functions
-			// nodep used without a trigonometric function ahead
-			if ((CSGP4_DEREF(nodep) < 0.0)) // && (opsmode == 'a'))
-				CSGP4_DEREF(nodep) = CSGP4_DEREF(nodep) + twopi;
-			if (FABS(xnoh - CSGP4_DEREF(nodep)) > SGPPI)
-			{
-				if (CSGP4_DEREF(nodep) < xnoh)
-					CSGP4_DEREF(nodep) = CSGP4_DEREF(nodep) + twopi;
-				else
-					CSGP4_DEREF(nodep) = CSGP4_DEREF(nodep) - twopi;
-			}
-			CSGP4_DEREF(mp) = CSGP4_DEREF(mp) + pl;
-			CSGP4_DEREF(argpp) = xls - CSGP4_DEREF(mp) - cosip * CSGP4_DEREF(nodep);
-		}
-	}   // if init == 'n'
-	//#include "debug1.cpp"
-}  // end dpper
-#endif
-
-CSGP4_DECORATOR void initl_simple
-	 (
-	// sgp4fix satn not needed. include in satrec in case needed later  
-	// int satn,	  
-	// sgp4fix just pass in xke and j2
-	// gravconsttype whichconst, 
-	   SGPF xke, SGPF j2,
-	   SGPF ecco, SGPF epoch, SGPF inclo, SGPF no_kozai, bool CSGP4_OUT method,
-
-	// Output params:
-	   SGPF CSGP4_OUT ainv, SGPF CSGP4_OUT ao, SGPF CSGP4_OUT con41, SGPF CSGP4_OUT con42, SGPF CSGP4_OUT cosio,
-	   SGPF CSGP4_OUT cosio2, SGPF CSGP4_OUT eccsq, SGPF CSGP4_OUT omeosq, SGPF CSGP4_OUT posq,
-	   SGPF CSGP4_OUT rp, SGPF CSGP4_OUT rteosq, SGPF CSGP4_OUT sinio, SGPF CSGP4_OUT gsto,
-	   SGPF CSGP4_OUT no_unkozai
-	 )
-{
-	/* --------------------- local variables ------------------------ */
-	SGPF ak, d1, del, adel, po, x2o3;
-
-	// sgp4fix use old way of finding gst
-	SGPF ds70;
-	SGPF ts70, tfrac, c1, thgr70, fk5r, c1p2p;
-	const SGPF twopi = 2.0 * SGPPI;
-
-	/* ----------------------- earth constants ---------------------- */
-	// sgp4fix identify constants and allow alternate values
-	// only xke and j2 are used here so pass them in directly
-	// getgravconst( whichconst, tumin, mu, radiusearthkm, xke, j2, j3, j4, j3oj2 );
-	x2o3 = 2.0 / 3.0;
-
-	/* ------------- calculate auxillary epoch quantities ---------- */
-	CSGP4_DEREF(eccsq) = ecco * ecco;
-	CSGP4_DEREF(omeosq) = 1.0 - CSGP4_DEREF(eccsq);
-	CSGP4_DEREF(rteosq) = SQRT(CSGP4_DEREF(omeosq));
-	CSGP4_DEREF(cosio) = COS(inclo);
-	CSGP4_DEREF(cosio2) = CSGP4_DEREF(cosio) * CSGP4_DEREF(cosio);
-
-	/* ------------------ un-kozai the mean motion ----------------- */
-	ak = POW(xke / no_kozai, x2o3);
-	d1 = 0.75 * j2 * (3.0 * CSGP4_DEREF(cosio2) - 1.0) / (CSGP4_DEREF(rteosq) * CSGP4_DEREF(omeosq));
-	del = d1 / (ak * ak);
-	adel = ak * (1.0 - del * del - del *
-			(1.0 / 3.0 + 134.0 * del * del / 81.0));
-	del = d1 / (adel * adel);
-	CSGP4_DEREF(no_unkozai) = no_kozai / (1.0 + del);
-
-	CSGP4_DEREF(ao) = POW(xke / (CSGP4_DEREF(no_unkozai)), x2o3);
-	CSGP4_DEREF(sinio) = SIN(inclo);
-	po = CSGP4_DEREF(ao) * CSGP4_DEREF(omeosq);
-	CSGP4_DEREF(con42) = 1.0 - 5.0 * CSGP4_DEREF(cosio2);
-	CSGP4_DEREF(con41) = -CSGP4_DEREF(con42) - CSGP4_DEREF(cosio2) - CSGP4_DEREF(cosio2);
-	CSGP4_DEREF(ainv) = 1.0 / CSGP4_DEREF(ao);
-	CSGP4_DEREF(posq) = po * po;
-	CSGP4_DEREF(rp) = CSGP4_DEREF(ao) * (1.0 - ecco);
-	CSGP4_DEREF(method) = false;
-	//*method = 'n';
-
-	// sgp4fix modern approach to finding sidereal time
-	// ALWAYS USE A OPS MODE in this form.
-	//if (opsmode == 'a')
-	{
-		// sgp4fix use old way of finding gst
-		// count integer number of days from 0 jan 1970
-		ts70 = epoch - 7305.0;
-		ds70 = FLOOR(ts70 + 1.0e-8);
-		tfrac = ts70 - ds70;
-		// find greenwich location at epoch
-		c1 = 1.72027916940703639e-2;
-		thgr70 = 1.7321343856509374;
-		fk5r = 5.07551419432269442e-15;
-		c1p2p = c1 + twopi;
-		CSGP4_DEREF(gsto) = FMOD(thgr70 + c1 * ds70 + c1p2p * tfrac + ts70 * ts70 * fk5r, twopi);
-		if (CSGP4_DEREF(gsto) < 0.0)
-			CSGP4_DEREF(gsto) = CSGP4_DEREF(gsto) + twopi;
-	}
-	//else
-	//	*gsto = gstime(epoch + 2433281.5);
-
-	//#include "debug5.cpp"
-}  // end initl
-
 
 CSGP4_DECORATOR void dsinit_simple
 	 (
@@ -583,7 +373,7 @@ CSGP4_DECORATOR int sgp4init_simple
 		 tc, temp, temp1, temp2, temp3, tsi, xpidot,
 		 xhdot1, z1, z2, z3, z11, z12, z13,
 		 z21, z22, z23, z31, z32, z33,
-		 qzms2t, ss, x2o3,
+		 qzms2t, ss,
 		 delmotemp, qzms2ttemp, qzms24temp;
 
 	/* ------------------------ initialization --------------------- */
@@ -591,6 +381,8 @@ CSGP4_DECORATOR int sgp4init_simple
 	// the old check used 1.0 + cos(Math.PI-1.0e-9), but then compared it to
 	// 1.5 e-12, so the threshold was changed to 1.5e-12 for consistency
 	const SGPF temp4 = 1.5e-12;
+	const SGPF twopi = 2.0 * SGPPI;
+	const SGPF x2o3 = 2.0 / 3.0;
 
 #if 0
 	/* ----------- set all near earth variables to zero ------------ */
@@ -673,16 +465,76 @@ CSGP4_DECORATOR int sgp4init_simple
 	// sgp4fix use multiply for speed instead of Math.POW
 	qzms2ttemp = (120.0 - 78.0) / gsr.radiusearthkm;
 	qzms2t = qzms2ttemp * qzms2ttemp * qzms2ttemp * qzms2ttemp;
-	x2o3 = 2.0 / 3.0;
 
 	//gsr.init = 'y';
 	gsr.t = 0.0;
 
 	// sgp4fix remove satn as it is not needed in initl
-	initl_simple
-		(gsr.xke, gsr.j2, gsr.ecco, epoch, gsr.inclo, gsr.no_kozai, CSGP4_REF(gsr.method),
-		  CSGP4_REF(ainv), CSGP4_REF(ao), CSGP4_REF(gsr.con41), CSGP4_REF(con42), CSGP4_REF(cosio), CSGP4_REF(cosio2), CSGP4_REF(eccsq), CSGP4_REF(omeosq),
-		  CSGP4_REF(posq), CSGP4_REF(rp), CSGP4_REF(rteosq), CSGP4_REF(sinio), CSGP4_REF(gsr.gsto), CSGP4_REF(gsr.no_unkozai) );
+	//initl_simple
+	//	(gsr.xke, gsr.j2, gsr.ecco, epoch, gsr.inclo, gsr.no_kozai, CSGP4_REF(gsr.method),
+	//	  CSGP4_REF(ainv), CSGP4_REF(ao), CSGP4_REF(gsr.con41), CSGP4_REF(con42), CSGP4_REF(cosio), CSGP4_REF(cosio2), CSGP4_REF(eccsq), CSGP4_REF(omeosq),
+	//	  CSGP4_REF(posq), CSGP4_REF(rp), CSGP4_REF(rteosq), CSGP4_REF(sinio), CSGP4_REF(gsr.gsto), CSGP4_REF(gsr.no_unkozai) );
+	//initl_simple
+
+
+		/* --------------------- local variables ------------------------ */
+		SGPF ak, d1, del, adel, po;
+
+		// sgp4fix use old way of finding gst
+		SGPF ds70;
+		SGPF ts70, tfrac, c1, thgr70, fk5r, c1p2p;
+
+
+		/* ------------- calculate auxillary epoch quantities ---------- */
+		(eccsq) = gsr.ecco * gsr.ecco;
+		(omeosq) = 1.0 - (eccsq);
+		(rteosq) = SQRT((omeosq));
+		(cosio) = COS(gsr.inclo);
+		(cosio2) = (cosio) * (cosio);
+
+		/* ------------------ un-kozai the mean motion ----------------- */
+		ak = POW(gsr.xke / gsr.no_kozai, x2o3);
+		d1 = 0.75 * gsr.j2 * (3.0 * (cosio2) - 1.0) / ((rteosq) * (omeosq));
+		del = d1 / (ak * ak);
+		adel = ak * (1.0 - del * del - del *
+				(1.0 / 3.0 + 134.0 * del * del / 81.0));
+		del = d1 / (adel * adel);
+		(gsr.no_unkozai) = gsr.no_kozai / (1.0 + del);
+
+		(ao) = POW(gsr.xke / ((gsr.no_unkozai)), x2o3);
+		(sinio) = SIN(gsr.inclo);
+		po = (ao) * (omeosq);
+		(con42) = 1.0 - 5.0 * (cosio2);
+		(gsr.con41) = -(con42) - (cosio2) - (cosio2);
+		//(ainv) = 1.0 / (ao);
+		(posq) = po * po;
+		(rp) = (ao) * (1.0 - gsr.ecco);
+		(gsr.method) = false;
+		//*method = 'n';
+
+		// sgp4fix modern approach to finding sidereal time
+		// ALWAYS USE A OPS MODE in this form.
+		//if (opsmode == 'a')
+		{
+			// sgp4fix use old way of finding gst
+			// count integer number of days from 0 jan 1970
+			ts70 = epoch - 7305.0;
+			ds70 = FLOOR(ts70 + 1.0e-8);
+			tfrac = ts70 - ds70;
+			// find greenwich location at epoch
+			c1 = 1.72027916940703639e-2;
+			thgr70 = 1.7321343856509374;
+			fk5r = 5.07551419432269442e-15;
+			c1p2p = c1 + twopi;
+			(gsr.gsto) = FMOD(thgr70 + c1 * ds70 + c1p2p * tfrac + ts70 * ts70 * fk5r, twopi);
+			if ((gsr.gsto) < 0.0)
+				(gsr.gsto) = (gsr.gsto) + twopi;
+		}
+
+	// end initl_simple
+
+
+
 	gsr.a = POW(gsr.no_unkozai * gsr.tumin, (-2.0 / 3.0));
 	gsr.alta = gsr.a * (1.0 + gsr.ecco) - 1.0;
 	gsr.altp = gsr.a * (1.0 - gsr.ecco) - 1.0;
@@ -802,7 +654,6 @@ CSGP4_DECORATOR int sgp4init_simple
 				const SGPF zcosis = 0.91744867;
 				const SGPF zcosgs = 0.1945905;
 				const SGPF zsings = -0.98088458;
-				const SGPF twopi = 2.0 * SGPPI;
 
 				/* --------------------- local variables ------------------------ */
 				int lsflg;
@@ -1079,7 +930,7 @@ CSGP4_DECORATOR int sgp4init_simple
 		uy, uz, vx, vy, vz, argpp,
 		xinc, xincp, xl, xlm, mp,
 		xmdf, xmx, xmy, nodedf, xnode, nodep,
-		twopi,  //, j2, j3, tumin, j4, xke, j3oj2, radiusearthkm,
+		//twopi,  //, j2, j3, tumin, j4, xke, j3oj2, radiusearthkm,
 		vkmpersec, delmtemp;   // mu, 
 	int ktr;
 
@@ -1096,8 +947,8 @@ CSGP4_DECORATOR int sgp4init_simple
 	// the old check used 1.0 + cos(Math.PI-1.0e-9), but then compared it to
 	// 1.5 e-12, so the threshold was changed to 1.5e-12 for consistency
 	//temp4 = 1.5e-12;
-	twopi = 2.0 * SGPPI;
-	x2o3 = 2.0 / 3.0;
+	//twopi = 2.0 * SGPPI;
+	//x2o3 = 2.0 / 3.0;
 	// sgp4fix identify constants and allow alternate values
 	// getgravconst( whichconst, tumin, mu, radiusearthkm, xke, j2, j3, j4, j3oj2 );
 	vkmpersec = gsr.radiusearthkm * gsr.xke / 60.0;
