@@ -63,7 +63,7 @@ int main( int argc, char ** argv )
 		printf( "%f %f %04d %02d %02d %02d:%02d:%05.02f\n", jd, jdfrac, year, mon, day, hr, min, sec );
 		printf( "[Δt%14.8f] %16.8f %16.8f %16.8f %16.8f \n                   %16.9f %16.9f %16.9f %16.9f\n                   %16.9f %16.9f %16.9f\n",
 			startmfe,ro[0],ro[1],ro[2], sqrt(ro[0]*ro[0]+ro[1]*ro[1]+ro[2]*ro[2]),vo[0],vo[1],vo[2], sqrt(vo[0]*vo[0]+vo[1]*vo[1]+vo[2]*vo[2]),
-			a_alta_altp[0], a_alta_altp[1], a_alta_altp[2]
+			(a_alta_altp[0]-1)*radiusearthkm, a_alta_altp[1]*radiusearthkm, a_alta_altp[2]*radiusearthkm
 		);
 
 		/*
@@ -149,7 +149,7 @@ e, r, v = satellite.sgp4(jd, fr)
 		}
 		puts( ss->objectName );
 		double startmfe = (1714327200 - ss->epoch)/60.0;
-		if( ConvertTLEToSGP4GPU( &ss[0], startmfe, ro,  vo, 0 ) )
+		if( ConvertTLEToSGP4GPU( &ss[0], startmfe, ro,  vo, a_alta_altp ) )
 		{
 			printf( "failed to convert tle\n" );
 			return -5;
@@ -163,7 +163,7 @@ e, r, v = satellite.sgp4(jd, fr)
 		printf( "%f %f %04d %02d %02d %02d:%02d:%05.02f\n", jd, jdfrac, year, mon, day, hr, min, sec );
 		printf( "[Δt%14.8f] %16.8f %16.8f %16.8f %16.8f \n                   %16.9f %16.9f %16.9f %16.9f\n                   %16.9f %16.9f %16.9f\n",
 			startmfe,ro[0],ro[1],ro[2], sqrt(ro[0]*ro[0]+ro[1]*ro[1]+ro[2]*ro[2]),vo[0],vo[1],vo[2], sqrt(vo[0]*vo[0]+vo[1]*vo[1]+vo[2]*vo[2]),
-			a_alta_altp[0], a_alta_altp[1], a_alta_altp[2]
+			(a_alta_altp[0]-1)*radiusearthkm, a_alta_altp[1]*radiusearthkm, a_alta_altp[2]*radiusearthkm
 		);
 
 		pysgp4[0] = 4435.874337686209; 
@@ -234,7 +234,7 @@ e, r, v = satellite.sgp4(jd, fr)
 		}
 
 		double startmfe = (1714672800 - ss_arase->epoch)/60.0;
-		if( ConvertTLEToSGP4GPU( &ss_arase[0], startmfe, ro,  vo, 0 ) )
+		if( ConvertTLEToSGP4GPU( &ss_arase[0], startmfe, ro,  vo, a_alta_altp ) )
 		{
 			printf( "failed to convert tle\n" );
 			return -5;
@@ -249,7 +249,7 @@ e, r, v = satellite.sgp4(jd, fr)
 		printf( "%f %f %04d %02d %02d %02d:%02d:%05.02f\n", jd, jdfrac, year, mon, day, hr, min, sec );
 		printf( "[Δt%14.8f] %16.8f %16.8f %16.8f %16.8f \n                   %16.9f %16.9f %16.9f %16.9f\n                   %16.9f %16.9f %16.9f\n",
 			startmfe,ro[0],ro[1],ro[2], sqrt(ro[0]*ro[0]+ro[1]*ro[1]+ro[2]*ro[2]),vo[0],vo[1],vo[2], sqrt(vo[0]*vo[0]+vo[1]*vo[1]+vo[2]*vo[2]),
-			a_alta_altp[0], a_alta_altp[1], a_alta_altp[2]
+			(a_alta_altp[0]-1)*radiusearthkm, a_alta_altp[1]*radiusearthkm, a_alta_altp[2]*radiusearthkm
 		);
 
 		pysgp4[0] = 13105.747459057653; 
@@ -318,7 +318,7 @@ e, r, v = satellite.sgp4(jd, fr)
 		}
 		puts( ss_THEMIS->objectName );
 		double startmfe = (1714672800 - ss_THEMIS->epoch)/60.0;
-		if( ConvertTLEToSGP4GPU( &ss_THEMIS[0], startmfe, ro,  vo, 0 ) )
+		if( ConvertTLEToSGP4GPU( &ss_THEMIS[0], startmfe, ro,  vo, a_alta_altp ) )
 		{
 			printf( "failed to convert tle\n" );
 			return -5;
@@ -334,7 +334,7 @@ e, r, v = satellite.sgp4(jd, fr)
 		printf( "%f %f %04d %02d %02d %02d:%02d:%05.02f\n", jd, jdfrac, year, mon, day, hr, min, sec );
 		printf( "[Δt%14.8f] %16.8f %16.8f %16.8f %16.8f \n                   %16.9f %16.9f %16.9f %16.9f\n                   %16.9f %16.9f %16.9f\n",
 			startmfe,ro[0],ro[1],ro[2], sqrt(ro[0]*ro[0]+ro[1]*ro[1]+ro[2]*ro[2]),vo[0],vo[1],vo[2], sqrt(vo[0]*vo[0]+vo[1]*vo[1]+vo[2]*vo[2]),
-			a_alta_altp[0], a_alta_altp[1], a_alta_altp[2]
+			(a_alta_altp[0]-1)*radiusearthkm, a_alta_altp[1]*radiusearthkm, a_alta_altp[2]*radiusearthkm
 		);
 
 		pysgp4[0] = 12197.874919034643;
@@ -404,7 +404,7 @@ e, r, v = satellite.sgp4(jd, fr)
 		}
 		puts( ss_THEMIS->objectName );
 		double startmfe = (1717178400 - ss_THEMIS->epoch)/60.0;
-		if( ConvertTLEToSGP4GPU( &ss_THEMIS[0], startmfe, ro,  vo, 0 ) )
+		if( ConvertTLEToSGP4GPU( &ss_THEMIS[0], startmfe, ro,  vo, a_alta_altp ) )
 		{
 			printf( "failed to convert tle\n" );
 			return -5;
@@ -420,7 +420,7 @@ e, r, v = satellite.sgp4(jd, fr)
 		printf( "%f %f %04d %02d %02d %02d:%02d:%05.02f\n", jd, jdfrac, year, mon, day, hr, min, sec );
 		printf( "[Δt%14.8f] %16.8f %16.8f %16.8f %16.8f \n                   %16.9f %16.9f %16.9f %16.9f\n                   %16.9f %16.9f %16.9f\n",
 			startmfe,ro[0],ro[1],ro[2], sqrt(ro[0]*ro[0]+ro[1]*ro[1]+ro[2]*ro[2]),vo[0],vo[1],vo[2], sqrt(vo[0]*vo[0]+vo[1]*vo[1]+vo[2]*vo[2]),
-			a_alta_altp[0], a_alta_altp[1], a_alta_altp[2]
+			(a_alta_altp[0]-1)*radiusearthkm, a_alta_altp[1]*radiusearthkm, a_alta_altp[2]*radiusearthkm
 		);
 
 		pysgp4[0] = 60379.65507502841;
@@ -485,7 +485,7 @@ e, r, v = satellite.sgp4(jd, fr)
 		}
 
 		double startmfe = (1716832800 - ss->epoch)/60.0;
-		if( ConvertTLEToSGP4GPU( &ss[0], startmfe, ro,  vo, 0 ) )
+		if( ConvertTLEToSGP4GPU( &ss[0], startmfe, ro,  vo,a_alta_altp ) )
 		{
 			printf( "failed to convert tle\n" );
 			return -5;
@@ -497,8 +497,10 @@ e, r, v = satellite.sgp4(jd, fr)
 		SGPF sec;
 		invjday( jd, jdfrac, &year, &mon, &day, &hr, &min, &sec );
 		printf( "%f %f %04d %02d %02d %02d:%02d:%05.02f\n", jd, jdfrac, year, mon, day, hr, min, sec );
-		printf( "[Δt%14.8f] %16.8f %16.8f %16.8f %16.8f \n                   %16.9f %16.9f %16.9f %16.9f\n",
-			startmfe,ro[0],ro[1],ro[2], sqrt(ro[0]*ro[0]+ro[1]*ro[1]+ro[2]*ro[2]),vo[0],vo[1],vo[2], sqrt(vo[0]*vo[0]+vo[1]*vo[1]+vo[2]*vo[2]));
+		printf( "[Δt%14.8f] %16.8f %16.8f %16.8f %16.8f \n                   %16.9f %16.9f %16.9f %16.9f\n                   %16.9f %16.9f %16.9f\n",
+			startmfe,ro[0],ro[1],ro[2], sqrt(ro[0]*ro[0]+ro[1]*ro[1]+ro[2]*ro[2]),vo[0],vo[1],vo[2], sqrt(vo[0]*vo[0]+vo[1]*vo[1]+vo[2]*vo[2]),
+			(a_alta_altp[0]-1)*radiusearthkm, a_alta_altp[1]*radiusearthkm, a_alta_altp[2]*radiusearthkm
+		);
 
 		pysgp4[0] = 5099.551520031815;
 		pysgp4[1] = 1808.2683576301836;

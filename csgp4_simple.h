@@ -35,6 +35,7 @@
 
 #define SGPPI 3.1415926535897932384626433
 
+
 // Default to double calculations.
 #ifndef CSGP4_USE_FLOAT
 #define CSGP4_USE_FLOAT 0
@@ -76,6 +77,7 @@
 #define FMOD  fmod
 #endif
 
+static const SGPF radiusearthkm = 6378.135;	 // km
 
 #define BOOL int
 
@@ -116,7 +118,7 @@ CSGP4_DECORATOR int sgp4init_simple
 	// sgp4fix add singly averaged variables
 	SGPF am, em, im, Om, mm, nm;
 	// sgp4fix add constant parameters to eliminate mutliple calls during execution
-	SGPF tumin, mu, radiusearthkm, xke, j2, j3, j4, j3oj2;
+	SGPF tumin, mu, xke, j2, j3, j4, j3oj2;
 
 
 	SGPF a /* Not actually used in algo but fun to look at */;
@@ -192,7 +194,6 @@ CSGP4_DECORATOR int sgp4init_simple
 //				  CSGP4_REF(j2), CSGP4_REF(j3), CSGP4_REF(j4), CSGP4_REF(j3oj2));
 	//Hard-coded WGS72
 	(mu) = 398600.8;			// in km3 / s2
-	(radiusearthkm) = 6378.135;	 // km
 	(xke) = 60.0 / SQRT((radiusearthkm) * (radiusearthkm) * (radiusearthkm) / (mu));
 	(tumin) = 1.0 / (xke);
 	(j2) = 0.001082616;

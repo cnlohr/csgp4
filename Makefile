@@ -6,9 +6,11 @@ checkProg : checkProg.c csgp4.h
 
 checkProg.float : checkProg.c
 	gcc -g -Os -flto -o $@ $< -lm -DCSGP4_USE_FLOAT=1
+	objdump -S $@ > $@.lst
 
 checkProgSimple : checkProgSimple.c
 	gcc -g -Os -flto -o $@ $< -lm -DCSGP4_USE_FLOAT=1 -pedantic -Wall
+	objdump -S $@ > $@.lst
 
 trackonly : trackonly.c csgp4.h
 	gcc -g -Os -flto -o $@ $< -lm
