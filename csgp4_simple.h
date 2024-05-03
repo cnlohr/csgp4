@@ -1055,13 +1055,16 @@ CSGP4_DECORATOR int sgp4init_simple
 			//iretn = 381; // added for do loop
 			//iret = 0; // added for loop
 			//while (iretn == 381)
-			bool iretn = true;
-			do
+			//bool iretn = true;
+			//do
+//			printf( "ITER: %f / %f %f\n", t-atime, stepp, delt );
+			int maxiter = (t-atime)/delt + 2; //+1 just in case. +1 is required.
+			if( irez != 2 )
 			{
-				/* ------------------- dot terms calculated ------------- */
-				/* ----------- near - synchronous resonance terms ------- */
-				if (irez != 2)
+				for( int i = 0; i < maxiter; i++ )
 				{
+					/* ------------------- dot terms calculated ------------- */
+					/* ----------- near - synchronous resonance terms ------- */
 					xndt = del1 * SIN(xli_cache - fasx2) + del2 * SIN(2.0 * (xli_cache - fasx4)) +
 							del3 * SIN(3.0 * (xli_cache - fasx6));
 					xldot = xni + xfact;
@@ -1069,8 +1072,28 @@ CSGP4_DECORATOR int sgp4init_simple
 							2.0 * del2 * COS(2.0 * (xli_cache - fasx4)) +
 							3.0 * del3 * COS(3.0 * (xli_cache - fasx6));
 					xnddt = xnddt * xldot;
+
+					/* ----------------------- integrator ------------------- */
+					// sgp4fix move end checks to end of routine
+					if (FABS(t - atime) >= stepp)
+					{
+						//iret = 0;
+						//iretn = true;
+						xli_cache = xli_cache + xldot * delt + xndt * step2;
+						xni = xni + xndt * delt + xnddt * step2;
+						atime = atime + delt;
+					}
+					else // exit here
+					{
+						ft = t - atime;
+						//iretn = false;
+						break;
+					}
 				}
-				else
+			}
+			else
+			{
+				for( int i = 0; i < maxiter; i++ )
 				{
 					/* --------- near - half-day resonance terms -------- */
 					xomi = argpo + argpdot * atime;
@@ -1089,29 +1112,24 @@ CSGP4_DECORATOR int sgp4init_simple
 						  d4422 * COS(x2li - g44) + d5421 * COS(xomi + x2li - g54) +
 						  d5433 * COS(-xomi + x2li - g54));
 					xnddt = xnddt * xldot;
+					/* ----------------------- integrator ------------------- */
+					// sgp4fix move end checks to end of routine
+					if (FABS(t - atime) >= stepp)
+					{
+						//iret = 0;
+						//iretn = true;
+						xli_cache = xli_cache + xldot * delt + xndt * step2;
+						xni = xni + xndt * delt + xnddt * step2;
+						atime = atime + delt;
+					}
+					else // exit here
+					{
+						ft = t - atime;
+						//iretn = false;
+						break;
+					}
 				}
-
-				/* ----------------------- integrator ------------------- */
-				// sgp4fix move end checks to end of routine
-				if (FABS(t - atime) >= stepp)
-				{
-					//iret = 0;
-					iretn = true;
-				}
-				else // exit here
-				{
-					ft = t - atime;
-					iretn = false;
-				}
-
-				if (iretn)
-				{
-					xli_cache = xli_cache + xldot * delt + xndt * step2;
-					xni = xni + xndt * delt + xnddt * step2;
-					atime = atime + delt;
-				}
-			} while( iretn );
-
+			}
 			nm = xni + xndt * ft + xnddt * ft * ft * 0.5;
 			xl = xli_cache + xldot * ft + xndt * ft * ft * 0.5;
 			xli = xli_cache;
