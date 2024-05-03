@@ -114,15 +114,15 @@ CSGP4_DECORATOR int sgp4init_simple
 	// sgp4fix add unkozai'd variable
 	SGPF no_unkozai;
 	// sgp4fix add singly averaged variables
-	SGPF am, em, im, Om, om, mm, nm;
+	SGPF am, em, im, Om, mm, nm;
 	// sgp4fix add constant parameters to eliminate mutliple calls during execution
 	SGPF tumin, mu, radiusearthkm, xke, j2, j3, j4, j3oj2;
 
 
 	SGPF a /* Not actually used in algo but fun to look at */;
-	SGPF no_kozai,rcse;
-	SGPF ndot /* Not actually used in algo*/;
-	SGPF nddot /* Not actually used in algo*/;
+	SGPF no_kozai;
+//	SGPF ndot /* Not actually used in algo*/;
+//	SGPF nddot /* Not actually used in algo*/;
 	SGPF alta /* Not used in algo, but cool anyway to look at */;
 	SGPF altp /* Not used in algo, but cool anyway to look at */;
 
@@ -212,8 +212,8 @@ CSGP4_DECORATOR int sgp4init_simple
 	// include the additional assignments in case twoline2rv is not used.
 	bstar = xbstar;
 	// sgp4fix allow additional parameters in the struct
-	ndot = xndot;
-	nddot = xnddot;
+//	ndot = xndot;
+//	nddot = xnddot;
 	ecco = xecco;
 	argpo = xargpo;
 	inclo = xinclo;
@@ -1170,7 +1170,7 @@ CSGP4_DECORATOR int sgp4init_simple
 	em = em;
 	im = inclm;
 	Om = nodem;
-	om = argpm;
+//	om = argpm;
 	mm = mm;
 	nm = nm;
 
