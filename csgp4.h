@@ -249,8 +249,7 @@ CSGP4_DECORATOR int ParseFileOrString( FILE * f, const char * sLineSet, struct T
 	int i;
 	ssize_t s;
 	char line[256];
-	char * lineptr = line;
-	size_t n = sizeof( line ) - 1;
+	size_t n;
 	int lineno = 0;
 
 	int thisValid = 0;
@@ -265,9 +264,10 @@ CSGP4_DECORATOR int ParseFileOrString( FILE * f, const char * sLineSet, struct T
 	{
 		if( f )
 		{
-			s = getline( &lineptr, &n, f );
-			if( s < 0 )
+			char * lp = fgets( line, sizeof(line), f );
+			if( !lp )
 				break;
+			s = strlen( line );
 		}
 		else if( sLineSet )
 		{
