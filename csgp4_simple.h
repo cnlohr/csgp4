@@ -79,9 +79,16 @@
 
 #define BOOL int
 
-
-struct elsetrec_simple
+CSGP4_DECORATOR int sgp4init_simple
+	 (
+	   /*enum gravconsttype whichconst,*/ SGPF epoch,
+	   SGPF xbstar, SGPF xndot, SGPF xnddot, SGPF xecco, SGPF xargpo,
+	   SGPF xinclo, SGPF xmo, SGPF xno_kozai,
+	   SGPF xnodeo, SGPF initial_time, SGPF * r, SGPF * v,
+	   SGPF * a_alta_altp
+	 )
 {
+	//struct elsetrec_simple gsr = { 0 };
 	int error;
 	bool method; // true for 'd' false for 'n' (Deep / Near Eart)
 
@@ -118,26 +125,14 @@ struct elsetrec_simple
 	SGPF nddot /* Not actually used in algo*/;
 	SGPF alta /* Not used in algo, but cool anyway to look at */;
 	SGPF altp /* Not used in algo, but cool anyway to look at */;
-};
-
-CSGP4_DECORATOR int sgp4init_simple
-	 (
-	   /*enum gravconsttype whichconst,*/ SGPF epoch,
-	   SGPF xbstar, SGPF xndot, SGPF xnddot, SGPF xecco, SGPF xargpo,
-	   SGPF xinclo, SGPF xmo, SGPF xno_kozai,
-	   SGPF xnodeo, SGPF initial_time, SGPF * r, SGPF * v,
-	   SGPF * a_alta_altp
-	 )
-{
-	struct elsetrec_simple gsr = { 0 };
 
 	/* --------------------- local variables ------------------------ */
 	SGPF ao, con42, cosio, sinio, cosio2, eccsq,
 		 omeosq, posq, rp, rteosq,
 		 cnodm, snodm, cosim, sinim, cosomm, sinomm, cc1sq,
 		 cc2, cc3, coef, coef1, cosio4, day, dndt,
-		 em, emsq, eeta, etasq, gam, argpm, nodem,
-		 inclm, mm, nm, perige, pinvsq, psisq, qzms24,
+		 emsq, eeta, etasq, gam, argpm, nodem,
+		 inclm, perige, pinvsq, psisq, qzms24,
 		 rtemsq, s1, s2, s3, s4, s5, s6,
 		 s7, sfour, ss1, ss2, ss3, ss4, ss5,
 		 ss6, ss7, sz1, sz2, sz3, sz11, sz12,
@@ -158,94 +153,94 @@ CSGP4_DECORATOR int sgp4init_simple
 
 #if 0
 	/* ----------- set all near earth variables to zero ------------ */
-	gsr.isimp = false; gsr.aycof = 0.0;
-	gsr.con41 = 0.0; gsr.cc1 = 0.0; gsr.cc4 = 0.0;
-	gsr.cc5 = 0.0; gsr.d2 = 0.0; gsr.d3 = 0.0;
-	gsr.d4 = 0.0; gsr.delmo = 0.0; gsr.eta = 0.0;
-	gsr.argpdot = 0.0; gsr.omgcof = 0.0; gsr.sinmao = 0.0;
-	gsr.t = 0.0; gsr.t2cof = 0.0; gsr.t3cof = 0.0;
-	gsr.t4cof = 0.0; gsr.t5cof = 0.0; gsr.x1mth2 = 0.0;
-	gsr.x7thm1 = 0.0; gsr.mdot = 0.0; gsr.nodedot = 0.0;
-	gsr.xlcof = 0.0; gsr.xmcof = 0.0; gsr.nodecf = 0.0;
+	isimp = false; aycof = 0.0;
+	con41 = 0.0; cc1 = 0.0; cc4 = 0.0;
+	cc5 = 0.0; d2 = 0.0; d3 = 0.0;
+	d4 = 0.0; delmo = 0.0; eta = 0.0;
+	argpdot = 0.0; omgcof = 0.0; siao = 0.0;
+	t = 0.0; t2cof = 0.0; t3cof = 0.0;
+	t4cof = 0.0; t5cof = 0.0; x1mth2 = 0.0;
+	x7thm1 = 0.0; mdot = 0.0; nodedot = 0.0;
+	xlcof = 0.0; xmcof = 0.0; nodecf = 0.0;
 
 	/* ----------- set all deep space variables to zero ------------ */
-	gsr.irez = 0; gsr.d2201 = 0.0; gsr.d2211 = 0.0;
-	gsr.d3210 = 0.0; gsr.d3222 = 0.0; gsr.d4410 = 0.0;
-	gsr.d4422 = 0.0; gsr.d5220 = 0.0; gsr.d5232 = 0.0;
-	gsr.d5421 = 0.0; gsr.d5433 = 0.0; gsr.dedt = 0.0;
-	gsr.del1 = 0.0; gsr.del2 = 0.0; gsr.del3 = 0.0;
-	gsr.didt = 0.0; gsr.dmdt = 0.0; gsr.dnodt = 0.0;
-	gsr.domdt = 0.0; gsr.e3 = 0.0; gsr.ee2 = 0.0;
-	gsr.peo = 0.0; gsr.pgho = 0.0; gsr.pho = 0.0;
-	gsr.pinco = 0.0; gsr.plo = 0.0; gsr.se2 = 0.0;
-	gsr.se3 = 0.0; gsr.sgh2 = 0.0; gsr.sgh3 = 0.0;
-	gsr.sgh4 = 0.0; gsr.sh2 = 0.0; gsr.sh3 = 0.0;
-	gsr.si2 = 0.0; gsr.si3 = 0.0; gsr.sl2 = 0.0;
-	gsr.sl3 = 0.0; gsr.sl4 = 0.0; gsr.gsto = 0.0;
-	gsr.xfact = 0.0; gsr.xgh2 = 0.0; gsr.xgh3 = 0.0;
-	gsr.xgh4 = 0.0; gsr.xh2 = 0.0; gsr.xh3 = 0.0;
-	gsr.xi2 = 0.0; gsr.xi3 = 0.0; gsr.xl2 = 0.0;
-	gsr.xl3 = 0.0; gsr.xl4 = 0.0; gsr.xlamo = 0.0;
-	gsr.zmol = 0.0; gsr.zmos = 0.0; gsr.atime = 0.0;
-	gsr.xli = 0.0; gsr.xni = 0.0;
+	irez = 0; d2201 = 0.0; d2211 = 0.0;
+	d3210 = 0.0; d3222 = 0.0; d4410 = 0.0;
+	d4422 = 0.0; d5220 = 0.0; d5232 = 0.0;
+	d5421 = 0.0; d5433 = 0.0; dedt = 0.0;
+	del1 = 0.0; del2 = 0.0; del3 = 0.0;
+	didt = 0.0; dmdt = 0.0; dnodt = 0.0;
+	domdt = 0.0; e3 = 0.0; ee2 = 0.0;
+	peo = 0.0; pgho = 0.0; pho = 0.0;
+	pinco = 0.0; plo = 0.0; se2 = 0.0;
+	se3 = 0.0; sgh2 = 0.0; sgh3 = 0.0;
+	sgh4 = 0.0; sh2 = 0.0; sh3 = 0.0;
+	si2 = 0.0; si3 = 0.0; sl2 = 0.0;
+	sl3 = 0.0; sl4 = 0.0; gsto = 0.0;
+	xfact = 0.0; xgh2 = 0.0; xgh3 = 0.0;
+	xgh4 = 0.0; xh2 = 0.0; xh3 = 0.0;
+	xi2 = 0.0; xi3 = 0.0; xl2 = 0.0;
+	xl3 = 0.0; xl4 = 0.0; xlamo = 0.0;
+	zmol = 0.0; zmos = 0.0; atime = 0.0;
+	xli = 0.0; xni = 0.0;
 #endif
 
 	/* ------------------------ earth constants ----------------------- */
 	// sgp4fix identify constants and allow aernate values
 	// this is now the only call for the constants
-//	getgravconst_simple(/*whichconst,*/ CSGP4_REF(gsr.tumin), CSGP4_REF(gsr.mu), CSGP4_REF(gsr.radiusearthkm), CSGP4_REF(gsr.xke),
-//				  CSGP4_REF(gsr.j2), CSGP4_REF(gsr.j3), CSGP4_REF(gsr.j4), CSGP4_REF(gsr.j3oj2));
+//	getgravconst_simple(/*whichconst,*/ CSGP4_REF(tumin), CSGP4_REF(mu), CSGP4_REF(radiusearthkm), CSGP4_REF(xke),
+//				  CSGP4_REF(j2), CSGP4_REF(j3), CSGP4_REF(j4), CSGP4_REF(j3oj2));
 	//Hard-coded WGS72
-	(gsr.mu) = 398600.8;			// in km3 / s2
-	(gsr.radiusearthkm) = 6378.135;	 // km
-	(gsr.xke) = 60.0 / SQRT((gsr.radiusearthkm) * (gsr.radiusearthkm) * (gsr.radiusearthkm) / (gsr.mu));
-	(gsr.tumin) = 1.0 / (gsr.xke);
-	(gsr.j2) = 0.001082616;
-	(gsr.j3) = -0.00000253881;
-	(gsr.j4) = -0.00000165597;
-	(gsr.j3oj2) = (gsr.j3) / (gsr.j2);
+	(mu) = 398600.8;			// in km3 / s2
+	(radiusearthkm) = 6378.135;	 // km
+	(xke) = 60.0 / SQRT((radiusearthkm) * (radiusearthkm) * (radiusearthkm) / (mu));
+	(tumin) = 1.0 / (xke);
+	(j2) = 0.001082616;
+	(j3) = -0.00000253881;
+	(j4) = -0.00000165597;
+	(j3oj2) = (j3) / (j2);
 
 
 	//-------------------------------------------------------------------------
-	gsr.error = 0;
-	//gsr.operationmode = opsmode;
-	//strcpy( gsr.satnum, satn );
+	error = 0;
+	//operationmode = opsmode;
+	//strcpy( satnum, satn );
 
-	// sgp4fix - note the following variables are also passed directly via gsr.
+	// sgp4fix - note the following variables are also passed directly via 
 	// it is possible to streamline the sgp4init call by deleting the 'x'
 	// variables, but the user would need to set the satrec* values first. we
 	// include the additional assignments in case twoline2rv is not used.
-	gsr.bstar = xbstar;
+	bstar = xbstar;
 	// sgp4fix allow additional parameters in the struct
-	gsr.ndot = xndot;
-	gsr.nddot = xnddot;
-	gsr.ecco = xecco;
-	gsr.argpo = xargpo;
-	gsr.inclo = xinclo;
-	gsr.mo = xmo;
+	ndot = xndot;
+	nddot = xnddot;
+	ecco = xecco;
+	argpo = xargpo;
+	inclo = xinclo;
+	mo = xmo;
 	// sgp4fix rename variables to clarify which mean motion is intended
-	gsr.no_kozai = xno_kozai;
-	gsr.nodeo = xnodeo;
+	no_kozai = xno_kozai;
+	nodeo = xnodeo;
 
 	// single averaged mean elements
-	gsr.am = gsr.em = gsr.im = gsr.Om = gsr.mm = gsr.nm = 0.0;
+	am = em = im = Om = mm = nm = 0.0;
 
 	/* ------------------------ earth constants ----------------------- */
 	// sgp4fix identify constants and allow alternate values no longer needed
 	// getgravconst( whichconst, tumin, mu, radiusearthkm, xke, j2, j3, j4, j3oj2 );
-	ss = 78.0 / gsr.radiusearthkm + 1.0;
+	ss = 78.0 / radiusearthkm + 1.0;
 	// sgp4fix use multiply for speed instead of Math.POW
-	qzms2ttemp = (120.0 - 78.0) / gsr.radiusearthkm;
+	qzms2ttemp = (120.0 - 78.0) / radiusearthkm;
 	qzms2t = qzms2ttemp * qzms2ttemp * qzms2ttemp * qzms2ttemp;
 
-	//gsr.init = 'y';
-	gsr.t = 0.0;
+	//init = 'y';
+	t = 0.0;
 
 	// sgp4fix remove satn as it is not needed in initl
 	//initl_simple
-	//	(gsr.xke, gsr.j2, gsr.ecco, epoch, gsr.inclo, gsr.no_kozai, CSGP4_REF(gsr.method),
-	//	  CSGP4_REF(ainv), CSGP4_REF(ao), CSGP4_REF(gsr.con41), CSGP4_REF(con42), CSGP4_REF(cosio), CSGP4_REF(cosio2), CSGP4_REF(eccsq), CSGP4_REF(omeosq),
-	//	  CSGP4_REF(posq), CSGP4_REF(rp), CSGP4_REF(rteosq), CSGP4_REF(sinio), CSGP4_REF(gsr.gsto), CSGP4_REF(gsr.no_unkozai) );
+	//	(xke, j2, ecco, epoch, inclo, no_kozai, CSGP4_REF(method),
+	//	  CSGP4_REF(ainv), CSGP4_REF(ao), CSGP4_REF(con41), CSGP4_REF(con42), CSGP4_REF(cosio), CSGP4_REF(cosio2), CSGP4_REF(eccsq), CSGP4_REF(omeosq),
+	//	  CSGP4_REF(posq), CSGP4_REF(rp), CSGP4_REF(rteosq), CSGP4_REF(sinio), CSGP4_REF(gsto), CSGP4_REF(no_unkozai) );
 	//initl_simple
 
 
@@ -258,30 +253,30 @@ CSGP4_DECORATOR int sgp4init_simple
 
 
 		/* ------------- calculate auxillary epoch quantities ---------- */
-		(eccsq) = gsr.ecco * gsr.ecco;
+		(eccsq) = ecco * ecco;
 		(omeosq) = 1.0 - (eccsq);
 		(rteosq) = SQRT((omeosq));
-		(cosio) = COS(gsr.inclo);
+		(cosio) = COS(inclo);
 		(cosio2) = (cosio) * (cosio);
 
 		/* ------------------ un-kozai the mean motion ----------------- */
-		ak = POW(gsr.xke / gsr.no_kozai, x2o3);
-		d1 = 0.75 * gsr.j2 * (3.0 * (cosio2) - 1.0) / ((rteosq) * (omeosq));
+		ak = POW(xke / no_kozai, x2o3);
+		d1 = 0.75 * j2 * (3.0 * (cosio2) - 1.0) / ((rteosq) * (omeosq));
 		del = d1 / (ak * ak);
 		adel = ak * (1.0 - del * del - del *
 				(1.0 / 3.0 + 134.0 * del * del / 81.0));
 		del = d1 / (adel * adel);
-		(gsr.no_unkozai) = gsr.no_kozai / (1.0 + del);
+		(no_unkozai) = no_kozai / (1.0 + del);
 
-		(ao) = POW(gsr.xke / ((gsr.no_unkozai)), x2o3);
-		(sinio) = SIN(gsr.inclo);
+		(ao) = POW(xke / ((no_unkozai)), x2o3);
+		(sinio) = SIN(inclo);
 		po = (ao) * (omeosq);
 		(con42) = 1.0 - 5.0 * (cosio2);
-		(gsr.con41) = -(con42) - (cosio2) - (cosio2);
+		(con41) = -(con42) - (cosio2) - (cosio2);
 		//(ainv) = 1.0 / (ao);
 		(posq) = po * po;
-		(rp) = (ao) * (1.0 - gsr.ecco);
-		(gsr.method) = false;
+		(rp) = (ao) * (1.0 - ecco);
+		(method) = false;
 		//*method = 'n';
 
 		// sgp4fix modern approach to finding sidereal time
@@ -298,25 +293,25 @@ CSGP4_DECORATOR int sgp4init_simple
 			thgr70 = 1.7321343856509374;
 			fk5r = 5.07551419432269442e-15;
 			c1p2p = c1 + twopi;
-			(gsr.gsto) = FMOD(thgr70 + c1 * ds70 + c1p2p * tfrac + ts70 * ts70 * fk5r, twopi);
-			if ((gsr.gsto) < 0.0)
-				(gsr.gsto) = (gsr.gsto) + twopi;
+			(gsto) = FMOD(thgr70 + c1 * ds70 + c1p2p * tfrac + ts70 * ts70 * fk5r, twopi);
+			if ((gsto) < 0.0)
+				(gsto) = (gsto) + twopi;
 		}
 
 	// end initl_simple
 
 
 
-	gsr.a = POW(gsr.no_unkozai * gsr.tumin, (-2.0 / 3.0));
-	gsr.alta = gsr.a * (1.0 + gsr.ecco) - 1.0;
-	gsr.altp = gsr.a * (1.0 - gsr.ecco) - 1.0;
-	gsr.error = 0;
+	a = POW(no_unkozai * tumin, (-2.0 / 3.0));
+	alta = a * (1.0 + ecco) - 1.0;
+	altp = a * (1.0 - ecco) - 1.0;
+	error = 0;
 
 	if( a_alta_altp )
 	{
-		a_alta_altp[0] = gsr.a;
-		a_alta_altp[1] = gsr.alta;
-		a_alta_altp[2] = gsr.altp;
+		a_alta_altp[0] = a;
+		a_alta_altp[1] = alta;
+		a_alta_altp[2] = altp;
 	}
 
 	// sgp4fix remove this check as it is unnecessary
@@ -325,17 +320,17 @@ CSGP4_DECORATOR int sgp4init_simple
 	//	 if (rp < 1.0)
 	//	   {
 	//		 printf("# *** satn%d epoch elts sub-orbital ***\n", satn);
-	//		 gsr.error = 5;
+	//		 error = 5;
 	//	   }
 
-	if ((omeosq >= 0.0) || (gsr.no_unkozai >= 0.0))
+	if ((omeosq >= 0.0) || (no_unkozai >= 0.0))
 	{
-		gsr.isimp = false;
-		if (rp < (220.0 / gsr.radiusearthkm + 1.0))
-			gsr.isimp = true;
+		isimp = false;
+		if (rp < (220.0 / radiusearthkm + 1.0))
+			isimp = true;
 		sfour = ss;
 		qzms24 = qzms2t;
-		perige = (rp - 1.0) * gsr.radiusearthkm;
+		perige = (rp - 1.0) * radiusearthkm;
 
 		/* - for perigees below 156 km, s and qoms2t are altered - */
 		if (perige < 156.0)
@@ -344,79 +339,79 @@ CSGP4_DECORATOR int sgp4init_simple
 			if (perige < 98.0)
 				sfour = 20.0;
 			// sgp4fix use multiply for speed instead of Math.POW
-			qzms24temp = (120.0 - sfour) / gsr.radiusearthkm;
+			qzms24temp = (120.0 - sfour) / radiusearthkm;
 			qzms24 = qzms24temp * qzms24temp * qzms24temp * qzms24temp;
-			sfour = sfour / gsr.radiusearthkm + 1.0;
+			sfour = sfour / radiusearthkm + 1.0;
 		}
 		pinvsq = 1.0 / posq;
 
 		tsi = 1.0 / (ao - sfour);
-		gsr.eta = ao * gsr.ecco * tsi;
-		etasq = gsr.eta * gsr.eta;
-		eeta = gsr.ecco * gsr.eta;
+		eta = ao * ecco * tsi;
+		etasq = eta * eta;
+		eeta = ecco * eta;
 		psisq = FABS(1.0 - etasq);
 		coef = qzms24 * POW(tsi, 4.0);
 		coef1 = coef / POW(psisq, 3.5);
-		cc2 = coef1 * gsr.no_unkozai * (ao * (1.0 + 1.5 * etasq + eeta *
-					   (4.0 + etasq)) + 0.375 * gsr.j2 * tsi / psisq * gsr.con41 *
+		cc2 = coef1 * no_unkozai * (ao * (1.0 + 1.5 * etasq + eeta *
+					   (4.0 + etasq)) + 0.375 * j2 * tsi / psisq * con41 *
 					   (8.0 + 3.0 * etasq * (8.0 + etasq)));
-		gsr.cc1 = gsr.bstar * cc2;
+		cc1 = bstar * cc2;
 		cc3 = 0.0;
-		if (gsr.ecco > 1.0e-4)
-			cc3 = -2.0 * coef * tsi * gsr.j3oj2 * gsr.no_unkozai * sinio / gsr.ecco;
-		gsr.x1mth2 = 1.0 - cosio2;
-		gsr.cc4 = 2.0 * gsr.no_unkozai * coef1 * ao * omeosq *
-						  (gsr.eta * (2.0 + 0.5 * etasq) + gsr.ecco *
-						  (0.5 + 2.0 * etasq) - gsr.j2 * tsi / (ao * psisq) *
-						  (-3.0 * gsr.con41 * (1.0 - 2.0 * eeta + etasq *
-						  (1.5 - 0.5 * eeta)) + 0.75 * gsr.x1mth2 *
-						  (2.0 * etasq - eeta * (1.0 + etasq)) * COS(2.0 * gsr.argpo)));
-		gsr.cc5 = 2.0 * coef1 * ao * omeosq * (1.0 + 2.75 *
+		if (ecco > 1.0e-4)
+			cc3 = -2.0 * coef * tsi * j3oj2 * no_unkozai * sinio / ecco;
+		x1mth2 = 1.0 - cosio2;
+		cc4 = 2.0 * no_unkozai * coef1 * ao * omeosq *
+						  (eta * (2.0 + 0.5 * etasq) + ecco *
+						  (0.5 + 2.0 * etasq) - j2 * tsi / (ao * psisq) *
+						  (-3.0 * con41 * (1.0 - 2.0 * eeta + etasq *
+						  (1.5 - 0.5 * eeta)) + 0.75 * x1mth2 *
+						  (2.0 * etasq - eeta * (1.0 + etasq)) * COS(2.0 * argpo)));
+		cc5 = 2.0 * coef1 * ao * omeosq * (1.0 + 2.75 *
 					   (etasq + eeta) + eeta * etasq);
 		cosio4 = cosio2 * cosio2;
-		temp1 = 1.5 * gsr.j2 * pinvsq * gsr.no_unkozai;
-		temp2 = 0.5 * temp1 * gsr.j2 * pinvsq;
-		temp3 = -0.46875 * gsr.j4 * pinvsq * pinvsq * gsr.no_unkozai;
-		gsr.mdot = gsr.no_unkozai + 0.5 * temp1 * rteosq * gsr.con41 + 0.0625 *
+		temp1 = 1.5 * j2 * pinvsq * no_unkozai;
+		temp2 = 0.5 * temp1 * j2 * pinvsq;
+		temp3 = -0.46875 * j4 * pinvsq * pinvsq * no_unkozai;
+		mdot = no_unkozai + 0.5 * temp1 * rteosq * con41 + 0.0625 *
 						   temp2 * rteosq * (13.0 - 78.0 * cosio2 + 137.0 * cosio4);
-		gsr.argpdot = -0.5 * temp1 * con42 + 0.0625 * temp2 *
+		argpdot = -0.5 * temp1 * con42 + 0.0625 * temp2 *
 							(7.0 - 114.0 * cosio2 + 395.0 * cosio4) +
 							temp3 * (3.0 - 36.0 * cosio2 + 49.0 * cosio4);
 		xhdot1 = -temp1 * cosio;
-		gsr.nodedot = xhdot1 + (0.5 * temp2 * (4.0 - 19.0 * cosio2) +
+		nodedot = xhdot1 + (0.5 * temp2 * (4.0 - 19.0 * cosio2) +
 							 2.0 * temp3 * (3.0 - 7.0 * cosio2)) * cosio;
-		xpidot = gsr.argpdot + gsr.nodedot;
-		gsr.omgcof = gsr.bstar * cc3 * COS(gsr.argpo);
-		gsr.xmcof = 0.0;
-		if (gsr.ecco > 1.0e-4)
-			gsr.xmcof = -x2o3 * coef * gsr.bstar / eeta;
-		gsr.nodecf = 3.5 * omeosq * xhdot1 * gsr.cc1;
-		gsr.t2cof = 1.5 * gsr.cc1;
+		xpidot = argpdot + nodedot;
+		omgcof = bstar * cc3 * COS(argpo);
+		xmcof = 0.0;
+		if (ecco > 1.0e-4)
+			xmcof = -x2o3 * coef * bstar / eeta;
+		nodecf = 3.5 * omeosq * xhdot1 * cc1;
+		t2cof = 1.5 * cc1;
 		// sgp4fix for divide by zero with xinco = 180 deg
 		if (FABS(cosio + 1.0) > 1.5e-12)
-			gsr.xlcof = -0.25 * gsr.j3oj2 * sinio * (3.0 + 5.0 * cosio) / (1.0 + cosio);
+			xlcof = -0.25 * j3oj2 * sinio * (3.0 + 5.0 * cosio) / (1.0 + cosio);
 		else
-			gsr.xlcof = -0.25 * gsr.j3oj2 * sinio * (3.0 + 5.0 * cosio) / temp4;
-		gsr.aycof = -0.5 * gsr.j3oj2 * sinio;
+			xlcof = -0.25 * j3oj2 * sinio * (3.0 + 5.0 * cosio) / temp4;
+		aycof = -0.5 * j3oj2 * sinio;
 		// sgp4fix use multiply for speed instead of Math.POW
-		delmotemp = 1.0 + gsr.eta * COS(gsr.mo);
-		gsr.delmo = delmotemp * delmotemp * delmotemp;
-		gsr.sinmao = SIN(gsr.mo);
-		gsr.x7thm1 = 7.0 * cosio2 - 1.0;
+		delmotemp = 1.0 + eta * COS(mo);
+		delmo = delmotemp * delmotemp * delmotemp;
+		sinmao = SIN(mo);
+		x7thm1 = 7.0 * cosio2 - 1.0;
 
 		/* --------------- deep space initialization ------------- */
-		if ((2 * SGPPI / gsr.no_unkozai) >= 225.0)
+		if ((2 * SGPPI / no_unkozai) >= 225.0)
 		{
-			gsr.method = true;
-			gsr.isimp = true;
+			method = true;
+			isimp = true;
 			tc = 0.0;
-			inclm = gsr.inclo;
+			inclm = inclo;
 
 			//dscom_simple begin.
 
-				SGPF nodep = gsr.nodeo;
-				SGPF argpp = gsr.argpo;
-				SGPF inclp = gsr.inclo;
+				SGPF nodep = nodeo;
+				SGPF argpp = argpo;
+				SGPF inclp = inclo;
 				/* -------------------------- constants ------------------------- */
 				const SGPF zes = 0.01675;
 				const SGPF zel = 0.05490;
@@ -477,8 +472,8 @@ CSGP4_DECORATOR int sgp4init_simple
 				(z32) = 0.0;
 				(z33) = 0.0;
 
-				(nm) = gsr.no_unkozai;
-				(em) = gsr.ecco;
+				(nm) = no_unkozai;
+				(em) = ecco;
 				(snodm) = SIN(nodep);
 				(cnodm) = COS(nodep);
 				(sinomm) = SIN(argpp);
@@ -490,11 +485,11 @@ CSGP4_DECORATOR int sgp4init_simple
 				(rtemsq) = SQRT(betasq);
 
 				/* ----------------- initialize lunar solar terms --------------- */
-				(gsr.peo) = 0.0;
-				(gsr.pinco) = 0.0;
-				(gsr.plo) = 0.0;
-				(gsr.pgho) = 0.0;
-				(gsr.pho) = 0.0;
+				(peo) = 0.0;
+				(pinco) = 0.0;
+				(plo) = 0.0;
+				(pgho) = 0.0;
+				(pho) = 0.0;
 				(day) = epoch + 18261.5 + tc / 1440.0;
 				xnodce = FMOD(4.5236020 - 9.2422029e-4 * (day), twopi);
 				stem = SIN(xnodce);
@@ -600,36 +595,36 @@ CSGP4_DECORATOR int sgp4init_simple
 					}
 				}
 
-				(gsr.zmol) = FMOD( (4.7199672 + 0.22997150 * (day) - (gam)), twopi );
-				(gsr.zmos) = FMOD( (6.2565837 + 0.017201977 * (day)), twopi );
+				(zmol) = FMOD( (4.7199672 + 0.22997150 * (day) - (gam)), twopi );
+				(zmos) = FMOD( (6.2565837 + 0.017201977 * (day)), twopi );
 
 				/* ------------------------ do solar terms ---------------------- */
-				(gsr.se2) = 2.0 * (ss1) * (ss6);
-				(gsr.se3) = 2.0 * (ss1) * (ss7);
-				(gsr.si2) = 2.0 * (ss2) * (sz12);
-				(gsr.si3) = 2.0 * (ss2) * ((sz13) - (sz11));
-				(gsr.sl2) = -2.0 * (ss3) * (sz2);
-				(gsr.sl3) = -2.0 * (ss3) * ((sz3) - (sz1));
-				(gsr.sl4) = -2.0 * (ss3) * (-21.0 - 9.0 * (emsq)) * zes;
-				(gsr.sgh2) = 2.0 * (ss4) * (sz32);
-				(gsr.sgh3) = 2.0 * (ss4) * ((sz33) - (sz31));
-				(gsr.sgh4) = -18.0 * (ss4) * zes;
-				(gsr.sh2) = -2.0 * (ss2) * (sz22);
-				(gsr.sh3) = -2.0 * (ss2) * ((sz23) - (sz21));
+				(se2) = 2.0 * (ss1) * (ss6);
+				(se3) = 2.0 * (ss1) * (ss7);
+				(si2) = 2.0 * (ss2) * (sz12);
+				(si3) = 2.0 * (ss2) * ((sz13) - (sz11));
+				(sl2) = -2.0 * (ss3) * (sz2);
+				(sl3) = -2.0 * (ss3) * ((sz3) - (sz1));
+				(sl4) = -2.0 * (ss3) * (-21.0 - 9.0 * (emsq)) * zes;
+				(sgh2) = 2.0 * (ss4) * (sz32);
+				(sgh3) = 2.0 * (ss4) * ((sz33) - (sz31));
+				(sgh4) = -18.0 * (ss4) * zes;
+				(sh2) = -2.0 * (ss2) * (sz22);
+				(sh3) = -2.0 * (ss2) * ((sz23) - (sz21));
 
 				/* ------------------------ do lunar terms ---------------------- */
-				(gsr.ee2) = 2.0 * (s1) * (s6);
-				(gsr.e3) = 2.0 * (s1) * (s7);
-				(gsr.xi2) = 2.0 * (s2) * (z12);
-				(gsr.xi3) = 2.0 * (s2) * ((z13) - (z11));
-				(gsr.xl2) = -2.0 * (s3) * (z2);
-				(gsr.xl3) = -2.0 * (s3) * ((z3) - (z1));
-				(gsr.xl4) = -2.0 * (s3) * (-21.0 - 9.0 * (emsq)) * zel;
-				(gsr.xgh2) = 2.0 * (s4) * (z32);
-				(gsr.xgh3) = 2.0 * (s4) * ((z33) - (z31));
-				(gsr.xgh4) = -18.0 * (s4) * zel;
-				(gsr.xh2) = -2.0 * (s2) * (z22);
-				(gsr.xh3) = -2.0 * (s2) * ((z23) - (z21));
+				(ee2) = 2.0 * (s1) * (s6);
+				(e3) = 2.0 * (s1) * (s7);
+				(xi2) = 2.0 * (s2) * (z12);
+				(xi3) = 2.0 * (s2) * ((z13) - (z11));
+				(xl2) = -2.0 * (s3) * (z2);
+				(xl3) = -2.0 * (s3) * ((z3) - (z1));
+				(xl4) = -2.0 * (s3) * (-21.0 - 9.0 * (emsq)) * zel;
+				(xgh2) = 2.0 * (s4) * (z32);
+				(xgh3) = 2.0 * (s4) * ((z33) - (z31));
+				(xgh4) = -18.0 * (s4) * zel;
+				(xh2) = -2.0 * (s2) * (z22);
+				(xh3) = -2.0 * (s2) * ((z23) - (z21));
 
 
 			//dscom_simple end.
@@ -643,19 +638,19 @@ CSGP4_DECORATOR int sgp4init_simple
 /*
 			dsinit_simple
 				(
-				  gsr.xke,
-				  cosim, emsq, gsr.argpo, s1, s2, s3, s4, s5, sinim, ss1, ss2, ss3, ss4,
-				  ss5, sz1, sz3, sz11, sz13, sz21, sz23, sz31, sz33, gsr.t, tc,
-				  gsr.gsto, gsr.mo, gsr.mdot, gsr.no_unkozai, gsr.nodeo,
-				  gsr.nodedot, xpidot, z1, z3, z11, z13, z21, z23, z31, z33,
-				  gsr.ecco, eccsq, CSGP4_REF(em), CSGP4_REF(argpm), CSGP4_REF(inclm), CSGP4_REF(mm), CSGP4_REF(nm), CSGP4_REF(nodem),
-				  CSGP4_REF(gsr.irez), CSGP4_REF(gsr.atime),
-				  CSGP4_REF(gsr.d2201), CSGP4_REF(gsr.d2211), CSGP4_REF(gsr.d3210), CSGP4_REF(gsr.d3222),
-				  CSGP4_REF(gsr.d4410), CSGP4_REF(gsr.d4422), CSGP4_REF(gsr.d5220), CSGP4_REF(gsr.d5232),
-				  CSGP4_REF(gsr.d5421), CSGP4_REF(gsr.d5433), CSGP4_REF(gsr.dedt), CSGP4_REF(gsr.didt),
-				  CSGP4_REF(gsr.dmdt), CSGP4_REF(dndt), CSGP4_REF(gsr.dnodt), CSGP4_REF(gsr.domdt),
-				  CSGP4_REF(gsr.del1), CSGP4_REF(gsr.del2), CSGP4_REF(gsr.del3), CSGP4_REF(gsr.xfact),
-				  CSGP4_REF(gsr.xlamo), CSGP4_REF(gsr.xli), CSGP4_REF(gsr.xni)
+				  xke,
+				  cosim, emsq, argpo, s1, s2, s3, s4, s5, sinim, ss1, ss2, ss3, ss4,
+				  ss5, sz1, sz3, sz11, sz13, sz21, sz23, sz31, sz33, t, tc,
+				  gsto, mo, mdot, no_unkozai, nodeo,
+				  nodedot, xpidot, z1, z3, z11, z13, z21, z23, z31, z33,
+				  ecco, eccsq, CSGP4_REF(em), CSGP4_REF(argpm), CSGP4_REF(inclm), CSGP4_REF(mm), CSGP4_REF(nm), CSGP4_REF(nodem),
+				  CSGP4_REF(irez), CSGP4_REF(atime),
+				  CSGP4_REF(d2201), CSGP4_REF(d2211), CSGP4_REF(d3210), CSGP4_REF(d3222),
+				  CSGP4_REF(d4410), CSGP4_REF(d4422), CSGP4_REF(d5220), CSGP4_REF(d5232),
+				  CSGP4_REF(d5421), CSGP4_REF(d5433), CSGP4_REF(dedt), CSGP4_REF(didt),
+				  CSGP4_REF(dmdt), CSGP4_REF(dndt), CSGP4_REF(dnodt), CSGP4_REF(domdt),
+				  CSGP4_REF(del1), CSGP4_REF(del2), CSGP4_REF(del3), CSGP4_REF(xfact),
+				  CSGP4_REF(xlamo), CSGP4_REF(xli), CSGP4_REF(xni)
 				);
 */
 
@@ -691,11 +686,11 @@ CSGP4_DECORATOR int sgp4init_simple
 				// getgravconst( whichconst, tumin, mu, radiusearthkm, xke, j2, j3, j4, j3oj2 );
 
 				/* -------------------- deep space initialization ------------ */
-				(gsr.irez) = 0;
+				(irez) = 0;
 				if (((nm) < 0.0052359877) && ((nm) > 0.0034906585))
-					(gsr.irez) = 1;
+					(irez) = 1;
 				if (((nm) >= 8.26e-3) && ((nm) <= 9.24e-3) && ((em) >= 0.5))
-					(gsr.irez) = 2;
+					(irez) = 2;
 
 				/* ------------------------ do solar terms ------------------- */
 				ses = ss1 * zns * ss5;
@@ -711,30 +706,30 @@ CSGP4_DECORATOR int sgp4init_simple
 				sgs = sghs - cosim * shs;
 
 				/* ------------------------- do lunar terms ------------------ */
-				(gsr.dedt) = ses + s1 * znl * s5;
-				(gsr.didt) = sis + s2 * znl * (z11 + z13);
-				(gsr.dmdt) = sls - znl * s3 * (z1 + z3 - 14.0 - 6.0 * emsq);
+				(dedt) = ses + s1 * znl * s5;
+				(didt) = sis + s2 * znl * (z11 + z13);
+				(dmdt) = sls - znl * s3 * (z1 + z3 - 14.0 - 6.0 * emsq);
 				sghl = s4 * znl * (z31 + z33 - 6.0);
 				shll = -znl * s2 * (z21 + z23);
 				// sgp4fix for 180 deg incl
 				if (((inclm) < 5.2359877e-2) || ((inclm) > SGPPI - 5.2359877e-2))
 					shll = 0.0;
-				(gsr.domdt) = sgs + sghl;
-				(gsr.dnodt) = shs;
+				(domdt) = sgs + sghl;
+				(dnodt) = shs;
 				if (sinim != 0.0)
 				{
-					(gsr.domdt) = (gsr.domdt) - cosim / sinim * shll;
-					(gsr.dnodt) = (gsr.dnodt) + shll / sinim;
+					(domdt) = (domdt) - cosim / sinim * shll;
+					(dnodt) = (dnodt) + shll / sinim;
 				}
 
 				/* ----------- calculate deep space resonance effects -------- */
 				(dndt) = 0.0;
-				theta = FMOD((gsr.gsto + tc * rptim), twopi );
-				(em) = (em) + (gsr.dedt) * gsr.t;
-				(inclm) = (inclm) + (gsr.didt) * gsr.t;
-				(argpm) = (argpm) + (gsr.domdt) * gsr.t;
-				(nodem) = (nodem) + (gsr.dnodt) * gsr.t;
-				(mm) = (mm) + (gsr.dmdt) * gsr.t;
+				theta = FMOD((gsto + tc * rptim), twopi );
+				(em) = (em) + (dedt) * t;
+				(inclm) = (inclm) + (didt) * t;
+				(argpm) = (argpm) + (domdt) * t;
+				(nodem) = (nodem) + (dnodt) * t;
+				(mm) = (mm) + (dmdt) * t;
 				//   sgp4fix for negative inclinations
 				//   the following if statement should be commented out
 				//if (inclm < 0.0)
@@ -745,22 +740,22 @@ CSGP4_DECORATOR int sgp4init_simple
 				//  }
 
 				/* -------------- initialize the resonance terms ------------- */
-				if ((gsr.irez) != 0)
+				if ((irez) != 0)
 				{
-					aonv = POW((nm) / gsr.xke, x2o3);
+					aonv = POW((nm) / xke, x2o3);
 
 					/* ---------- geopotential resonance for 12 hour orbits ------ */
-					if ((gsr.irez) == 2)
+					if ((irez) == 2)
 					{
 						cosisq = cosim * cosim;
 						emo = (em);
-						(em) = gsr.ecco;
+						(em) = ecco;
 						emsqo = emsq;
 						emsq = eccsq;
 						eoc = (em) * emsq;
-						g201 = -0.306 - ((gsr.em) - 0.64) * 0.440;
+						g201 = -0.306 - ((em) - 0.64) * 0.440;
 
-						if ((gsr.em) <= 0.65)
+						if ((em) <= 0.65)
 						{
 							g211 = 3.616 - 13.2470 * (em) + 16.2900 * emsq;
 							g310 = -19.302 + 117.3900 * (em) - 228.4190 * emsq + 156.5910 * eoc;
@@ -813,31 +808,31 @@ CSGP4_DECORATOR int sgp4init_simple
 						ainv2 = aonv * aonv;
 						temp1 = 3.0 * xno2 * ainv2;
 						temp = temp1 * root22;
-						(gsr.d2201) = temp * f220 * g201;
-						(gsr.d2211) = temp * f221 * g211;
+						(d2201) = temp * f220 * g201;
+						(d2211) = temp * f221 * g211;
 						temp1 = temp1 * aonv;
 						temp = temp1 * root32;
-						(gsr.d3210) = temp * f321 * g310;
-						(gsr.d3222) = temp * f322 * g322;
+						(d3210) = temp * f321 * g310;
+						(d3222) = temp * f322 * g322;
 						temp1 = temp1 * aonv;
 						temp = 2.0 * temp1 * root44;
-						(gsr.d4410) = temp * f441 * g410;
-						(gsr.d4422) = temp * f442 * g422;
+						(d4410) = temp * f441 * g410;
+						(d4422) = temp * f442 * g422;
 						temp1 = temp1 * aonv;
 						temp = temp1 * root52;
-						(gsr.d5220) = temp * f522 * g520;
-						(gsr.d5232) = temp * f523 * g532;
+						(d5220) = temp * f522 * g520;
+						(d5232) = temp * f523 * g532;
 						temp = 2.0 * temp1 * root54;
-						(gsr.d5421) = temp * f542 * g521;
-						(gsr.d5433) = temp * f543 * g533;
-						(gsr.xlamo) = FMOD( (gsr.mo + gsr.nodeo + gsr.nodeo - theta - theta), twopi );
-						(gsr.xfact) = gsr.mdot + (gsr.dmdt) + 2.0 * (gsr.nodedot + (gsr.dnodt) - rptim) - gsr.no_unkozai;
-						(gsr.em) = emo;
+						(d5421) = temp * f542 * g521;
+						(d5433) = temp * f543 * g533;
+						(xlamo) = FMOD( (mo + nodeo + nodeo - theta - theta), twopi );
+						(xfact) = mdot + (dmdt) + 2.0 * (nodedot + (dnodt) - rptim) - no_unkozai;
+						(em) = emo;
 						emsq = emsqo;
 					}
 
 					/* ---------------- synchronous resonance terms -------------- */
-					if ((gsr.irez) == 1)
+					if ((irez) == 1)
 					{
 						g200 = 1.0 + emsq * (-2.5 + 0.8125 * emsq);
 						g310 = 1.0 + 2.0 * emsq;
@@ -846,47 +841,47 @@ CSGP4_DECORATOR int sgp4init_simple
 						f311 = 0.9375 * sinim * sinim * (1.0 + 3.0 * cosim) - 0.75 * (1.0 + cosim);
 						f330 = 1.0 + cosim;
 						f330 = 1.875 * f330 * f330 * f330;
-						(gsr.del1) = 3.0 * (nm) * (nm) * aonv * aonv;
-						(gsr.del2) = 2.0 * (gsr.del1) * f220 * g200 * q22;
-						(gsr.del3) = 3.0 * (gsr.del1) * f330 * g300 * q33 * aonv;
-						(gsr.del1) = (gsr.del1) * f311 * g310 * q31 * aonv;
-						(gsr.xlamo) = FMOD(gsr.mo + gsr.nodeo + gsr.argpo - theta, twopi );
-						(gsr.xfact) = gsr.mdot + xpidot - rptim + (gsr.dmdt) + (gsr.domdt) + (gsr.dnodt) - gsr.no_unkozai;
+						(del1) = 3.0 * (nm) * (nm) * aonv * aonv;
+						(del2) = 2.0 * (del1) * f220 * g200 * q22;
+						(del3) = 3.0 * (del1) * f330 * g300 * q33 * aonv;
+						(del1) = (del1) * f311 * g310 * q31 * aonv;
+						(xlamo) = FMOD(mo + nodeo + argpo - theta, twopi );
+						(xfact) = mdot + xpidot - rptim + (dmdt) + (domdt) + (dnodt) - no_unkozai;
 					}
 
 					/* ------------ for sgp4, initialize the integrator ---------- */
-					(gsr.xli) = (gsr.xlamo);
-					(gsr.xni) = gsr.no_unkozai;
-					(gsr.atime) = 0.0;
-					(nm) = gsr.no_unkozai + (dndt);
+					(xli) = (xlamo);
+					(xni) = no_unkozai;
+					(atime) = 0.0;
+					(nm) = no_unkozai + (dndt);
 				}
 
 			//end dsinit_simple
 		}
 
 		/* ----------- set variables if not deep space ----------- */
-		if (gsr.isimp != true)
+		if (isimp != true)
 		{
-			cc1sq = gsr.cc1 * gsr.cc1;
-			gsr.d2 = 4.0 * ao * tsi * cc1sq;
-			temp = gsr.d2 * tsi * gsr.cc1 / 3.0;
-			gsr.d3 = (17.0 * ao + sfour) * temp;
-			gsr.d4 = 0.5 * temp * ao * tsi * (221.0 * ao + 31.0 * sfour) *
-							 gsr.cc1;
-			gsr.t3cof = gsr.d2 + 2.0 * cc1sq;
-			gsr.t4cof = 0.25 * (3.0 * gsr.d3 + gsr.cc1 *
-							 (12.0 * gsr.d2 + 10.0 * cc1sq));
-			gsr.t5cof = 0.2 * (3.0 * gsr.d4 +
-							 12.0 * gsr.cc1 * gsr.d3 +
-							 6.0 * gsr.d2 * gsr.d2 +
-							 15.0 * cc1sq * (2.0 * gsr.d2 + cc1sq));
+			cc1sq = cc1 * cc1;
+			d2 = 4.0 * ao * tsi * cc1sq;
+			temp = d2 * tsi * cc1 / 3.0;
+			d3 = (17.0 * ao + sfour) * temp;
+			d4 = 0.5 * temp * ao * tsi * (221.0 * ao + 31.0 * sfour) *
+							 cc1;
+			t3cof = d2 + 2.0 * cc1sq;
+			t4cof = 0.25 * (3.0 * d3 + cc1 *
+							 (12.0 * d2 + 10.0 * cc1sq));
+			t5cof = 0.2 * (3.0 * d4 +
+							 12.0 * cc1 * d3 +
+							 6.0 * d2 * d2 +
+							 15.0 * cc1sq * (2.0 * d2 + cc1sq));
 		}
 	} // if omeosq = 0 ...
 
 
 	/* finally propagate to zero epoch to initialize all others. */
 	// sgp4fix take out check to let satellites process until they are actually below earth surface
-	//	   if(gsr.error == 0)
+	//	   if(error == 0)
 	SGPF r_default[3];
 	SGPF v_default[3];
 	if( !r ) r = r_default;
@@ -897,7 +892,7 @@ CSGP4_DECORATOR int sgp4init_simple
 
 	SGPF tsince = initial_time;
 
-	SGPF am, axnl, aynl, betal, cnod,
+	SGPF axnl, aynl, betal, cnod,
 		cos2u, coseo1, cosi, cosip, cosisq, cossu, cosu,
 		delm, delomg, ecose, el2, eo1,
 		ep, esine, argpdf, pl, mrt = 0.0,
@@ -929,66 +924,66 @@ CSGP4_DECORATOR int sgp4init_simple
 	//x2o3 = 2.0 / 3.0;
 	// sgp4fix identify constants and allow alternate values
 	// getgravconst( whichconst, tumin, mu, radiusearthkm, xke, j2, j3, j4, j3oj2 );
-	vkmpersec = gsr.radiusearthkm * gsr.xke / 60.0;
+	vkmpersec = radiusearthkm * xke / 60.0;
 
 	/* --------------------- clear sgp4 error flag ----------------- */
-	gsr.t = tsince;
-	gsr.error = 0;
+	t = tsince;
+	error = 0;
 
 	/* ------- update for secular gravity and atmospheric drag ----- */
-	xmdf = gsr.mo + gsr.mdot * gsr.t;
-	argpdf = gsr.argpo + gsr.argpdot * gsr.t;
-	nodedf = gsr.nodeo + gsr.nodedot * gsr.t;
+	xmdf = mo + mdot * t;
+	argpdf = argpo + argpdot * t;
+	nodedf = nodeo + nodedot * t;
 	argpm = argpdf;
 	mm = xmdf;
-	t2 = gsr.t * gsr.t;
-	nodem = nodedf + gsr.nodecf * t2;
-	tempa = 1.0 - gsr.cc1 * gsr.t;
-	tempe = gsr.bstar * gsr.cc4 * gsr.t;
-	templ = gsr.t2cof * t2;
+	t2 = t * t;
+	nodem = nodedf + nodecf * t2;
+	tempa = 1.0 - cc1 * t;
+	tempe = bstar * cc4 * t;
+	templ = t2cof * t2;
 
-	if (gsr.isimp != true)
+	if (isimp != true)
 	{
-		delomg = gsr.omgcof * gsr.t;
+		delomg = omgcof * t;
 		// sgp4fix use mutliply for speed instead of Math.POW
-		delmtemp = 1.0 + gsr.eta * COS(xmdf);
-		delm = gsr.xmcof *
+		delmtemp = 1.0 + eta * COS(xmdf);
+		delm = xmcof *
 				 (delmtemp * delmtemp * delmtemp -
-				 gsr.delmo);
+				 delmo);
 		temp = delomg + delm;
 		mm = xmdf + temp;
 		argpm = argpdf - temp;
-		t3 = t2 * gsr.t;
-		t4 = t3 * gsr.t;
-		tempa = tempa - gsr.d2 * t2 - gsr.d3 * t3 -
-						 gsr.d4 * t4;
-		tempe = tempe + gsr.bstar * gsr.cc5 * (SIN(mm) -
-						 gsr.sinmao);
-		templ = templ + gsr.t3cof * t3 + t4 * (gsr.t4cof +
-						 gsr.t * gsr.t5cof);
+		t3 = t2 * t;
+		t4 = t3 * t;
+		tempa = tempa - d2 * t2 - d3 * t3 -
+						 d4 * t4;
+		tempe = tempe + bstar * cc5 * (SIN(mm) -
+						 sinmao);
+		templ = templ + t3cof * t3 + t4 * (t4cof +
+						 t * t5cof);
 	}
 
-	nm = gsr.no_unkozai;
-	em = gsr.ecco;
-	inclm = gsr.inclo;
+	nm = no_unkozai;
+	em = ecco;
+	inclm = inclo;
 
-	if (gsr.method)
+	if (method)
 	{
-		tc = gsr.t;
+		tc = t;
 /*
 		dspace_simple
 			(
-			  gsr.irez,
-			  gsr.d2201, gsr.d2211, gsr.d3210,
-			  gsr.d3222, gsr.d4410, gsr.d4422,
-			  gsr.d5220, gsr.d5232, gsr.d5421,
-			  gsr.d5433, gsr.dedt, gsr.del1,
-			  gsr.del2, gsr.del3, gsr.didt,
-			  gsr.dmdt, gsr.dnodt, gsr.domdt,
-			  gsr.argpo, gsr.argpdot, gsr.t, tc,
-			  gsr.gsto, gsr.xfact, gsr.xlamo,
-			  gsr.no_unkozai, CSGP4_REF(gsr.atime),
-			  CSGP4_REF(em), CSGP4_REF(argpm), CSGP4_REF(inclm), CSGP4_REF(gsr.xli), CSGP4_REF(mm), CSGP4_REF(gsr.xni),
+			  irez,
+			  d2201, d2211, d3210,
+			  d3222, d4410, d4422,
+			  d5220, d5232, d5421,
+			  d5433, dedt, del1,
+			  del2, del3, didt,
+			  dmdt, dnodt, domdt,
+			  argpo, argpdot, t, tc,
+			  gsto, xfact, xlamo,
+			  no_unkozai, CSGP4_REF(atime),
+			  CSGP4_REF(em), CSGP4_REF(argpm), CSGP4_REF(inclm), CSGP4_REF(xli), CSGP4_REF(mm), CSGP4_REF(xni),
 			  CSGP4_REF(nodem), CSGP4_REF(dndt), CSGP4_REF(nm)
 			);
 */
@@ -1012,13 +1007,13 @@ CSGP4_DECORATOR int sgp4init_simple
 
 		/* ----------- calculate deep space resonance effects ----------- */
 		dndt = 0.0;
-		theta = FMOD( (gsr.gsto + tc * rptim), twopi );
-		em = em + gsr.dedt * gsr.t;
+		theta = FMOD( (gsto + tc * rptim), twopi );
+		em = em + dedt * t;
 
-		inclm = inclm + gsr.didt * gsr.t;
-		argpm = argpm + gsr.domdt * gsr.t;
-		nodem = nodem + gsr.dnodt * gsr.t;
-		mm = mm + gsr.dmdt * gsr.t;
+		inclm = inclm + didt * t;
+		argpm = argpm + domdt * t;
+		nodem = nodem + dnodt * t;
+		mm = mm + dmdt * t;
 
 		//   sgp4fix for negative inclinations
 		//   the following if statement should be commented out
@@ -1041,18 +1036,18 @@ CSGP4_DECORATOR int sgp4init_simple
 
 		// sgp4fix take out atime = 0.0 and fix for faster operation
 		ft = 0.0;
-		if (gsr.irez != 0)
+		if (irez != 0)
 		{
 			// sgp4fix streamline check
-			if ((gsr.atime == 0.0) || (gsr.t * gsr.atime <= 0.0) || (FABS(gsr.t) < FABS(gsr.atime)))
+			if ((atime == 0.0) || (t * atime <= 0.0) || (FABS(t) < FABS(atime)))
 			{
-				gsr.atime = 0.0;
-				gsr.xni = gsr.no_unkozai;
-				gsr.xli = gsr.xlamo;
+				atime = 0.0;
+				xni = no_unkozai;
+				xli = xlamo;
 			}
-			SGPF xli_cache = gsr.xli;
+			SGPF xli_cache = xli;
 			// sgp4fix move check outside loop
-			if (gsr.t > 0.0)
+			if (t > 0.0)
 				delt = stepp;
 			else
 				delt = stepn;
@@ -1065,72 +1060,72 @@ CSGP4_DECORATOR int sgp4init_simple
 			{
 				/* ------------------- dot terms calculated ------------- */
 				/* ----------- near - synchronous resonance terms ------- */
-				if (gsr.irez != 2)
+				if (irez != 2)
 				{
-					xndt = gsr.del1 * SIN(xli_cache - fasx2) + gsr.del2 * SIN(2.0 * (xli_cache - fasx4)) +
-							gsr.del3 * SIN(3.0 * (xli_cache - fasx6));
-					xldot = gsr.xni + gsr.xfact;
-					xnddt = gsr.del1 * COS(xli_cache - fasx2) +
-							2.0 * gsr.del2 * COS(2.0 * (xli_cache - fasx4)) +
-							3.0 * gsr.del3 * COS(3.0 * (xli_cache - fasx6));
+					xndt = del1 * SIN(xli_cache - fasx2) + del2 * SIN(2.0 * (xli_cache - fasx4)) +
+							del3 * SIN(3.0 * (xli_cache - fasx6));
+					xldot = xni + xfact;
+					xnddt = del1 * COS(xli_cache - fasx2) +
+							2.0 * del2 * COS(2.0 * (xli_cache - fasx4)) +
+							3.0 * del3 * COS(3.0 * (xli_cache - fasx6));
 					xnddt = xnddt * xldot;
 				}
 				else
 				{
 					/* --------- near - half-day resonance terms -------- */
-					xomi = gsr.argpo + gsr.argpdot * gsr.atime;
+					xomi = argpo + argpdot * atime;
 					x2omi = xomi + xomi;
 					x2li = xli_cache + xli_cache;
-					xndt = gsr.d2201 * SIN(x2omi + xli_cache - g22) + gsr.d2211 * SIN(xli_cache - g22) +
-						  gsr.d3210 * SIN(xomi + xli_cache - g32) + gsr.d3222 * SIN(-xomi + xli_cache - g32) +
-						  gsr.d4410 * SIN(x2omi + x2li - g44) + gsr.d4422 * SIN(x2li - g44) +
-						  gsr.d5220 * SIN(xomi + xli_cache- g52) + gsr.d5232 * SIN(-xomi + gsr.xli - g52) +
-						  gsr.d5421 * SIN(xomi + x2li - g54) + gsr.d5433 * SIN(-xomi + x2li - g54);
-					xldot = gsr.xni + gsr.xfact;
-					xnddt = gsr.d2201 * COS(x2omi + xli_cache - g22) + gsr.d2211 * COS(xli_cache - g22) +
-						  gsr.d3210 * COS(xomi + xli_cache - g32) + gsr.d3222 * COS(-xomi + xli_cache - g32) +
-						  gsr.d5220 * COS(xomi + xli_cache - g52) + gsr.d5232 * COS(-xomi + xli_cache - g52) +
-						  2.0 * (gsr.d4410 * COS(x2omi + x2li - g44) +
-						  gsr.d4422 * COS(x2li - g44) + gsr.d5421 * COS(xomi + x2li - g54) +
-						  gsr.d5433 * COS(-xomi + x2li - g54));
+					xndt = d2201 * SIN(x2omi + xli_cache - g22) + d2211 * SIN(xli_cache - g22) +
+						  d3210 * SIN(xomi + xli_cache - g32) + d3222 * SIN(-xomi + xli_cache - g32) +
+						  d4410 * SIN(x2omi + x2li - g44) + d4422 * SIN(x2li - g44) +
+						  d5220 * SIN(xomi + xli_cache- g52) + d5232 * SIN(-xomi + xli - g52) +
+						  d5421 * SIN(xomi + x2li - g54) + d5433 * SIN(-xomi + x2li - g54);
+					xldot = xni + xfact;
+					xnddt = d2201 * COS(x2omi + xli_cache - g22) + d2211 * COS(xli_cache - g22) +
+						  d3210 * COS(xomi + xli_cache - g32) + d3222 * COS(-xomi + xli_cache - g32) +
+						  d5220 * COS(xomi + xli_cache - g52) + d5232 * COS(-xomi + xli_cache - g52) +
+						  2.0 * (d4410 * COS(x2omi + x2li - g44) +
+						  d4422 * COS(x2li - g44) + d5421 * COS(xomi + x2li - g54) +
+						  d5433 * COS(-xomi + x2li - g54));
 					xnddt = xnddt * xldot;
 				}
 
 				/* ----------------------- integrator ------------------- */
 				// sgp4fix move end checks to end of routine
-				if (FABS(gsr.t - gsr.atime) >= stepp)
+				if (FABS(t - atime) >= stepp)
 				{
 					//iret = 0;
 					iretn = true;
 				}
 				else // exit here
 				{
-					ft = gsr.t - gsr.atime;
+					ft = t - atime;
 					iretn = false;
 				}
 
 				if (iretn)
 				{
 					xli_cache = xli_cache + xldot * delt + xndt * step2;
-					gsr.xni = gsr.xni + xndt * delt + xnddt * step2;
-					gsr.atime = gsr.atime + delt;
+					xni = xni + xndt * delt + xnddt * step2;
+					atime = atime + delt;
 				}
 			} while( iretn );
 
-			nm = gsr.xni + xndt * ft + xnddt * ft * ft * 0.5;
+			nm = xni + xndt * ft + xnddt * ft * ft * 0.5;
 			xl = xli_cache + xldot * ft + xndt * ft * ft * 0.5;
-			gsr.xli = xli_cache;
-			if (gsr.irez != 1)
+			xli = xli_cache;
+			if (irez != 1)
 			{
 				mm = xl - 2.0 * nodem + 2.0 * theta;
-				dndt = nm - gsr.no_unkozai;
+				dndt = nm - no_unkozai;
 			}
 			else
 			{
 				mm = xl - nodem - argpm + theta;
-				dndt = nm - gsr.no_unkozai;
+				dndt = nm - no_unkozai;
 			}
-			nm = gsr.no_unkozai + dndt;
+			nm = no_unkozai + dndt;
 		}
 
 
@@ -1139,13 +1134,13 @@ CSGP4_DECORATOR int sgp4init_simple
 	if (nm <= 0.0)
 	{
 		//		 printf("# error nm %f\n", nm);
-		gsr.error = 2;
+		error = 2;
 		// sgp4fix add return
 		//return false;
 	}
 
-	am = POW((gsr.xke / nm), x2o3) * tempa * tempa;
-	nm = gsr.xke / POW(am, 1.5);
+	am = POW((xke / nm), x2o3) * tempa * tempa;
+	nm = xke / POW(am, 1.5);
 	em = em - tempe;
 
 	// fix tolerance for error recognition
@@ -1153,14 +1148,14 @@ CSGP4_DECORATOR int sgp4init_simple
 	if ((em >= 1.0) || (em < -0.001)/* || (am < 0.95)*/ )
 	{
 		//		 printf("# error em %f\n", em);
-		gsr.error = 1;
+		error = 1;
 		// sgp4fix to return if there is an error in eccentricity
 		//return false;
 	}
 	// sgp4fix fix tolerance to avoid a divide by zero
 	if (em < 1.0e-6)
 		em = 1.0e-6;
-	mm = mm + gsr.no_unkozai * templ;
+	mm = mm + no_unkozai * templ;
 	xlm = mm + argpm + nodem;
 	emsq = em * em;
 	temp = 1.0 - emsq;
@@ -1171,13 +1166,13 @@ CSGP4_DECORATOR int sgp4init_simple
 	mm = FMOD((xlm - argpm - nodem), twopi);
 
 	// sgp4fix recover singly averaged mean elements
-	gsr.am = am;
-	gsr.em = em;
-	gsr.im = inclm;
-	gsr.Om = nodem;
-	gsr.om = argpm;
-	gsr.mm = mm;
-	gsr.nm = nm;
+	am = am;
+	em = em;
+	im = inclm;
+	Om = nodem;
+	om = argpm;
+	mm = mm;
+	nm = nm;
 
 	/* ----------------- compute extra mean quantities ------------- */
 	sinim = SIN(inclm);
@@ -1191,22 +1186,22 @@ CSGP4_DECORATOR int sgp4init_simple
 	mp = mm;
 	sinip = sinim;
 	cosip = cosim;
-	if (gsr.method)
+	if (method)
 	{
 /*
 		dpper_simple
 			(
-			  gsr.e3, gsr.ee2, gsr.peo,
-			  gsr.pgho, gsr.pho, gsr.pinco,
-			  gsr.plo, gsr.se2, gsr.se3,
-			  gsr.sgh2, gsr.sgh3, gsr.sgh4,
-			  gsr.sh2, gsr.sh3, gsr.si2,
-			  gsr.si3, gsr.sl2, gsr.sl3,
-			  gsr.sl4, gsr.t, gsr.xgh2,
-			  gsr.xgh3, gsr.xgh4, gsr.xh2,
-			  gsr.xh3, gsr.xi2, gsr.xi3,
-			  gsr.xl2, gsr.xl3, gsr.xl4,
-			  gsr.zmol, gsr.zmos, gsr.inclo,
+			  e3, ee2, peo,
+			  pgho, pho, pinco,
+			  plo, se2, se3,
+			  sgh2, sgh3, sgh4,
+			  sh2, sh3, si2,
+			  si3, sl2, sl3,
+			  sl4, t, xgh2,
+			  xgh3, xgh4, xh2,
+			  xh3, xi2, xi3,
+			  xl2, xl3, xl4,
+			  zmol, zmos, inclo,
 			  false, CSGP4_REF(ep), CSGP4_REF(xincp), CSGP4_REF(nodep), CSGP4_REF(argpp), CSGP4_REF(mp)
 			);
 */
@@ -1227,31 +1222,31 @@ CSGP4_DECORATOR int sgp4init_simple
 			zel = 0.05490;
 
 			/* --------------- calculate time varying periodics ----------- */
-			zm = gsr.zmos + zns * gsr.t;
+			zm = zmos + zns * t;
 			// be sure that the initial call has time set to zero
 			//if (init)
-			//	zm = gsr.zmos;
+			//	zm = zmos;
 			zf = zm + 2.0 * zes * SIN(zm);
 			sinzf = SIN(zf);
 			f2 = 0.5 * sinzf * sinzf - 0.25;
 			f3 = -0.5 * sinzf * COS(zf);
-			ses = gsr.se2 * f2 + gsr.se3 * f3;
-			sis = gsr.si2 * f2 + gsr.si3 * f3;
-			sls = gsr.sl2 * f2 + gsr.sl3 * f3 + gsr.sl4 * sinzf;
-			sghs = gsr.sgh2 * f2 + gsr.sgh3 * f3 + gsr.sgh4 * sinzf;
-			shs = gsr.sh2 * f2 + gsr.sh3 * f3;
-			zm = gsr.zmol + znl * gsr.t;
+			ses = se2 * f2 + se3 * f3;
+			sis = si2 * f2 + si3 * f3;
+			sls = sl2 * f2 + sl3 * f3 + sl4 * sinzf;
+			sghs = sgh2 * f2 + sgh3 * f3 + sgh4 * sinzf;
+			shs = sh2 * f2 + sh3 * f3;
+			zm = zmol + znl * t;
 			//if (init)
-			//	zm = gsr.zmol;
+			//	zm = zmol;
 			zf = zm + 2.0 * zel * SIN(zm);
 			sinzf = SIN(zf);
 			f2 = 0.5 * sinzf * sinzf - 0.25;
 			f3 = -0.5 * sinzf * COS(zf);
-			sel = gsr.ee2 * f2 + gsr.e3 * f3;
-			sil = gsr.xi2 * f2 + gsr.xi3 * f3;
-			sll = gsr.xl2 * f2 + gsr.xl3 * f3 + gsr.xl4 * sinzf;
-			sghl = gsr.xgh2 * f2 + gsr.xgh3 * f3 + gsr.xgh4 * sinzf;
-			shll = gsr.xh2 * f2 + gsr.xh3 * f3;
+			sel = ee2 * f2 + e3 * f3;
+			sil = xi2 * f2 + xi3 * f3;
+			sll = xl2 * f2 + xl3 * f3 + xl4 * sinzf;
+			sghl = xgh2 * f2 + xgh3 * f3 + xgh4 * sinzf;
+			shll = xh2 * f2 + xh3 * f3;
 			pe = ses + sel;
 			pinc = sis + sil;
 			pl = sls + sll;
@@ -1260,11 +1255,11 @@ CSGP4_DECORATOR int sgp4init_simple
 
 			// not init
 			{
-				pe = pe - gsr.peo;
-				pinc = pinc - gsr.pinco;
-				pl = pl - gsr.plo;
-				pgh = pgh - gsr.pgho;
-				ph = ph - gsr.pho;
+				pe = pe - peo;
+				pinc = pinc - pinco;
+				pl = pl - plo;
+				pgh = pgh - pgho;
+				ph = ph - pho;
 				(xincp) = (xincp) + pinc;
 				(ep) = (ep) + pe;
 				sinip = SIN((xincp));
@@ -1335,7 +1330,7 @@ CSGP4_DECORATOR int sgp4init_simple
 		if ((ep < 0.0) || (ep > 1.0))
 		{
 			//			printf("# error ep %f\n", ep);
-			gsr.error = 3;
+			error = 3;
 			// sgp4fix add return
 			//return false;
 		}
@@ -1343,21 +1338,21 @@ CSGP4_DECORATOR int sgp4init_simple
 	} // if method = true
 
 	/* -------------------- long period periodics ------------------ */
-	if (gsr.method)
+	if (method)
 	{
 		sinip = SIN(xincp);
 		cosip = COS(xincp);
-		gsr.aycof = -0.5 * gsr.j3oj2 * sinip;
+		aycof = -0.5 * j3oj2 * sinip;
 		// sgp4fix for divide by zero for xincp = 180 deg
 		if (FABS(cosip + 1.0) > 1.5e-12)
-			gsr.xlcof = -0.25 * gsr.j3oj2 * sinip * (3.0 + 5.0 * cosip) / (1.0 + cosip);
+			xlcof = -0.25 * j3oj2 * sinip * (3.0 + 5.0 * cosip) / (1.0 + cosip);
 		else
-			gsr.xlcof = -0.25 * gsr.j3oj2 * sinip * (3.0 + 5.0 * cosip) / temp4;
+			xlcof = -0.25 * j3oj2 * sinip * (3.0 + 5.0 * cosip) / temp4;
 	}
 	axnl = ep * COS(argpp);
 	temp = 1.0 / (am * (1.0 - ep * ep));
-	aynl = ep * SIN(argpp) + temp * gsr.aycof;
-	xl = mp + argpp + nodep + temp * gsr.xlcof * axnl;
+	aynl = ep * SIN(argpp) + temp * aycof;
+	xl = mp + argpp + nodep + temp * xlcof * axnl;
 
 	/* --------------------- solve kepler's equation --------------- */
 	u = FMOD( (xl - nodep), twopi );
@@ -1391,7 +1386,7 @@ CSGP4_DECORATOR int sgp4init_simple
 	if (pl < 0.0)
 	{
 		//		 printf("# error pl %f\n", pl);
-		gsr.error = 4;
+		error = 4;
 		// sgp4fix add return
 		//return false;
 	}
@@ -1408,25 +1403,25 @@ CSGP4_DECORATOR int sgp4init_simple
 		sin2u = (cosu + cosu) * sinu;
 		cos2u = 1.0 - 2.0 * sinu * sinu;
 		temp = 1.0 / pl;
-		temp1 = 0.5 * gsr.j2 * temp;
+		temp1 = 0.5 * j2 * temp;
 		temp2 = temp1 * temp;
 
 		/* -------------- update for short period periodics ------------ */
-		if (gsr.method  ) // == 'd')
+		if (method  ) // == 'd')
 		{
 			cosisq = cosip * cosip;
-			gsr.con41 = 3.0 * cosisq - 1.0;
-			gsr.x1mth2 = 1.0 - cosisq;
-			gsr.x7thm1 = 7.0 * cosisq - 1.0;
+			con41 = 3.0 * cosisq - 1.0;
+			x1mth2 = 1.0 - cosisq;
+			x7thm1 = 7.0 * cosisq - 1.0;
 		}
-		mrt = rl * (1.0 - 1.5 * temp2 * betal * gsr.con41) +
-				0.5 * temp1 * gsr.x1mth2 * cos2u;
-		su = su - 0.25 * temp2 * gsr.x7thm1 * sin2u;
+		mrt = rl * (1.0 - 1.5 * temp2 * betal * con41) +
+				0.5 * temp1 * x1mth2 * cos2u;
+		su = su - 0.25 * temp2 * x7thm1 * sin2u;
 		xnode = nodep + 1.5 * temp2 * cosip * sin2u;
 		xinc = xincp + 1.5 * temp2 * cosip * sinip * cos2u;
-		mvt = rdotl - nm * temp1 * gsr.x1mth2 * sin2u / gsr.xke;
-		rvdot = rvdotl + nm * temp1 * (gsr.x1mth2 * cos2u +
-				1.5 * gsr.con41) / gsr.xke;
+		mvt = rdotl - nm * temp1 * x1mth2 * sin2u / xke;
+		rvdot = rvdotl + nm * temp1 * (x1mth2 * cos2u +
+				1.5 * con41) / xke;
 
 		/* --------------------- orientation vectors ------------------- */
 		sinsu = SIN(su);
@@ -1445,9 +1440,9 @@ CSGP4_DECORATOR int sgp4init_simple
 		vz = sini * cossu;
 
 		/* --------- position and velocity (in km and km/sec) ---------- */
-		r[0] = (mrt * ux) * gsr.radiusearthkm;
-		r[1] = (mrt * uy) * gsr.radiusearthkm;
-		r[2] = (mrt * uz) * gsr.radiusearthkm;
+		r[0] = (mrt * ux) * radiusearthkm;
+		r[1] = (mrt * uy) * radiusearthkm;
+		r[2] = (mrt * uz) * radiusearthkm;
 		v[0] = (mvt * ux + rvdot * vx) * vkmpersec;
 		v[1] = (mvt * uy + rvdot * vy) * vkmpersec;
 		v[2] = (mvt * uz + rvdot * vz) * vkmpersec;
@@ -1457,21 +1452,21 @@ CSGP4_DECORATOR int sgp4init_simple
 	if (mrt < 1.0)
 	{
 		//		 printf("# decay condition %11.6f \n",mrt);
-		gsr.error = 6;
+		error = 6;
 		//return false;
 	}
 
-	return gsr.error;
+	return error;
 	//#include "debug7.cpp"
 	//return true;
 
 	//END SGP4_SIMPLE
 
 
-	//gsr.init = 'n';
+	//init = 'n';
 
 	//#include "debug6.cpp"
-	//sgp4fix return boolean. gsr.error contains any error codes
+	//sgp4fix return boolean. error contains any error codes
 	//return true;
 }  // end sgp4init
 
