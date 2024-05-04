@@ -16,7 +16,11 @@
 #include <string.h>
 #include <stdlib.h>
 
+#ifdef __cplusplus
+#define CSGP4_OUT *
+#else
 #define CSGP4_OUT * restrict
+#endif
 
 #define SGPPI 3.1415926535897932384626433
 
@@ -291,7 +295,7 @@ CSGP4_DECORATOR int ParseFileOrString( FILE * f, const char * sLineSet, struct T
 				ret = -5;
 
 			aborted = 0;
-			*objects = realloc( *objects, sizeof( **objects ) * *numObjects );
+			*objects = (struct TLEObject*)realloc( *objects, sizeof( **objects ) * *numObjects );
 			thisObject = *objects + nObject;
 			memset( thisObject, 0, sizeof( *thisObject ) );
 			thisObject->objectName[0] = ' ';
@@ -321,6 +325,7 @@ CSGP4_DECORATOR int ParseFileOrString( FILE * f, const char * sLineSet, struct T
 		switch( line[0] )
 		{
 		case '1':
+		{
 			// 1 25544U 98067A   24108.06679608  .00019473  00000+0  34469-3 0  9999
 			if( s < 68 )
 			{
@@ -382,7 +387,9 @@ CSGP4_DECORATOR int ParseFileOrString( FILE * f, const char * sLineSet, struct T
 			jday(year, mon, day, hr, minute, sec, &thisObject->jdsatepoch, &thisObject->jdsatepochF);
 			thisObject->epoch = ConvertEpochYearAndDayToUnix( epochYear, epochDay );
 			break;
+		}
 		case '2':
+		{
 			// 2 25544  51.6384 258.4693 0004986  70.1481  42.8477 15.50291806449066
 			thisValid = 0; // Finalizing this record.
 
@@ -440,6 +447,7 @@ CSGP4_DECORATOR int ParseFileOrString( FILE * f, const char * sLineSet, struct T
 			thisObject->valid = 1;
 
 			break;
+		}
 		default:
 			fprintf( stderr, "Unknown record type %c on line %d\n", line[0], lineno );
 		}
