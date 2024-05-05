@@ -35,6 +35,7 @@
 
 #define SGPPI 3.1415926535897932384626433
 
+#define SGP4_FROM_EPOCH_DAYS 2440587.5
 
 // Default to double calculations.
 #ifndef CSGP4_USE_FLOAT
