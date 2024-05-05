@@ -17,6 +17,8 @@ This is kind of rough, so USE AT YOUR OWN RISK. All I've done to validate is tha
  * Figure out why Deep Space is off some.
  * Can we avoid extra call to sgp4 in sgp4init?
  * Is meanMotion1, meanMotion2 used at all?  Can we just remove them?  (and ndot)
+ * Make it so `sgp4init_simple` can take epoch as epocf and epoch fraction.
+
 
 ## Resources
 
