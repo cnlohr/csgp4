@@ -28,5 +28,5 @@ This is kind of rough, so USE AT YOUR OWN RISK. All I've done to validate is tha
  * https://cdn.digitalarsenal.io/celestrak/NORAD/elements/catalog.txt
  * https://celestrak.org/NORAD/elements/
  * Space Stations: https://celestrak.org/NORAD/elements/gp.php?GROUP=stations&FORMAT=tle
-
+ *  https://en.wikipedia.org/wiki/Julian_day
 
