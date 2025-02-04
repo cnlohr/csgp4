@@ -17,4 +17,4 @@ jobs:
           make \
           build-essential
     - name: Build
-      run: make clean test
+      run: make clean github_test
