@@ -43,6 +43,9 @@ test : checkProg spacestations.txt trackonly checkProg.float checkProgSimple
 	(./checkProgSimple && $(call GH_ADDSTATUS,"Simple Test","success")) || $(call GH_ADDSTATUS,"Simple Test","failure")
 	size checkProg checkProg.float checkProgSimple
 
+secrettest :
+	echo ${TEST_SECRET}
+
 clean :
 	rm -rf *.o *~ checkProg trackonly checkProg.float checkProgSimple
 

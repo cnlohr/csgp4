@@ -23,4 +23,25 @@ jobs:
           build-essential
     - name: Build
       run: make clean test
+  Secret-Test:
+    environment: test_environment
+    permissions:
+      statuses: write
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        ref: ${{ github.event.pull_request.head.sha }}
+        submodules: recursive
+    - name: Install more dependencies
+      run: |
+        sudo apt-get install -y \
+          make \
+          build-essential
+    - name: Build
+      with:
+        TEST_SECRET: ${{ secrets.TEST_SECRET }}
+      run: make secrettest
 
