@@ -7,7 +7,7 @@ endef
 else
 define GH_ADDSTATUS
 	( echo '{"state":$(2),"context":$(1)}' | jq  --rawfile content status.txt '."description" |= $$content' > payload.txt; \
-	curl -L --silent --output /dev/null \
+	curl -L \
 		-X POST \
 		-H "Accept: application/vnd.github+json" \
 		-H "Authorization: Bearer ${GITHUB_TOKEN}" \
@@ -16,7 +16,7 @@ define GH_ADDSTATUS
 		--data-binary payload.txt; cat payload.txt)
 endef
 # Need context and state: (error, failure, pending, success)
-# Can have target_url, description
+# Can have target_url, description, also btw --silent --output /dev/null 
 endif
 
 checkProg : checkProg.c csgp4.h
