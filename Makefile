@@ -25,7 +25,6 @@ test : checkProg spacestations.txt trackonly checkProg.float checkProgSimple
 	size checkProg checkProg.float checkProgSimple
 
 github_test : test
-	env
 	echo github test
 	curl -L \
 		-X POST \
@@ -34,8 +33,6 @@ github_test : test
 		-H "X-GitHub-Api-Version: 2022-11-28" \
 		https://api.github.com/repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_WORKFLOW_SHA} \
 		-d '{"state":"success","target_url":"https://example.com/build/status","description":"Tetset Sentinel!","context":"continuous-integration/jenkins"}'
-
-
 
 clean :
 	rm -rf *.o *~ checkProg trackonly checkProg.float checkProgSimple
