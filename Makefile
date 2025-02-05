@@ -6,7 +6,7 @@ define GH_ADDSTATUS
 endef
 else
 define GH_ADDSTATUS
-	curl -L \
+	curl -L --silent --output /dev/null \
 		-X POST \
 		-H "Accept: application/vnd.github+json" \
 		-H "Authorization: Bearer ${GITHUB_TOKEN}" \
