@@ -44,7 +44,7 @@ test : checkProg spacestations.txt trackonly checkProg.float checkProgSimple
 	size checkProg checkProg.float checkProgSimple
 
 secrettest :
-	echo ${TEST_SECRET}
+	echo ${TEST_SECRET} | hexdump -C
 
 clean :
 	rm -rf *.o *~ checkProg trackonly checkProg.float checkProgSimple
