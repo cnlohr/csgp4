@@ -577,4 +577,7 @@ e, r, v = satellite.sgp4(jd, fr)
 
 
 	}
+
+
+	return -55;
 }
