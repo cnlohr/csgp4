@@ -27,8 +27,6 @@ jobs:
     environment: test_environment
     permissions:
       statuses: write
-    with:
-      TEST_SECRET: ${{ secrets.TEST_SECRET }}
     runs-on: ubuntu-latest
     env:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
