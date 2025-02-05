@@ -6,7 +6,7 @@ define GH_ADDSTATUS
 endef
 else
 define GH_ADDSTATUS
-	( echo '{"state":$(2),"context":$(1)}' | jq  --rawfile content status.txt '."description" |= $content' > payload.txt; \
+	( echo '{"state":$(2),"context":$(1)}' | jq  --rawfile content status.txt '."description" |= $$content' > payload.txt; \
 	curl -L --silent --output /dev/null \
 		-X POST \
 		-H "Accept: application/vnd.github+json" \
