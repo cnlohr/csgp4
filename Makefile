@@ -38,7 +38,6 @@ spacestations.txt :
 	wget "https://celestrak.org/NORAD/elements/gp.php?GROUP=stations&FORMAT=tle" -O spacestations.txt
 
 test : checkProg spacestations.txt trackonly checkProg.float checkProgSimple
-	env
 	(./checkProg spacestations.txt && $(call GH_ADDSTATUS,"Double precision","success")) || $(call GH_ADDSTATUS,"Double precision","failure")
 	(./checkProg.float spacestations.txt && $(call GH_ADDSTATUS,"Single precision","success")) || $(call GH_ADDSTATUS,"Single precision","failure")
 	(./checkProgSimple && $(call GH_ADDSTATUS,"Simple Test","success")) || $(call GH_ADDSTATUS,"Simple Test","failure")

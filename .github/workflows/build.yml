@@ -23,3 +23,4 @@ jobs:
           build-essential
     - name: Build
       run: make clean test
+
