@@ -4,8 +4,6 @@ ifeq ($(GITHUB_TOKEN),)
 define GH_ADDSTATUS
 endef
 else
-# Need context and state: (error, failure, pending, success)
-# Can have target_url, description
 define GH_ADDSTATUS
 	curl -L \
 		-X POST \
@@ -14,6 +12,8 @@ define GH_ADDSTATUS
 		-H "X-GitHub-Api-Version: 2022-11-28" \
 		https://api.github.com/repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_WORKFLOW_SHA} \
 		-d '{"state":$(2),"context":$(1)}'
+# Need context and state: (error, failure, pending, success)
+# Can have target_url, description
 endef
 endif
 
