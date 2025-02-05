@@ -12,7 +12,7 @@ define GH_ADDSTATUS
 		-H "Authorization: Bearer ${GITHUB_TOKEN}" \
 		-H "X-GitHub-Api-Version: 2022-11-28" \
 		https://api.github.com/repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_WORKFLOW_SHA} \
-		-d '{"state":$(2),"context":$(1)}'
+		-d '{"state":$(2),"context":$(1),"target_url":"https://github.com/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"}'
 endef
 # Need context and state: (error, failure, pending, success)
 # Can have target_url, description
