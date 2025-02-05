@@ -1,9 +1,7 @@
 name: Build Test
-
 on:
   push:
   pull_request:
-
 jobs:
   Build-for-Linux:
     permissions:
