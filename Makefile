@@ -25,6 +25,7 @@ test : checkProg spacestations.txt trackonly checkProg.float checkProgSimple
 	size checkProg checkProg.float checkProgSimple
 
 github_test : test
+	env
 	echo github test
 	curl -L \
 		-X POST \
