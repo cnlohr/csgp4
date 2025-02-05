@@ -46,3 +46,4 @@ test : checkProg spacestations.txt trackonly checkProg.float checkProgSimple
 clean :
 	rm -rf *.o *~ checkProg trackonly checkProg.float checkProgSimple
 
+
