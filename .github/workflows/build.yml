@@ -23,6 +23,11 @@ jobs:
           build-essential
     - name: Build
       run: make clean test
+
+
+name : Secret Test
+on :
+jobs :
   Secret-Test:
     environment: test_environment
     permissions:
