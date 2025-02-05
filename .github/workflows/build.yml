@@ -6,6 +6,8 @@ on:
 
 jobs:
   Build-for-Linux:
+    permissions:
+      statuses: write
     runs-on: ubuntu-latest
     env:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
