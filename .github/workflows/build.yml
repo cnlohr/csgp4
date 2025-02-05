@@ -5,15 +5,15 @@ on:
   pull_request:
 
 jobs:
+  get_git_token:
+    title: Reading Github token
+    image: codefresh/cli
+    commands:
+      - codefresh get contexts
+      - cf_export GITHUB_TOKEN=$(codefresh get context github --decrypt -o yaml | yq -y .spec.data.auth.password)
   Build-for-Linux:
     runs-on: ubuntu-latest
     steps:
-    get_git_token:
-      title: Reading Github token
-      image: codefresh/cli
-      commands:
-        - codefresh get contexts
-        - cf_export GITHUB_TOKEN=$(codefresh get context github --decrypt -o yaml | yq -y .spec.data.auth.password)
     - uses: actions/checkout@v4
       with:
         submodules: recursive
