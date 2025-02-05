@@ -12,8 +12,9 @@ jobs:
       with:
         submodules: recursive
     - name: Reading Github Token
-      run: codefresh get contexts
-      run: cf_export GITHUB_TOKEN=$(codefresh get context github --decrypt -o yaml | yq -y .spec.data.auth.password)
+      run: >
+        codefresh get contexts
+        cf_export GITHUB_TOKEN=$(codefresh get context github --decrypt -o yaml | yq -y .spec.data.auth.password)
     - name: Install more dependencies
       run: |
         sudo apt-get install -y \
