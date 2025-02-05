@@ -566,5 +566,5 @@ e, r, v = satellite.sgp4(jd, fr)
 		printf( "Deep Space Full At Init: %.4f us/iteration\n", dEndFullInit - dStartFullInit );
 	}
 
-	return 0;
+	return -55;
 }
