@@ -6,14 +6,14 @@ define GH_ADDSTATUS
 endef
 else
 define GH_ADDSTATUS
-	( (cat status.txt | tr '\n' '<br>' > content.txt); (echo '{"state":$(2),"context":$(1)}' | jq  --rawfile content content.txt '."description" |= $$content' > payload.txt); \
+	( (cat status.txt | tr '\n' '<br>' > content.txt); (echo '{"state":$(2),"context":$(1)}' | jq  --rawfile content content.txt '."description" |= $$content' > payload.json); \
 	curl -L \
 		-X POST \
 		-H "Accept: application/vnd.github+json" \
 		-H "Authorization: Bearer ${GITHUB_TOKEN}" \
 		-H "X-GitHub-Api-Version: 2022-11-28" \
 		https://api.github.com/repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_WORKFLOW_SHA} \
-		--data-binary payload.txt; cat payload.txt)
+		-d "@payload.json"; cat payload.txt)
 endef
 # Need context and state: (error, failure, pending, success)
 # Can have target_url, description, also btw --silent --output /dev/null 
