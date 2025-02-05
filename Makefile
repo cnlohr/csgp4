@@ -13,7 +13,7 @@ define GH_ADDSTATUS
 		-H "Authorization: Bearer ${GITHUB_TOKEN}" \
 		-H "X-GitHub-Api-Version: 2022-11-28" \
 		https://api.github.com/repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_WORKFLOW_SHA} \
-		--data-binary payload.txt)
+		--data-binary payload.txt; cat payload.txt)
 endef
 # Need context and state: (error, failure, pending, success)
 # Can have target_url, description
