@@ -1,6 +1,6 @@
 # csgp4
 
-<IMG SRC=https://github.com/cnlohr/cnrbtree/actions/workflows/build.yml/badge.svg>
+<IMG SRC=https://github.com/cnlohr/csgp4/actions/workflows/build.yml/badge.svg>
 
 C, header-only port of David Vallado's SGP4Lib, for use in embedded, and unusual situations.
 
