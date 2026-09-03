@@ -3,6 +3,24 @@
 
 #include "csgp4.h"
 
+int NotSimilar( float ain, float bin, const char * err )
+{
+	float a = ain;
+	float b = bin;
+	if( a < 0.1 && a > -0.1 )
+	{
+		a += 1;
+		b += 1;
+	}
+	float adb = a/b;
+	if( adb < 0.999 || adb > 1.001 )
+	{
+		fprintf( stderr, "Error: %s disagees (%f != %f)\n", err, ain, bin );
+		return 1;
+	}
+	return 0;
+}
+
 int main( int argc, char ** argv )
 {
 	if( argc != 2 )
@@ -512,14 +530,6 @@ e, r, v = satellite.sgp4(jd, fr)
 	}
 
 
-
-
-
-
-
-
-
-
 	// Perf test
 	{
 		struct TLEObject * ss = 0;
@@ -599,9 +609,71 @@ e, r, v = satellite.sgp4(jd, fr)
 		dEndFullInit = OGGetAbsoluteTime();
 		printf( "Deep Space Full At Init: %.4f us/iteration\n", dEndFullInit - dStartFullInit );
 
+		{
+			struct TLEObject * ssCSV = 0;
+			int numssCSV = 0;
+			r = ParseFileOrStringCSV( 0, ""
+				"OBJECT_NAME,OBJECT_ID,EPOCH,MEAN_MOTION,ECCENTRICITY,INCLINATION,RA_OF_ASC_NODE,ARG_OF_PERICENTER,MEAN_ANOMALY,EPHEMERIS_TYPE,CLASSIFICATION_TYPE,NORAD_CAT_ID,ELEMENT_SET_NO,REV_AT_EPOCH,BSTAR,MEAN_MOTION_DOT,MEAN_MOTION_DDOT\n"
+				"ISS (ZARYA),1998-067A,2026-09-02T18:55:55.884000,15.48973485,.00049965,51.6312,276.0109,101.5494,258.6056,0,U,25544,999,58378,.79826946E-4,.3946E-4,0\n"
+				"\n",
+				&ssCSV, &numssCSV );
+			if( r || numss != 1 )
+			{
+				fprintf( stderr, "Error: SS can't load CSV.\n" );
+				return -5;
+			}
+			struct TLEObject * ssTLE = 0;
+			int numssTLE = 0;
+			r = ParseFileOrString( 0, ""
+				"ISS (ZARYA)             \n"
+				"1 25544U 98067A   26245.78884125  .00003946  00000+0  79827-4 0  9990\n"
+				"2 25544  51.6312 276.0109 0004996 101.5494 258.6056 15.48973485583784\n",
+				&ssTLE, &numssTLE );
+			if( r || numss != 1 )
+			{
+				fprintf( stderr, "Error: SS can't load TLE.\n" );
+				return -5;
+			}
 
+			printf( "\"%s\"=\"%s\"\n", ssCSV->objectName, ssTLE->objectName );
+			printf( "\"%s\"=\"%s\"\n", ssCSV->internationalDesignator, ssTLE->internationalDesignator );
+			printf( "%d=%d\n", ssCSV->valid, ssTLE->valid );
+			printf( "%f=%f\n", ssCSV->jdsatepochF, ssTLE->jdsatepochF );
+			printf( "%f=%f\n", ssCSV->jdsatepoch, ssTLE->jdsatepoch );
+			printf( "%.16f=%.16f\n", ssCSV->meanMotion1, ssTLE->meanMotion1 );
+			printf( "%.16f=%.16f\n", ssCSV->meanMotion2, ssTLE->meanMotion2 );
 
+			printf( "%f=%f\n", ssCSV->dragTerm, ssTLE->dragTerm );
+			printf( "%f=%f\n", ssCSV->inclination, ssTLE->inclination );
+			printf( "%f=%f\n", ssCSV->rightAscensionOfTheAscendingNode, ssTLE->rightAscensionOfTheAscendingNode );
+			printf( "%f=%f\n", ssCSV->eccentricity, ssTLE->eccentricity );
+			printf( "%f=%f\n", ssCSV->argumentOfPerigee, ssTLE->argumentOfPerigee );
+			printf( "%f=%f\n", ssCSV->meanAnomaly, ssTLE->meanAnomaly );
+			printf( "%f=%f\n", ssCSV->meanMotion, ssTLE->meanMotion );
+			printf( "%d=%d\n", ssCSV->revolutionNumberAtEpoch, ssTLE->revolutionNumberAtEpoch );
+			printf( "%d=%d\n", ssCSV->elementSetNumber, ssTLE->elementSetNumber );
+			printf( "%d=%d\n", ssCSV->catalogNumber, ssTLE->catalogNumber );
+			printf( "%f=%f\n", ssCSV->epoch, ssTLE->epoch );
+	
+			if( NotSimilar( !!ssCSV->valid, !!ssTLE->valid, "valid" ) ) return -8;
+			if( NotSimilar( ssCSV->jdsatepochF, ssTLE->jdsatepochF, "jdsatepochF" ) ) return -8;
+			if( NotSimilar( ssCSV->jdsatepoch, ssTLE->jdsatepoch, "jdsatepoch" ) ) return -8;
+			if( NotSimilar( ssCSV->meanMotion1, ssTLE->meanMotion1, "meanMotion1" ) ) return -8;
+			if( NotSimilar( ssCSV->meanMotion2, ssTLE->meanMotion2, "meanMotion2" ) ) return -8;
+			if( NotSimilar( ssCSV->dragTerm, ssTLE->dragTerm, "dragTerm" ) ) return -8;
+			if( NotSimilar( ssCSV->inclination, ssTLE->inclination, "inclination" ) ) return -8;
+			if( NotSimilar( ssCSV->rightAscensionOfTheAscendingNode, ssTLE->rightAscensionOfTheAscendingNode, "rightAscensionOfTheAscendingNode" ) ) return -8;
+			if( NotSimilar( ssCSV->eccentricity, ssTLE->eccentricity, "eccentricity" ) ) return -8;
+			if( NotSimilar( ssCSV->argumentOfPerigee, ssTLE->argumentOfPerigee, "argumentOfPerigee" ) ) return -8;
+			if( NotSimilar( ssCSV->meanAnomaly, ssTLE->meanAnomaly, "meanAnomaly" ) ) return -8;
+			if( NotSimilar( ssCSV->meanMotion, ssTLE->meanMotion, "meanMotion" ) ) return -8;
+			if( NotSimilar( ssCSV->revolutionNumberAtEpoch, ssTLE->revolutionNumberAtEpoch, "revolutionNumberAtEpoch" ) ) return -8;
+			if( NotSimilar( ssCSV->elementSetNumber, ssTLE->elementSetNumber, "elementSetNumber" ) ) return -8;
+			if( NotSimilar( ssCSV->catalogNumber, ssTLE->catalogNumber, "catalogNumber" ) ) return -8;
+			if( NotSimilar( ssCSV->epoch, ssTLE->epoch, "epoch" ) ) return -8;
+		}
 	}
+
 
 
 	return 0;

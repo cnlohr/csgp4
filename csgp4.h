@@ -151,6 +151,7 @@ struct TLEObject
 CSGP4_DECORATOR double ConvertEpochYearAndDayToUnix( int epochYear, double epochDay );
 
 CSGP4_DECORATOR int ParseFileOrString( FILE * f, const char * sLineSet, struct TLEObject ** objects, int * numObjects );
+CSGP4_DECORATOR int ParseFileOrStringCSV( FILE * f, const char * sLineSet, struct TLEObject ** objects, int * numObjects );
 
 CSGP4_DECORATOR int ConvertTLEToSGP4( struct elsetrec * satrec, struct TLEObject * obj, SGPF initial_time, SGPF * initial_r, SGPF* initial_v );
 
@@ -225,6 +226,64 @@ CSGP4_DECORATOR float ParseFixedEponential( const char * le, int lineno, int * a
 	return ret;
 }
 
+CSGP4_DECORATOR float ParseEEponential( const char * vin )
+{
+	float ret = 0;
+	int place = 0;
+	int gotnums = 0;
+	int gotdot = 0;
+	int gotminus = 0;
+	int gote = 0;
+	float evalue = 0;
+	int goteminus = 0;
+
+	float afterdotplace = 1;
+	do
+	{
+		char c = vin[place++];
+		if( !c ) break;
+		if( !gotnums && ( c == ' ' || c == '\t' || c == '\n' ) );
+		else if( c == '-' && ( !gotminus || ( gote && !goteminus && evalue == 0 ) ) ) { if( gote ) goteminus = 1; else gotminus = 1;  }
+		else if( c == '.' && !gotdot ) { gotdot = 1; }
+		else if( ( c == 'E' || c == 'e' ) && !gote ) { gote = 1; }
+		else if( c >= '0' && c <= '9' )
+		{
+			int num = c - '0';
+			if( gote )
+			{
+				evalue = evalue * 10 + num;
+			}
+			else if( gotdot )
+			{
+				afterdotplace *= .1;
+				ret += num * afterdotplace;
+			}
+			else
+			{
+				ret = ret * 10 + num;
+			}
+		}
+		else
+			return 0.0/0.0;
+	} while( 1 );
+
+	if( gote )
+	{
+		int i;
+		float expval = 1.0;
+		if( goteminus )
+			for( i = 0; i < evalue; i++ )
+				expval *= .1;
+		else
+			for( i = 0; i < evalue; i++ )
+				expval *= 10;
+		ret *= expval;
+	}
+	if( gotminus )
+		ret *= -1;
+
+	return ret;
+}
 
 CSGP4_DECORATOR double ConvertEpochYearAndDayToUnix( int epochYear, double epochDay )
 {
@@ -278,12 +337,18 @@ CSGP4_DECORATOR int ParseFileOrString( FILE * f, const char * sLineSet, struct T
 		{
 			char c;
 			s = 0;
-			while( ( c = *(sLineSet++) ) )			{
+			while( ( c = *(sLineSet++) ) )
+			{
 				line[s++] = c;
 				if( c == '\n' ) break;
 			}
 			if( c == 0 ) break;
 			line[s] = 0;
+		}
+		else
+		{
+			fprintf( stderr, "ParseFileOrString improperly called\n" );
+			return -1;
 		}
 		if( line[s-1] == '\r' || line[s-1] == '\n' ) s--;
 		if( line[s-1] == '\r' || line[s-1] == '\n' ) s--;
@@ -461,6 +526,217 @@ CSGP4_DECORATOR int ParseFileOrString( FILE * f, const char * sLineSet, struct T
 	return ret;
 }
 
+CSGP4_DECORATOR int ParseFileOrStringCSV( FILE * f, const char * sLineSet, struct TLEObject ** objects, int * numObjects )
+{
+	ssize_t s;
+	char line[256];
+	char * lineptr = line;
+	size_t n = sizeof( line ) - 1;
+	int lineno = 0;
+
+	int aborted = 0;
+	int ret = 0;
+	struct TLEObject * thisObject;
+
+	const double deg2rad  =   SGPPI / 180.0;         //   0.0174532925199433
+	const double xpdotp   =  1440.0 / (2.0 *SGPPI);  // 229.1831180523293
+
+	#define MAXFIELDS 32
+	char * fields[MAXFIELDS];
+	char * headerFields[MAXFIELDS];
+	int numFields = 0;
+	int thisFields = 0;
+	int thisValid = 0;
+
+	while( 1 )
+	{
+		thisValid = 0;
+		if( f )
+		{
+			s = getline( &lineptr, &n, f );
+			if( s < 0 )
+				break;
+		}
+		else if( sLineSet )
+		{
+			char c;
+			s = 0;
+			lineptr = line;
+			while( ( c = *(sLineSet++) ) )
+			{
+				line[s++] = c;
+				if( c == '\n' ) break;
+			}
+			if( c == 0 ) break;
+			line[s] = 0;
+			n = s;
+		}
+		if( line[s-1] == '\r' || line[s-1] == '\n' ) s--;
+		if( line[s-1] == '\r' || line[s-1] == '\n' ) s--;
+		lineno++;
+
+
+		if( lineno == 1 ) lineptr = strdup( lineptr );
+
+		int linelen = strlen( lineptr );
+		if( linelen < 2 ) break;
+
+		//Otherwise data.
+		if( lineno == 1 )
+			numFields = 0;
+		else
+			thisFields = 0;
+
+		if( lineno == 1 )
+			headerFields[numFields++] = lineptr;
+		else
+			fields[thisFields++] = lineptr;
+
+		int n;
+		for( n = 0; n < linelen + 1; n++ )
+		{
+			int c = lineptr[n];
+
+			if( c == ',' || c == '\n' || c == linelen )
+			{
+				lineptr[n] = 0;
+				n++;
+				if( lineno == 1 )
+					headerFields[numFields++] = lineptr + n;
+				else
+					fields[thisFields++] = lineptr + n;
+
+			}
+		}
+
+		if( lineno == 1 ) continue; // First line is title.
+
+		if( numFields != thisFields )
+		{
+			fprintf( stderr, "Parsing error on line %d; wrong number of feilds (expected %d got %d)\n", lineno, numFields, thisFields );
+			aborted = 1;
+			continue;
+		}
+
+		char * value = 0;
+		#define GV( title ) \
+			for( n = 0; n < numFields; n++ ) \
+			{ \
+				if( strcmp( title, headerFields[n] ) == 0 ) \
+				{ \
+					value = fields[n]; break; \
+				} \
+			} \
+			if( n == numFields ) \
+			{ \
+				fprintf( stderr, "Parsing error on line %d; couldn't find %s\n", lineno, title ); \
+				aborted = 1; \
+				continue; \
+			}
+
+		int nObject = *numObjects;
+		if( !aborted )
+			++*numObjects;
+		else
+			ret = -5;
+
+		aborted = 0;
+		*objects = realloc( *objects, sizeof( **objects ) * *numObjects );
+		thisObject = *objects + nObject;
+		memset( thisObject, 0, sizeof( *thisObject ) );
+		thisObject->objectName[0] = ' ';
+		thisObject->objectName[1] = ' ';
+
+		GV( "OBJECT_NAME" );
+
+		int olen = strlen( value );
+		if( olen >= sizeof( thisObject->objectName ) - 2 ) olen = sizeof( thisObject->objectName ) - 3;
+		memcpy( thisObject->objectName + 2, value, olen );
+
+		GV( "CLASSIFICATION_TYPE" );
+		thisObject->objectName[0] = value[0];
+
+		GV( "OBJECT_ID" );
+		int oilen = strlen( value );
+		if( oilen >= sizeof( thisObject->internationalDesignator ) ) oilen = sizeof( thisObject->internationalDesignator ) - 1;
+		memcpy( thisObject->internationalDesignator, value, oilen );
+
+		GV( "EPOCH" );
+		if( strlen( value ) < 20 ) {
+			fprintf( stderr, "Parsing error on line %d; Date unparsable\n", lineno );
+			aborted = 1;
+			continue;
+		}
+
+		value[4] = 0;
+		value[7] = 0;
+		value[10] = 0;
+		value[13] = 0;
+		value[16] = 0;
+		int year = atoi( value + 0 );
+		int mon = atoi( value + 5 );
+		int day = atoi( value + 8 );
+		int hr = atoi( value + 11 );
+		int minute = atoi( value + 14 );
+		SGPF sec = atof( value + 17 );
+
+		jday( year, mon, day, hr, minute, sec, & thisObject->jdsatepoch, & thisObject->jdsatepochF );
+
+		// But, jdsatepoch is in days from 4713 bc. 2234613.5 days between then and unix epoch.
+		thisObject->epoch = 24*60*60*(thisObject->jdsatepoch - 2440587.5) + 24*60*60*thisObject->jdsatepochF;
+
+		GV( "NORAD_CAT_ID" );
+		thisObject->catalogNumber = atoi( value );
+
+		GV( "MEAN_MOTION" );
+		thisObject->meanMotion = ParseEEponential( value ) / xpdotp;
+
+		GV( "ECCENTRICITY" );
+		thisObject->eccentricity = ParseEEponential( value );
+
+		GV( "INCLINATION" );
+		thisObject->inclination = ParseEEponential( value ) * deg2rad;
+
+		GV( "RA_OF_ASC_NODE" );
+		thisObject->rightAscensionOfTheAscendingNode = ParseEEponential( value ) * deg2rad;
+
+		GV( "ARG_OF_PERICENTER" );
+		thisObject->argumentOfPerigee = ParseEEponential( value ) * deg2rad;
+
+		GV( "MEAN_ANOMALY" );
+		thisObject->meanAnomaly = ParseEEponential( value ) * deg2rad;
+
+		//GV( "EPHEMERIS_TYPE" );
+		// ???
+
+		GV( "ELEMENT_SET_NO" );
+		thisObject->elementSetNumber = atoi( value );
+		//??? Normally 999?
+
+		GV( "REV_AT_EPOCH" );
+		thisObject->revolutionNumberAtEpoch = ParseEEponential( value );
+
+		GV( "BSTAR" );
+		thisObject->dragTerm = ParseEEponential( value );
+
+		GV( "MEAN_MOTION_DOT" );
+		thisObject->meanMotion1 = ParseEEponential( value ) / (xpdotp*1440.0);
+
+		GV( "MEAN_MOTION_DDOT" );
+		thisObject->meanMotion2 = ParseEEponential( value ) / (xpdotp*1440.0*1440);
+
+		thisObject->valid = 7; // See comment for TLE
+
+		thisValid = 1;
+	}
+
+	free( headerFields[0] ); // Release header line.
+
+	// If last element is complete, drop it.
+	if( *numObjects && thisValid ) --*numObjects;
+
+	return ret;
+}
 
 
 
