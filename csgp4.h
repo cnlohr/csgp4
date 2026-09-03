@@ -529,7 +529,7 @@ CSGP4_DECORATOR int ParseFileOrString( FILE * f, const char * sLineSet, struct T
 CSGP4_DECORATOR int ParseFileOrStringCSV( FILE * f, const char * sLineSet, struct TLEObject ** objects, int * numObjects )
 {
 	ssize_t s;
-	char line[256];
+	char line[512];
 	char * lineptr = line;
 	size_t n = sizeof( line ) - 1;
 	int lineno = 0;
@@ -547,13 +547,15 @@ CSGP4_DECORATOR int ParseFileOrStringCSV( FILE * f, const char * sLineSet, struc
 	int numFields = 0;
 	int thisFields = 0;
 	int thisValid = 0;
-
+	char * mallocedmem = 0;
 	while( 1 )
 	{
 		thisValid = 0;
 		if( f )
 		{
+			lineptr = line;
 			s = getline( &lineptr, &n, f );
+			mallocedmem = lineptr;
 			if( s < 0 )
 				break;
 		}
@@ -571,14 +573,17 @@ CSGP4_DECORATOR int ParseFileOrStringCSV( FILE * f, const char * sLineSet, struc
 			line[s] = 0;
 			n = s;
 		}
-		if( line[s-1] == '\r' || line[s-1] == '\n' ) s--;
-		if( line[s-1] == '\r' || line[s-1] == '\n' ) s--;
+
+		char * val = lineptr;
+		val[s] = 0;
+		if( lineno == 0 ) { val = strdup( val ); }
+
+		if( val[s-1] == '\r' || val[s-1] == '\n' ) s--;
+		if( val[s-1] == '\r' || val[s-1] == '\n' ) s--;
 		lineno++;
+		val[s] = 0;
 
-
-		if( lineno == 1 ) lineptr = strdup( lineptr );
-
-		int linelen = strlen( lineptr );
+		int linelen = s;
 		if( linelen < 2 ) break;
 
 		//Otherwise data.
@@ -588,26 +593,24 @@ CSGP4_DECORATOR int ParseFileOrStringCSV( FILE * f, const char * sLineSet, struc
 			thisFields = 0;
 
 		if( lineno == 1 )
-			headerFields[numFields++] = lineptr;
+			headerFields[numFields++] = val;
 		else
-			fields[thisFields++] = lineptr;
+			fields[thisFields++] = val;
 
 		int n;
-		for( n = 0; n < linelen + 1; n++ )
+		for( n = 0; n < linelen+1; n++ )
 		{
-			int c = lineptr[n];
-
-			if( c == ',' || c == '\n' || c == linelen )
+			int c = val[n];
+			if( c == ',' || c == '\n' || c == '\r' || n == linelen )
 			{
-				lineptr[n] = 0;
-				n++;
+				val[n] = 0;
 				if( lineno == 1 )
-					headerFields[numFields++] = lineptr + n;
+					headerFields[numFields++] = val + n+1;
 				else
-					fields[thisFields++] = lineptr + n;
-
+					fields[thisFields++] = val + n+1;
 			}
 		}
+
 
 		if( lineno == 1 ) continue; // First line is title.
 
